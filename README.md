@@ -98,121 +98,35 @@ Ejemplo de estructura de datos esperada:
 
 ## Uso
 
-Lo más cómodo es exportar las variables de entorno una sola vez al inicio de la sesión:
+### 1. Configurar rutas
+
+Exportar las variables de entorno antes de ejecutar cualquier comando:
 
 ```bash
 export TRITON_BASE_URI=/ruta/a/datos/triton_results
-export TRITON_GTIFF_DIR=/ruta/a/datos        # solo necesario para ETL, verify y benchmark_vs_geotiff
-export TRITON_OUTPUT_DIR=/ruta/a/datos/export  # opcional, para export_to_geotiff
-cd spillway
+export TRITON_GTIFF_DIR=/ruta/a/datos   # solo necesario para el ETL
 ```
 
-A partir de ahí, todos los scripts funcionan sin más configuración.
+### 2. Cargar datos (ETL)
 
----
+Por cada dataset disponible, ejecutar el proceso de ingesta:
 
-### Aplicación web
+```bash
+cd spillway
+python geotiff_to_tiledb_sparse.py --dataset datos1
+python geotiff_to_tiledb_sparse.py --dataset datos2
+# ...
+```
+
+Lee los GeoTIFF de `TRITON_GTIFF_DIR/datos1/` y crea el array TileDB en `TRITON_BASE_URI/`. Tarda ~10 min por dataset con un pico de ~4 GB de RAM. Al finalizar verifica la integridad automáticamente.
+
+### 3. Arrancar la aplicación
 
 ```bash
 python -m streamlit run app.py
 ```
 
-Abre `http://localhost:8501`. Detecta automáticamente todos los datasets disponibles en `TRITON_BASE_URI`.
-
----
-
-### ETL: convertir GeoTIFF a TileDB
-
-```bash
-python geotiff_to_tiledb_sparse.py --dataset datos1
-```
-
-Lee los GeoTIFF de `TRITON_GTIFF_DIR/datos1/` y escribe el array TileDB en `TRITON_BASE_URI/output_10_.../`. Tarda ~10 min por dataset con un pico de ~4 GB de RAM. Al finalizar verifica la integridad automáticamente.
-
-Para especificar la ruta de los GeoTIFF manualmente:
-
-```bash
-python geotiff_to_tiledb_sparse.py --dataset datos1 --gtiff-dir /otra/ruta/datos1
-```
-
----
-
-### Verificar integridad del array
-
-```bash
-python verify_tiledb.py --dataset datos1
-python verify_tiledb.py --dataset datos2 --step 10_00 --n 2000
-```
-
-Compara 1 000 celdas aleatorias entre TileDB y los GeoTIFF originales (en `TRITON_GTIFF_DIR/datos1/`). Reporta discrepancias y porcentaje de coincidencia.
-
----
-
-### Visualizador de escritorio
-
-```bash
-python visualize_tiledb.py --dataset datos1
-python visualize_tiledb.py --dataset datos1 --paso 10_00
-python visualize_tiledb.py --dataset datos1 --paso 10_00 H    # solo calado
-python visualize_tiledb.py --dataset datos1 --paso 10_00 full # H + V + MH
-```
-
-Lee de `TRITON_BASE_URI`. Abre una ventana matplotlib interactiva con panel de cursor en tiempo real.
-
----
-
-### Estadísticos por paso
-
-```bash
-python query_tiledb.py --dataset datos1
-```
-
-Imprime por pantalla estadísticas de H, área inundada, máximos y serie temporal para cada uno de los 20 pasos.
-
----
-
-### Celda con mayor calado (top-N)
-
-```bash
-python query_max_depth_tiledb.py --dataset datos1
-python query_max_depth_tiledb.py --dataset datos1 --top 10
-```
-
-Localiza las N celdas con mayor profundidad e imprime sus coordenadas UTM y valor H.
-
----
-
-### Exportar a GeoTIFF
-
-```bash
-python export_to_geotiff.py --dataset datos1 --paso 10_00 --var H
-python export_to_geotiff.py --dataset datos1 --paso 10_00 --var all
-python export_to_geotiff.py --dataset datos1 --paso 10_00 --var H --out /tmp/salida
-```
-
-Reconstruye el ráster denso desde TileDB y lo guarda como GeoTIFF en `TRITON_OUTPUT_DIR` (o en `--out`). Cada fichero ocupa ~257 MB.
-
----
-
-### Comparativa multi-escenario (línea de comandos)
-
-```bash
-python comparar_datasets.py --datasets datos1 datos2 datos3
-```
-
-Compara métricas clave (extensión máxima, hora del pico, volumen) entre varios datasets.
-
----
-
-### Benchmarks
-
-```bash
-# Rendimiento de 5 patrones de consulta TileDB
-python benchmark_queries.py --dataset datos1
-
-# Comparativa TileDB vs GeoTIFF (requiere TRITON_GTIFF_DIR con los .tif fuente)
-python benchmark_vs_geotiff.py --dataset datos1
-```
+Abre `http://localhost:8501` en el navegador. La aplicación detecta automáticamente todos los datasets disponibles en `TRITON_BASE_URI`.
 
 ---
 
