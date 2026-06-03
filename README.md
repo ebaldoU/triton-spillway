@@ -161,12 +161,10 @@ Los arrays TileDB y los GeoTIFF fuente no se distribuyen en este repositorio. So
 
 ## Despliegue en servidor (producción)
 
-La aplicación está desplegada como servicio systemd. Ver [DEPLOY.txt](spillway/DEPLOY.txt) para instrucciones detalladas de despliegue en VPS.
-
-Acceso mediante túnel SSH:
+La aplicación puede desplegarse como servicio `systemd` en cualquier servidor Linux. El fichero de unidad debe definir `TRITON_BASE_URI` y ejecutar `streamlit run app.py` en modo headless. Una vez el servicio está activo, se accede mediante un túnel SSH:
 
 ```bash
-ssh -L 8501:localhost:8501 ubuntu@<servidor>
+ssh -L 8501:localhost:8501 usuario@servidor
 # Luego abrir http://localhost:8501
 ```
 
