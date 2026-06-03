@@ -1,0 +1,38 @@
+# Datos (nunca subir al repo)
+triton_results/
+datos*/
+*.tif
+*.tiff
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+*.egg-info/
+
+# Archivos compilados LaTeX
+memoria/*.aux
+memoria/*.log
+memoria/*.out
+memoria/*.toc
+memoria/*.lof
+memoria/*.lot
+memoria/*.fls
+memoria/*.fdb_latexmk
+memoria/*.synctex.gz
+memoria/*.bbl
+memoria/*.blg
+memoria/*.idx
+memoria/*.ilg
+memoria/*.ind
+memoria/_minted*/
+memoria/auto/
+
+# Archivos temporales / sistema
+*.zip
+*.Zone.Identifier
+.DS_Store
+Thumbs.db

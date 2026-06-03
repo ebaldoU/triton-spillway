@@ -1,0 +1,104 @@
+\chapter{Introducción y Motivación}\label{introduccion-y-motivacion}
+\pagenumbering{arabic}
+
+Las simulaciones hidráulicas de alta resolución generan grandes volúmenes de datos rasterizados que representan variables físicas: profundidad del agua, caudales, máximos históricos en cada celda de un dominio espacial a lo largo del tiempo. El simulador utilizado en este proyecto, Triton \cite{triton}, produce sus resultados en formato GeoTIFF (Geographic Tagged Image File Format) \cite{ogc_geotiff}, un formato ráster estándar que integra los metadatos de georreferenciación sistema de coordenadas, resolución espacial y origen en el propio fichero, ampliamente adoptado en SIG (Sistemas de Información Geográfica) pero diseñado para el acceso secuencial, no para consultas analíticas sobre grandes series temporales.
+
+El contexto de aplicación de este trabajo son las inundaciones fluviales, fenómenos de gran impacto socioeconómico cuya predicción y análisis requieren simular la propagación del agua sobre el terreno durante episodios de crecida. Los simuladores hidráulicos 2D resuelven numéricamente las ecuaciones de Saint-Venant \cite{saintvenant1871} sobre una malla espacial regular, produciendo para cada celda y paso temporal estimaciones de la profundidad del agua y los caudales. Estos resultados permiten evaluar la extensión de la mancha de inundación, identificar zonas de riesgo según criterios de peligrosidad hidrodinámica y comparar el comportamiento del sistema hídrico entre distintos escenarios. El Anexo C ofrece una descripción más detallada de este contexto para lectores no familiarizados con la modelización hidráulica.
+
+El objetivo principal de este TFG es diseñar e implementar un sistema de almacenamiento y análisis que permita almacenar estos resultados de forma compacta y eficiente, habilitando consultas analíticas rápidas y visualizaciones interactivas sin necesidad de cargar los rásteres completos en memoria. La Figura~\ref{fig:contexto-problema} resume el contraste entre el enfoque original y la solución propuesta.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+    node distance=6mm,
+    arrow/.style={-Latex, thick, draw=black!60},
+    etlarrow/.style={-Latex, line width=2pt, draw=blue!70!black},
+]
+
+%% —— Nodos principales (se definen antes de dibujar) ——
+\node[rectangle, draw=gray!70, fill=black!5, rounded corners=3pt, thick,
+      minimum width=50mm, minimum height=42mm] (geo) {};
+
+\node[rectangle, draw=orange!80!black, fill=orange!8, rounded corners=3pt, thick,
+      minimum width=50mm, minimum height=42mm, right=32mm of geo] (tdb) {};
+
+%% —— Contenido bloque GeoTIFF ——
+\node[font=\small\bfseries, above=2mm] at (geo.north) {GeoTIFF (por escenario)};
+\foreach \r in {0,1,2,3} {
+    \foreach \c in {0,1,2,3,4} {
+        \node[rectangle, draw=gray!50, fill=white, minimum width=7mm, minimum height=5mm]
+            at ([xshift=(\c-2)*9mm, yshift=(1.5-\r)*7.5mm] geo.center) {};
+    }
+}
+\node[font=\tiny, left=12mm] at ([yshift= 11mm] geo.center) {H};
+\node[font=\tiny, left=12mm] at ([yshift=  3.5mm] geo.center) {QX};
+\node[font=\tiny, left=12mm] at ([yshift= -3.5mm] geo.center) {QY};
+\node[font=\tiny, left=12mm] at ([yshift=-11mm] geo.center) {MH};
+\node[font=\tiny, below=3mm] at (geo.south) {4 variables $\times$ 20 pasos $=$ 80 ficheros $\approx$ 235 GB};
+
+%% —— Contenido bloque TileDB ——
+\node[font=\small\bfseries, above=2mm] at (tdb.north) {TileDB sparse};
+\begin{scope}[shift={(tdb.center)}]
+    \draw[fill=orange!15, draw=orange!70!black, thick] (-1.1cm,-0.75cm) rectangle (1.1cm,0.75cm);
+    \draw[fill=orange!25, draw=orange!70!black, thick]
+        (-1.1cm,0.75cm) -- (-0.75cm,1.1cm) -- (1.45cm,1.1cm) -- (1.1cm,0.75cm) -- cycle;
+    \draw[fill=orange!20, draw=orange!70!black, thick]
+        (1.1cm,0.75cm) -- (1.45cm,1.1cm) -- (1.45cm,-0.4cm) -- (1.1cm,-0.75cm) -- cycle;
+    \node[font=\tiny\itshape] at (0, 0.15cm) {tiempo};
+    \node[font=\tiny\itshape] at (0,-0.2cm) {fila $\times$ col};
+\end{scope}
+\node[font=\tiny, below=3mm] at (tdb.south) {Solo celdas húmedas $\approx$ 17{,}5 GB ($-$93\,\%)};
+
+%% —— Cajas de consulta ——
+\node[rectangle, draw=red!60, fill=red!5, rounded corners=2pt, dashed, thick,
+      align=center, font=\scriptsize, minimum width=50mm, below=10mm of geo] (qgeo)
+    {\textbf{Q7: hora de llegada del frente}\\
+     Leer 20 ficheros en secuencia $\to$ varios minutos};
+
+\node[rectangle, draw=green!60!black, fill=green!5, rounded corners=2pt, dashed, thick,
+      align=center, font=\scriptsize, minimum width=50mm, below=10mm of tdb] (qtdb)
+    {\textbf{Q7: misma consulta}\\
+     1 operación sobre el array $\to$ 79{,}5 s};
+
+%% —— Flechas ——
+\draw[etlarrow] (geo.east) -- node[above, font=\small\bfseries, text=blue!70!black] {ETL}
+                                node[below, font=\scriptsize, text=blue!60] {ingesta + compresión}
+               (tdb.west);
+\draw[arrow, draw=red!60]        (geo.south)  -- (qgeo.north);
+\draw[arrow, draw=green!60!black] (tdb.south) -- (qtdb.north);
+
+\end{tikzpicture}
+\caption{Contexto y problemática del trabajo. Los GeoTIFF de Triton organizan los datos por variable y paso temporal (80 ficheros independientes), lo que obliga a lecturas masivas en serie para consultas multi-temporales. El proceso ETL (\textit{Extract, Transform, Load}) los convierte en un array TileDB sparse 3D (tiempo, fila, columna) que almacena únicamente las celdas húmedas y permite responder las mismas consultas mediante una sola operación indexada.}
+\label{fig:contexto-problema}
+\end{figure}
+
+La problemática de partida combina tres dimensiones que se refuerzan entre sí: un volumen de datos considerable, un formato de almacenamiento no diseñado para análisis y unos patrones de acceso que el formato no cubre con eficiencia.
+
+\section{Volumen y estructura de los datos}\label{volumen-y-estructura}
+
+Cada simulación con el simulador Triton produce 80 ficheros GeoTIFF georreferenciados (4 variables físicas $\times$ 20 pasos temporales), con un tamaño aproximado de 3 GB por fichero y un total cercano a 235 GB por escenario. El dominio espacial está discretizado en una malla regular de 34 200 $\times$ 23 040 píxeles, lo que supone aproximadamente 787 millones de celdas por paso temporal y unas 15 700 millones de celdas en la simulación completa. Procesar este volumen con herramientas convencionales exige cargar cada ráster completo en memoria, lo que requiere alrededor de 3 GB por variable y resulta inviable en estaciones de trabajo con menos de 32 GB de RAM.
+
+\section{Inadecuación del formato GeoTIFF para consultas analíticas}\label{inadecuacion-geotiff}
+
+GeoTIFF \cite{ogc_geotiff} es un estándar consolidado en el ecosistema SIG, pero está concebido para el acceso eficiente a un único ráster: lectura completa, recortes espaciales puntuales y visualización en herramientas como QGIS. No incorpora un motor de consultas, no indexa subconjuntos espaciales o temporales más allá de los tiles internos de TIFF y no permite filtrar por valor sin descomprimir el ráster completo. Operaciones tan comunes en análisis hidráulico como ``calcular la primera hora en que el agua llega a cada celda'' o ``identificar las zonas peligrosas para peatones según los criterios de Russo et al.'' \cite{russo2013} requieren recorrer los 20 pasos temporales y, para cada uno, descomprimir y leer en memoria los rásteres correspondientes. Sobre 235 GB de datos crudos, este enfoque alcanza tiempos del orden de minutos a horas y, en algunos casos, fallos por agotamiento de memoria.
+
+\section{Patrones de acceso típicos del análisis hidráulico}\label{patrones-de-acceso}
+
+El usuario final no consulta los datos como rásteres aislados, sino como una colección espacio-temporal coherente. Los patrones de acceso más habituales son cinco:
+
+\begin{itemize}
+\item \textbf{Consultas en un punto o zona}: Valor de calado en un punto y un instante concretos, o serie temporal completa en un punto.
+\item \textbf{Consultas espaciales acotadas}: Estadísticos o mapas sobre una ventana geográfica reducida (por ejemplo, un núcleo urbano de 5$\times$5 km).
+\item \textbf{Consultas multi-temporales}: Agregados sobre los 20 pasos temporales completos (hora de llegada del frente, duración total de la inundación, calado máximo por celda).
+\item \textbf{Consultas de peligrosidad}: Clasificación de cada celda según criterios combinados de calado y caudal unitario (Russo et al. 2013 \cite{russo2013}).
+\item \textbf{Consultas comparativas}: Contraste de métricas entre varios escenarios simulados (por ejemplo, año seco frente a año húmedo).
+\end{itemize}
+
+Tres de estos cinco patrones (espaciales acotados, multi-temporales y peligrosidad) son los que penalizan severamente la lectura directa de GeoTIFF: o requieren leer muchas veces fracciones pequeñas del dominio, o requieren recorrer todos los pasos temporales.
+
+\section{Oportunidad: dominio mayoritariamente seco}\label{oportunidad-sparse}
+
+Una observación cuantitativa del problema abre una vía de optimización: en una inundación típica, solo el $\sim$8,3 \% de las celdas del dominio contienen agua en cada paso temporal ($\sim$65 millones de las $\sim$787 millones totales). El $\sim$92 \% restante son celdas secas con valor cero o nulo. Almacenar y procesar estas celdas vacías como si fueran datos útiles desperdicia ancho de banda de disco, memoria y tiempo de cómputo. Esta característica del problema convierte el almacenamiento disperso (que solo guarda las celdas no nulas y sus coordenadas) en un candidato natural y constituye la oportunidad técnica que se explora en este trabajo.
+
+Los datos de entrada se describen en detalle en el capítulo~\ref{descripcion-de-los-datos}. El capítulo~\ref{analisis-de-tecnologias} analiza las tecnologías candidatas para abordar el almacenamiento eficiente de este tipo de datos.
+

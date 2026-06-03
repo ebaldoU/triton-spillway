@@ -1,0 +1,139 @@
+\chapter{Tablas de resultados completas}\label{anexo-b.-tablas-de-resultados-completas}
+
+\section{G1. Filtros de compresión}\label{g1.-filtros-de-compresion}
+
+Se evaluaron tres familias de filtros: ZSTD puro (niveles 1, 3, 5, 7 y 9), ByteShuffle + ZSTD y BitShuffle + ZSTD (mismos niveles), así como la combinación DeltaFilter + ZSTD. Esta última no fue aplicable porque TileDB no acepta DeltaFilter sobre atributos de tipo float32.
+
+
+\begin{table}[ht]
+\centering
+\begin{tabularx}{\textwidth}{L>{\raggedleft\arraybackslash}p{2cm}>{\raggedleft\arraybackslash}p{2.2cm}>{\raggedleft\arraybackslash}p{2.5cm}>{\raggedleft\arraybackslash}p{1.5cm}}
+\toprule
+\textbf{Configuración} & \textbf{Tamaño (MB)} & \textbf{vs sin comp.} & \textbf{Mediana lect. (s)} & \textbf{$\sigma$ (s)} \\
+\midrule
+Sin compresión & 1\,029 & 100,0\,\% & 0,161 & 0,009 \\
+ZSTD-1 & 946 & 91,9\,\% & 0,158 & 0,005 \\
+ZSTD-3 & 945 & 91,8\,\% & 0,161 & 0,006 \\
+ZSTD-5 & 944 & 91,7\,\% & 0,175 & 0,067 \\
+ZSTD-9 & 944 & 91,7\,\% & 0,200 & 0,078 \\
+ByteShuffle + ZSTD-1 & 879 & 85,4\,\% & 0,195 & 0,084 \\
+ByteShuffle + ZSTD-3 & 870 & 84,5\,\% & 0,206 & 0,075 \\
+ByteShuffle + ZSTD-5 & 860 & 83,5\,\% & 0,200 & 0,077 \\
+ByteShuffle + ZSTD-7 & 861 & 83,7\,\% & 0,199 & 0,091 \\
+\textbf{ByteShuffle + ZSTD-9} & \textbf{860} & \textbf{83,6\,\%} & \textbf{0,196} & \textbf{0,079} \\
+BitShuffle + ZSTD-1 & 875 & 85,1\,\% & 0,201 & 0,100 \\
+BitShuffle + ZSTD-3 & 872 & 84,8\,\% & 0,187 & 0,059 \\
+BitShuffle + ZSTD-5 & 869 & 84,5\,\% & 0,178 & 0,014 \\
+BitShuffle + ZSTD-7 & 868 & 84,4\,\% & 0,176 & 0,003 \\
+BitShuffle + ZSTD-9 & 868 & 84,3\,\% & 0,173 & 0,003 \\
+Delta + ZSTD & --- & --- & \multicolumn{1}{l}{ERROR (no acepta float32)} & --- \\
+\bottomrule
+\end{tabularx}
+\caption{Comparativa de filtros de compresión (G1). En negrita: configuración elegida.}
+\label{tab:g1-filtros}
+\end{table}
+
+
+El hallazgo más relevante es que ZSTD solo reduce el tamaño apenas un 8 \% respecto a sin compresión (de 1 029 MB a 943 MB), porque los valores float32 de la simulación no presentan redundancia de bytes suficiente. Al anteponer ByteShuffle o BitShuffle, que reordenan los bytes de cada float para agrupar exponentes y mantisas similares, ZSTD alcanza un 16 \% de reducción adicional ($\sim$860--872 MB). ByteShuffle + ZSTD-1 es la excepción: con nivel 1 ZSTD no explota el reordenamiento y el \textit{overhead} de descompresión supera el ahorro de I/O, resultando en lecturas lentas e inestables (mediana 0,195 s, $\sigma$ = 0,084 s).
+
+Un dato llamativo es que ZSTD-1 (configuración inicial) resulta más lento en lectura que sin compresión (0,158 s frente a 0,161 s), ya que no comprime lo suficiente para reducir el I/O pero sí introduce \textit{overhead} de CPU. ZSTD-5 en adelante recupera ese tiempo gracias a la mayor compresión.
+
+Respecto a la elección final del filtro, los tiempos de lectura entre las configuraciones shuffle+ZSTD presentan variabilidad comparable al ruido de la caché del sistema operativo, lo que impide designar un ganador absoluto en rendimiento. El criterio determinante es por tanto el tamaño en disco, que es determinista. Se eligió ByteShuffle + ZSTD-9 por ofrecer el menor tamaño (860,3 MB/paso) junto a tiempos de escritura menores que BitShuffle, factor relevante en futuros escenarios de carga incremental.
+
+\section{G2. Tamaño de tile espacial}\label{g2.-tamano-de-tile-espacial}
+
+Se compararon tiles de 256$\times$256, 512$\times$512 y 1 024$\times$1 024 celdas manteniendo ZSTD-3 como filtro. Las diferencias son despreciables tanto en tamaño como en lectura.
+
+
+\begin{table}[ht]
+\centering
+\begin{tabularx}{\textwidth}{L>{\raggedleft\arraybackslash}p{2.5cm}>{\raggedleft\arraybackslash}p{3cm}>{\raggedleft\arraybackslash}p{1.8cm}}
+\toprule
+\textbf{Tile (filas$\times$cols)} & \textbf{Tamaño (MB)} & \textbf{Mediana lect. (s)} & \textbf{$\sigma$ (s)} \\
+\midrule
+\textbf{256$\times$256} & \textbf{945} & \textbf{0,175} & \textbf{0,004} \\
+512$\times$512 & 946 & 0,177 & 0,005 \\
+1\,024$\times$1\,024 & 951 & 0,180 & 0,007 \\
+\bottomrule
+\end{tabularx}
+\caption{Comparativa de tamaños de tile espacial (G2). En negrita: configuración de producción.}
+\label{tab:g2-tile}
+\end{table}
+
+
+Con datos dispersos, las celdas húmedas están distribuidas irregularmente y no existe una ganancia de localidad al aumentar el tile. Se mantiene 256$\times$256 por ser el valor por defecto bien soportado por TileDB.
+
+\section{G3. Tipo de dato}\label{g3.-tipo-de-dato}
+
+Se compararon float64 (tipo nativo de los ficheros GeoTIFF), float32 (producción) y float16.
+
+
+\begin{table}[ht]
+\centering
+\begin{tabularx}{\textwidth}{L>{\raggedleft\arraybackslash}p{2.5cm}>{\raggedleft\arraybackslash}p{2.8cm}>{\raggedleft\arraybackslash}p{3cm}}
+\toprule
+\textbf{Tipo de dato} & \textbf{Bytes/valor} & \textbf{Tamaño (MB)} & \textbf{Mediana lect. (s)} \\
+\midrule
+float64 & 8 & 1\,034 & 0,219 \\
+\textbf{float32} & \textbf{4} & \textbf{945} & \textbf{0,170} \\
+float16 & 2 & \multicolumn{2}{l}{No soportado por TileDB} \\
+\bottomrule
+\end{tabularx}
+\caption{Comparativa de tipos de dato (G3). En negrita: configuración de producción (float32).}
+\label{tab:g3-tipo}
+\end{table}
+
+
+float16 no está soportado por la versión de TileDB utilizada. float64 ocupa solo un 9,4 \% más que float32 gracias a la compresión, pero es un 29 \% más lento en lectura. float32 ofrece precisión más que suficiente para los valores de H, QX, QY y MH en simulación hidráulica (error de cuantización \textless{} 0,001 m).
+
+\section{G4. Estructura temporal}\label{g4.-estructura-temporal}
+
+Se compararon tres organizaciones para almacenar múltiples pasos temporales, usando 5 pasos de muestra (12\_00--16\_00) con ZSTD-3.
+
+
+\begin{table}[ht]
+\centering
+\begin{tabularx}{\textwidth}{L>{\raggedleft\arraybackslash}p{3cm}>{\raggedleft\arraybackslash}p{3cm}}
+\toprule
+\textbf{Estructura} & \textbf{Tamaño (MB)} & \textbf{Mediana lect. (s)} \\
+\midrule
+\textbf{3D (time, row, col), tile\_t=1} & \textbf{4\,109} & \textbf{0,595} \\
+3D (time, row, col), tile\_t=4 & 5\,054 & 0,571 \\
+2D: un array por paso & 5\,052 & 0,511 \\
+\bottomrule
+\end{tabularx}
+\caption{Comparativa de estructuras temporales sobre 5 pasos de muestra (G4). En negrita: configuración elegida.}
+\label{tab:g4-temporal}
+\end{table}
+
+
+El array 3D con tile\_t=1 ocupa un 19 \% menos que con tile\_t=4 (4 109 MB frente a 5 054 MB). La razón es que con tile\_t=1 cada tile solo contiene celdas de un paso temporal, cuyos valores hidráulicos presentan alta correlación espacial; ZSTD los comprime eficazmente. Con tile\_t=4 se mezclan valores de cuatro pasos con distribuciones distintas, reduciendo la compresibilidad.
+
+La decisión fue adoptar el array 3D con 1 fragmento por paso temporal. El código de producción define el tile de la dimensión temporal como \texttt{min(n\_times, 16) = 16}; sin embargo, al escribirse un fragmento independiente por cada paso (con un único paso por fragmento), las celdas de distintos pasos no comparten tiles en el mismo fragmento, obteniendo el mismo comportamiento práctico que con tile\_t=1.
+
+\section{G5. Organización de atributos}\label{g5.-organizacion-de-atributos}
+
+Se comparó almacenar H, QX, QY y MH como atributos de un único array frente a cuatro arrays independientes.
+
+
+\begin{table}[ht]
+\centering
+\begin{tabularx}{\textwidth}{L>{\raggedleft\arraybackslash}p{2.8cm}>{\raggedleft\arraybackslash}p{3cm}}
+\toprule
+\textbf{Organización} & \textbf{Tamaño (MB)} & \textbf{Mediana lect. (s)} \\
+\midrule
+\textbf{Multi-atributo: H, QX, QY y MH en un array} & \textbf{945} & \textbf{0,139} \\
+Arrays independientes: un array por variable & 1\,086 & 0,312 \\
+\bottomrule
+\end{tabularx}
+\caption{Comparativa de organizaciones de atributos (G5). En negrita: configuración de producción.}
+\label{tab:g5-atributos}
+\end{table}
+
+
+Los arrays independientes ocupan un 14,9 \% más porque almacenan las coordenadas (time, row, col) cuatro veces. En lectura son 2,2$\times$ más lentos al requerir cuatro consultas separadas. La organización multi-atributo es superior en todos los criterios.
+
+\section{Evolución horaria por dataset}\label{evolucion-horaria-por-dataset}
+
+La Tabla~\ref{tab:evolucion-horaria} recoge la evolución horaria de la extensión inundada (km\textsuperscript{2}) y el área de peligro para adultos según los criterios de Russo et al. \cite{russo2013} para los cuatro \textit{datasets} de referencia.
+

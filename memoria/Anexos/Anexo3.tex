@@ -1,0 +1,77 @@
+\chapter{Contexto de las simulaciones hidráulicas}\label{anexo-c.-contexto-de-las-simulaciones-hidraulicas}
+
+\section{Simulación hidráulica 2D}\label{c.1-simulacion-hidraulica-2d}
+
+Las simulaciones hidráulicas 2D modelizan la propagación de inundaciones resolviendo numéricamente las ecuaciones de Saint-Venant (también denominadas ecuaciones de aguas poco profundas o shallow water equations). Derivadas de la conservación de masa y cantidad de movimiento, estas ecuaciones describen el movimiento del agua sobre terreno complejo bajo la hipótesis de que la dimensión vertical es pequeña comparada con la extensión horizontal, condición característica de las llanuras de inundación fluvial.
+
+El dominio de simulación se discretiza en una malla cartesiana regular (en este proyecto, 34 200 $\times$ 23 040 celdas de 10 $\times$ 10 m) y las variables de estado (calado y caudales) se calculan en cada celda y cada paso de tiempo. El resultado es una secuencia temporal de campos rasterizados que describe la evolución de la inundación. Los pasos de tiempo no corresponden a la discretización numérica interna del simulador, sino a los instantes de exportación configurados por el usuario; en este proyecto, un paso cada seis horas.
+
+\section{El simulador Triton}\label{c.2-el-simulador-triton}
+
+Triton \cite{triton} es un simulador hidráulico 2D de alto rendimiento diseñado para modelizar inundaciones en dominios de gran extensión territorial. Aprovecha la capacidad de cálculo paralelo de las GPU para acelerar la resolución numérica y es capaz de simular dominios de cientos de millones de celdas en tiempos razonables. Sus resultados se exportan como colecciones de ficheros GeoTIFF georreferenciados, con un fichero por variable y por paso de tiempo.
+
+En este proyecto, Triton se emplea para simular episodios de crecida sobre una cuenca hidrográfica identificada mediante el sistema HUC (Hydrologic Unit Code), concretamente la cuenca HUC1024, bajo condiciones forzadas por el modelo climático ACCESS-CM2 y el escenario de emisiones SSP5-8.5. Este escenario de alta emisión proporciona las condiciones meteorológicas de contorno para los 56 episodios de crecida procesados en el proyecto.
+
+\section{Variables físicas almacenadas}\label{c.3-variables-fisicas-almacenadas}
+
+Triton exporta cuatro variables por celda y por paso de tiempo. Solo se almacenan celdas con H $\geq$ 0,01 m (umbral de celda húmeda); en un estado de inundación típico, aproximadamente el 8,3 \% de las celdas del dominio supera este umbral ($\sim$65 millones de $\sim$787 millones).
+
+H (calado instantáneo, m): profundidad del agua en la celda en ese instante. Es la variable principal para determinar si una celda está inundada y con qué nivel.
+
+QX (caudal unitario en dirección X, m\textsuperscript{2}/s): componente este-oeste del flujo de agua por unidad de anchura. Cuantifica el transporte horizontal de agua a través de la celda.
+
+QY (caudal unitario en dirección Y, m\textsuperscript{2}/s): componente norte-sur del flujo de agua por unidad de anchura, análogo a QX en la dirección perpendicular.
+
+MH (calado máximo histórico, m): mayor valor de calado registrado en la celda desde el inicio de la simulación hasta el instante actual. Permite determinar el nivel máximo alcanzado sin necesidad de procesar todos los pasos anteriores.
+
+El módulo del caudal unitario Q\_mod = $\sqrt{QX^2 + QY^2}$ (m\textsuperscript{2}/s) se emplea en los criterios de peligrosidad hidrodinámica (véase la sección~\ref{motor-de-consultas-analiticas}) y se calcula en tiempo de consulta a partir de QX y QY almacenados, sin ocupar espacio adicional en el array.
+
+\section{Los 56 escenarios simulados}\label{c.4-los-56-escenarios-simulados}
+
+El proyecto procesa 56 episodios de crecida simulados por Triton sobre el mismo dominio HUC1024, organizados en dos periodos climáticos: un periodo histórico (datos1--datos40, julio de 1980 a mayo de 2019) y un periodo de proyección futura bajo el escenario SSP5-8.5 (datos41--datos56, mayo de 2020 a abril de 2035). Cada episodio abarca cinco días de simulación (120 horas) con pasos de exportación de seis horas, lo que produce 20 instantes temporales por escenario y 80 ficheros GeoTIFF por escenario (4 variables $\times$ 20 pasos). Los episodios se identifican en el proyecto mediante los alias datos1 a datos56.
+
+La disponibilidad de 56 escenarios permite comparar el comportamiento del sistema hídrico en distintas condiciones: episodios con distinta intensidad y duración del caudal pico, distintas épocas del año, distintos años hidrológicos y distintos horizontes temporales de cambio climático. Las secciones~\ref{validacion-benchmark-datos2} y~\ref{comparativa-multiescenario} presentan resultados comparativos entre los cuatro primeros escenarios de referencia.
+
+
+\begin{table}[ht]
+\centering
+\begingroup
+\setlength{\tabcolsep}{4pt}
+\small
+\begin{tabularx}{\textwidth}{>{\centering\arraybackslash}p{1.2cm}RRRRRRRR}
+\toprule
+\textbf{Hora (h)}
+  & \multicolumn{4}{c}{\textbf{Extensión inundada (km\textsuperscript{2})}}
+  & \multicolumn{4}{c}{\textbf{Peligro adultos Russo (km\textsuperscript{2})}} \\
+\cmidrule(lr){2-5}\cmidrule(lr){6-9}
+& \textbf{datos1} & \textbf{datos2} & \textbf{datos3} & \textbf{datos4}
+& \textbf{datos1} & \textbf{datos2} & \textbf{datos3} & \textbf{datos4} \\
+\midrule
+6   & 6\,168 & 6\,174 & 2\,838 & 6\,206 & 2\,292 & 2\,288 & 848 & 2\,288 \\
+12  & 6\,204 & 6\,143 & 2\,811 & 6\,204 & 2\,291 & 2\,290 & 843 & 2\,291 \\
+18  & 6\,199 & 6\,120 & 2\,572 & 6\,199 & 2\,294 & 2\,292 & 777 & 2\,294 \\
+24  & 6\,195 & 6\,103 & 2\,561 & 6\,195 & 2\,297 & 2\,293 & 778 & 2\,297 \\
+30  & 6\,194 & 6\,090 & 2\,525 & 6\,194 & 2\,299 & 2\,293 & 764 & 2\,299 \\
+36  & 6\,194 & 6\,079 & 2\,473 & 6\,194 & 2\,301 & 2\,293 & 751 & 2\,301 \\
+42  & 6\,194 & 6\,071 & 2\,263 & 6\,194 & 2\,303 & 2\,292 & 703 & 2\,303 \\
+48  & 6\,196 & 6\,063 & 2\,265 & 6\,196 & 2\,305 & 2\,292 & 705 & 2\,305 \\
+54  & 6\,195 & 6\,060 & 2\,309 & 6\,195 & 2\,308 & 2\,293 & 710 & 2\,308 \\
+60  & 6\,196 & 6\,059 & 2\,358 & 6\,196 & 2\,311 & 2\,294 & 717 & 2\,311 \\
+66  & 6\,200 & 6\,059 & 2\,372 & 6\,200 & 2\,314 & 2\,296 & 721 & 2\,314 \\
+72  & 6\,204 & 6\,060 & 2\,390 & 6\,204 & 2\,318 & 2\,298 & 727 & 2\,318 \\
+78  & 6\,979 & 7\,004 & 2\,633 & 6\,979 & 2\,369 & 2\,349 & 750 & 2\,369 \\
+84  & 7\,260 & 7\,344 & 2\,629 & 7\,260 & 2\,434 & 2\,416 & 743 & 2\,434 \\
+90  & 7\,433 & 7\,554 & 2\,648 & 7\,433 & 2\,489 & 2\,483 & 756 & 2\,489 \\
+96  & 6\,430 & 7\,718 & 2\,671 & 7\,569 & 2\,406 & 2\,552 & 769 & 2\,543 \\
+102 & 7\,221 & 7\,110 & 2\,456 & 7\,221 & 2\,561 & 2\,564 & 771 & 2\,561 \\
+108 & 7\,170 & 6\,926 & 2\,387 & 7\,170 & 2\,576 & 2\,567 & 769 & 2\,576 \\
+114 & 7\,165 & 6\,836 & 2\,351 & 7\,165 & 2\,595 & 2\,567 & 768 & 2\,595 \\
+120 & 7\,172 & 6\,776 & 2\,327 & 7\,172 & 2\,614 & 2\,570 & 767 & 2\,614 \\
+\bottomrule
+\end{tabularx}
+\endgroup
+\caption{Evolución horaria de la extensión inundada y el área de peligro para adultos (Russo et al.\ \cite{russo2013}) en los cuatro datasets de referencia. Valores en km\textsuperscript{2}.}
+\label{tab:evolucion-horaria}
+\end{table}
+
+

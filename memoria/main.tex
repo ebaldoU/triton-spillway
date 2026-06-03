@@ -1,0 +1,185 @@
+\documentclass[a4paper,12pt,twoside,hidelinks,openright]{report}
+
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[usenames, dvipsnames]{color}
+\usepackage{graphicx}
+\usepackage{enumerate}
+\usepackage{multirow}
+\usepackage{graphics}
+\usepackage{appendix}
+\usepackage[nottoc]{tocbibind}
+
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning,arrows.meta,fit,backgrounds}
+\usepackage{subcaption}
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage[]{placeins,flafter}
+\usepackage[none]{hyphenat} \sloppy
+\usepackage{xcolor}
+\usepackage{adjustbox}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{tabularx}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\newcolumntype{R}{>{\raggedleft\arraybackslash}X}
+\usepackage{amssymb}
+\newcommand{\real}[1]{#1}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage[hidelinks]{hyperref}
+
+%	CONFIGURACIÓN DE PÁGINA
+
+\setlength{\paperwidth}{21cm}          % Ancho de página
+\setlength{\paperheight}{29,7cm}       % Alto de página
+\setlength{\textwidth}{15.5cm}         % Ancho de zona con texto
+\setlength{\textheight}{24.6cm}        % Ancho de zona con texto
+\setlength{\topmargin}{-1.0cm}         % Margen superior
+                                      
+\setlength{\oddsidemargin}{0.46cm}     % Margen izquierdo
+\setlength{\evensidemargin}{0.46cm}
+
+\usepackage[skip=6pt]{parskip}
+\usepackage{titlesec}
+\titlespacing*{\section}{0pt}{16pt}{4pt}
+\titlespacing*{\subsection}{0pt}{12pt}{2pt}
+\titlespacing*{\subsubsection}{0pt}{10pt}{2pt}
+
+\usepackage{makeidx}
+\makeindex
+\index{key}
+\newcommand{\myref}[1]{\color{red}\bf(\ref{#1})}
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%		PORTADA
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{titlepage}
+
+\vspace*{-4mm}
+\begin{figure}[!h]
+  \centering
+	\includegraphics[width=69.62mm]{Imagenes/UnizarLogo}
+\end{figure}
+
+\vspace*{17mm}
+
+\fontsize{28pt}{28pt}\selectfont
+\begin{center}
+\setlength{\fboxsep}{3.4mm}
+\adjustbox{minipage=14.4cm,cfbox=blue,center}{\begin{center} Trabajo Fin de Grado \end{center}}
+\end{center}
+
+\vspace*{18.7mm}
+
+
+\fontsize{20pt}{20pt}\selectfont
+\begin{center}
+Almacenamiento y Análisis Eficiente de Resultados de Simulaciones Hidráulicas mediante TileDB
+\end{center}
+
+\vspace*{0cm} 
+\baselineskip 36pt
+\begin{center}
+\fontsize{12pt}{12pt}\selectfont
+\center{\rm  Autor}
+
+\vspace*{3.65mm}
+\fontsize{18pt}{18pt}\selectfont
+\center{Enrique Baldovín Cotela}
+\vspace*{1cm}
+\baselineskip 36pt
+\fontsize{12pt}{12pt}\selectfont
+\center{\rm  Director y Codirector}
+\vspace*{3.56mm}
+\fontsize{14pt}{14pt}\selectfont
+\center{Mario Morales Hernández}
+\center{Sergio Ilarri Artigas}
+\end{center}
+
+\setcounter{footnote}{1}
+
+\vspace*{16.45mm}
+\fontsize{12pt}{12pt}\selectfont
+\begin{center}
+ESCUELA DE INGENIERÍA Y ARQUITECTURA\\
+2026\\
+\end{center}
+
+
+\renewcommand{\thefootnote}{\arabic{footnote}}
+\pagenumbering{gobble}
+\end{titlepage}
+\newpage
+
+\title{Almacenamiento y Análisis Eficiente de Resultados de Simulaciones Hidráulicas mediante TileDB}
+\author{Enrique Baldovín Cotela}
+
+\baselineskip 19pt
+\renewcommand{\labelitemi}{$-$}
+\renewcommand{\tablename}{Tabla}
+\renewcommand{\appendixname}{Anexos}
+\renewcommand{\appendixtocname}{Anexos}
+\renewcommand{\appendixpagename}{Anexos}
+
+\pagenumbering{Roman}
+\null\newpage
+
+\input{Capitulos/Agradecimientos}
+\clearpage\null\clearpage
+\input{Capitulos/Resumen}
+\newpage
+
+\cleardoublepage
+\renewcommand{\contentsname}{Índice}
+\tableofcontents
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%		Capitulos
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\input{Capitulos/Introduccion.tex}
+\input{Capitulos/Capitulo1.tex}
+\input{Capitulos/Capitulo2.tex}
+\input{Capitulos/Capitulo3.tex}
+\input{Capitulos/Conclusion.tex}
+
+%Puedes añadir más capítulos
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%		BIBLIOGRAFÍA Y REFERENCIAS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\bibliographystyle{unsrt} %plaindin
+\bibliography{Bibliografia_TFM}
+
+\newpage
+\renewcommand\listfigurename{Lista de Figuras}
+\listoffigures
+
+\newpage
+\renewcommand\listtablename{Lista de Tablas}
+\listoftables
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%		ANEXOS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newpage
+\appendix
+\clearpage
+\addappheadtotoc
+\appendixpage
+\input{Anexos/Anexo1.tex}
+\input{Anexos/Anexo2.tex}
+\input{Anexos/Anexo3.tex}
+\input{Anexos/Anexo4.tex}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\end{document}

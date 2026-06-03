@@ -1,0 +1,58 @@
+\chapter{Catálogo completo de consultas analíticas}\label{anexo-a.-catalogo-completo-de-consultas-analiticas}
+
+Este anexo recoge la descripción de las 20 consultas implementadas en el motor analítico. Las consultas que operan sobre una zona geográfica permiten delimitar esa zona mediante un rectángulo de coordenadas; si no se especifica ninguna, operan sobre el dominio completo de la simulación. El tiempo se expresa en horas de simulación, con pasos de 6 horas (hora 6, 12, 18... hasta hora 120).
+
+\section{Bloque A. Consultas básicas y de velocidad}\label{bloque-a.-consultas-basicas-y-de-velocidad}
+
+Q1. Calado en un punto: dado un punto geográfico y una hora de simulación, devuelve el calado en metros en esa celda. Si la celda está seca en ese instante, el resultado es cero.
+
+Q2. Serie temporal de calado en un punto: dado un punto geográfico, devuelve la evolución del calado a lo largo de los 20 pasos temporales (de la hora 6 a la hora 120).
+
+Q3. Velocidad en una zona: dada una zona y una hora, calcula la velocidad del agua en cada celda húmeda de esa zona, junto con la velocidad máxima y media.
+
+\section{Bloque B. Umbrales espaciales}\label{bloque-b.-umbrales-espaciales}
+
+Q4. Mapa de zonas inundadas: devuelve todas las celdas con calado superior a un umbral mínimo (por defecto 1 cm) en un paso temporal concreto, junto con la extensión total inundada.
+
+Q5. Evolución de la extensión inundada: calcula el área inundada en cada uno de los 20 pasos temporales, permitiendo ver cómo avanza la inundación a lo largo del tiempo.
+
+Q6. Zonas sobre umbral personalizado: igual que Q4, pero con un umbral de calado definido por el usuario.
+
+\section{Bloque C. Indicadores temporales por celda}\label{bloque-c.-indicadores-temporales-por-celda}
+
+Q7. Hora de llegada del frente de inundación: para cada celda del dominio, calcula la primera hora en que el agua llega a ese punto.
+
+Q8. Duración total de la inundación: para cada celda, calcula el número total de horas que permanece inundada a lo largo de toda la simulación.
+
+Q9. Hora de calado máximo: para cada celda, identifica en qué hora de la simulación se alcanza el calado más alto.
+
+Q11. Ventana de paso para vehículos de emergencia: para cada celda, calcula el intervalo horario en que el calado es inferior a 0,60 m, que es el límite a partir del cual los vehículos de emergencia no pueden circular.
+
+\section{Bloque D. Indicadores de peligrosidad (Russo et al., 2013)}\label{bloque-d.-indicadores-de-peligrosidad-russo-et-al.-2013}
+
+Los umbrales utilizados en este bloque son los criterios operativos derivados de los resultados experimentales de Russo et al. \cite{russo2013}, alineados con las guías técnicas españolas para clasificación de zonas inundables. Son umbrales conservadores destinados a uso operativo; los valores de instabilidad estricta determinados experimentalmente en el paper original son ligeramente superiores.
+
+Q10a. Peligro para adultos: identifica las celdas peligrosas para adultos con calado superior a 0,50 m o caudal unitario superior a 0,50 m\textsuperscript{2}/s.
+
+Q10b. Peligro para niños: identifica las celdas peligrosas para niños, con umbrales más estrictos: calado superior a 0,25 m o caudal unitario superior a 0,15 m\textsuperscript{2}/s.
+
+Q10c. Peligro para vehículos ligeros: identifica las celdas donde el calado supera los 0,30 m, umbral a partir del cual los turismos pueden comenzar a flotar.
+
+Q11b. Transitabilidad para vehículos de emergencia: identifica las celdas húmedas donde el calado es inferior a 0,60 m y, por tanto, todavía son accesibles para vehículos de emergencia.
+
+Q17. Semáforo global de peligrosidad: genera un mapa categórico con cinco niveles de riesgo basados en el calado. Los dos umbrales intermedios provienen de Russo et al. (2013): 0,25 m para niños y 0,50 m para adultos. Los niveles son: Somera (H $\leq$ 0,25 m), Peligrosa para niños (0,25--0,50 m), Peligrosa para adultos (0,50--1,00 m), Crítica (1,00--2,00 m) y Extrema (H $>$ 2,00 m), donde los dos últimos son niveles adicionales de severidad extrema.
+
+\section{Bloque E. Estadísticos espaciales}\label{bloque-e.-estadisticos-espaciales}
+
+Q12. Área inundada por hora: calcula el área total inundada (en km\textsuperscript{2}) en cada paso temporal.
+
+Q13. Volumen de agua por hora: calcula el volumen total de agua en el dominio en cada paso temporal, sumando el calado de cada celda multiplicado por su superficie (100 m\textsuperscript{2}).
+
+Q14. Estadísticos por zona: dada una zona y una hora, calcula media, máximo, mínimo, desviación típica y percentiles 25, 50, 75 y 95 del calado en esa zona.
+
+Q15. Semáforo de área por nivel de peligro: clasifica el área inundada en tres niveles según el calado: bajo (hasta 0,25 m), medio (entre 0,25 y 0,50 m) y alto (más de 0,50 m).
+
+\section{Bloque F. Evacuación}\label{bloque-f.-evacuacion}
+
+Q16. Tiempo de evacuación disponible: para cada celda, calcula el tiempo disponible para evacuar antes de que la situación se vuelva peligrosa. Un valor negativo indica que la celda nunca alcanza el nivel crítico; un valor cero indica que ya es peligrosa en el momento en que el agua llega.
+

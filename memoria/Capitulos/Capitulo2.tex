@@ -1,0 +1,204 @@
+\chapter{Tecnología: TileDB}\label{tecnologia-tiledb}
+
+Este capítulo describe el funcionamiento interno de TileDB: el modelo de datos, los modos de almacenamiento, la gestión de fragmentos y el mecanismo de compresión, con el objetivo de justificar las decisiones de diseño adoptadas en el capítulo siguiente.
+
+\section{¿Qué es TileDB?}\label{que-es-tiledb}
+
+TileDB es una base de datos orientada a arrays multidimensionales de código abierto. A diferencia de las bases de datos relacionales (tablas), TileDB organiza los datos en arrays N-dimensionales, lo que lo hace especialmente eficiente para datos científicos, rásteres geoespaciales y series temporales densas o dispersas.
+
+TileDB no requiere servidor: los arrays se almacenan directamente en el sistema de ficheros local (o en la nube) como directorios con metadatos, fragmentos de datos y ficheros de índice. El acceso se realiza mediante la biblioteca Python (o C/C++/R) sin ningún servicio en ejecución.
+
+\section{Arrays sparse vs. densos}\label{arrays-sparse-vs.-densos}
+
+TileDB soporta dos modos de almacenamiento:
+
+\begin{itemize}
+\item \textbf{Dense:} Almacena todos los valores del dominio, incluidos los nulos. Eficiente cuando el dominio está mayoritariamente relleno.
+\item \textbf{Sparse:} Almacena únicamente las celdas no nulas junto con sus coordenadas. Eficiente cuando el dominio es mayoritariamente vacío.
+\end{itemize}
+
+En este proyecto se utiliza el modo disperso porque solo el $\sim$8,3 \% del dominio tiene agua. Almacenar el $\sim$92 \% restante (terreno seco) sería un desperdicio de espacio y tiempo de lectura. La Figura~\ref{fig:dense-vs-sparse} ilustra la diferencia entre ambos modos.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[x=0.6cm, y=0.6cm, font=\small\sffamily]
+  %% --- Cuadrícula izquierda: almacenamiento denso (6 cols × 5 filas) ---
+  \foreach \r in {0,...,4} {
+    \foreach \c in {0,...,5} {
+      \fill[gray!12] (\c,\r) rectangle +(1,1);
+      \draw[gray!45, line width=0.4pt] (\c,\r) rectangle +(1,1);
+      \node[gray!55, font=\tiny, inner sep=0pt] at (\c+0.5,\r+0.5) {0};
+    }
+  }
+  % Celdas húmedas (8 de 30)
+  \foreach \r/\c in {0/3, 1/2, 1/3, 2/1, 2/2, 2/3, 3/2, 4/4} {
+    \fill[blue!28] (\c,\r) rectangle +(1,1);
+    \draw[blue!60!black, line width=0.6pt] (\c,\r) rectangle +(1,1);
+    \node[blue!75!black, font=\tiny\bfseries, inner sep=0pt] at (\c+0.5,\r+0.5) {H};
+  }
+  \node[font=\small\bfseries, align=center, above=3pt] at (3,5) {\textbf{Denso}\\[1pt]{\normalfont\scriptsize 30 celdas (dominio completo)}};
+  \node[rotate=90, gray!55, font=\tiny] at (-0.7, 2.5) {filas};
+  \node[gray!55, font=\tiny, below=3pt] at (3, 0) {columnas};
+
+  %% --- Flecha de filtrado ---
+  \draw[-Latex, thick, draw=blue!65!black] (6.4,2.5) -- (7.6,2.5)
+    node[midway, above, font=\scriptsize\bfseries, blue!65!black] {H $\geq$ 0{,}01 m}
+    node[midway, below, font=\tiny, blue!45!black] {filtro húmedo};
+
+  %% --- Cuadrícula derecha: almacenamiento disperso (solo celdas húmedas) ---
+  \def\dx{8}
+  \draw[gray!28, dashed, line width=0.5pt] (\dx,0) rectangle +(6,5);
+  \foreach \r in {1,...,4} { \draw[gray!18, very thin] (\dx,\r) -- (\dx+6,\r); }
+  \foreach \c in {1,...,5} { \draw[gray!18, very thin] (\dx+\c,0) -- (\dx+\c,5); }
+  \foreach \r/\c in {0/3, 1/2, 1/3, 2/1, 2/2, 2/3, 3/2, 4/4} {
+    \fill[blue!28] (\dx+\c,\r) rectangle +(1,1);
+    \draw[blue!60!black, line width=0.6pt] (\dx+\c,\r) rectangle +(1,1);
+    \node[blue!75!black, font=\tiny\bfseries, inner sep=0pt] at (\dx+\c+0.5,\r+0.5) {H};
+  }
+  \node[font=\small\bfseries, align=center, above=3pt] at (\dx+3,5) {\textbf{Disperso}\\[1pt]{\normalfont\scriptsize 8 celdas ($\sim$27\,\%)}};
+\end{tikzpicture}
+\caption{Diferencia entre almacenamiento denso y disperso sobre un dominio de ejemplo de 6$\times$5 celdas. El modo denso almacena todas las celdas incluyendo las secas (valor cero, en gris). El modo disperso almacena únicamente las celdas húmedas (en azul) junto con sus coordenadas, eliminando el $\sim$73\,\% de entradas vacías en este ejemplo. En el dominio real del proyecto la fracción seca es del $\sim$92\,\%, lo que reduce los 235\,GB de GeoTIFF a 17,5\,GB en TileDB sparse.}
+\label{fig:dense-vs-sparse}
+\end{figure}
+
+\section{Fragmentos y consolidación}\label{fragmentos-y-consolidacion}
+
+Cada escritura en TileDB crea un fragmento independiente en disco. En este proyecto se realiza una escritura por paso temporal, lo que produce \textbf{20 fragmentos} (uno por cada intervalo de 6 horas). Mantenerlos separados tiene una ventaja importante: TileDB puede filtrar por la dimensión \texttt{time} leyendo solo los fragmentos relevantes, lo que acelera las consultas acotadas temporalmente.
+
+La API de TileDB ofrece \texttt{tiledb.consolidate()} para fusionar todos los fragmentos en uno solo, y \texttt{tiledb.vacuum()} para eliminar los fragmentos anteriores. En este proyecto esta operación \textbf{no se aplica}: la consolidación agrupa celdas de distintos pasos temporales en los mismos tiles, lo que obliga a leer datos innecesarios en consultas que solo acceden a uno o pocos pasos (\textit{tile amplification}). Las pruebas realizadas durante el benchmark de configuración (véase Anexo B, grupo G4) confirman que mantener un fragmento por paso temporal es la opción más eficiente para el filtrado por tiempo; la consolidación en un único fragmento penaliza las consultas multi-paso por \textit{tile amplification}.
+
+\section{Compresión}\label{compresion}
+
+Se utilizó el filtro ByteShuffle+ZSTD nivel 9 \cite{tiledb_compression_tutorial, tiledb_compression, tiledb_docs_compression}. Tras un \textit{benchmark} exhaustivo de 15 configuraciones (ZSTD puro niveles 1, 3, 5 y 9, ByteShuffle+ZSTD y BitShuffle+ZSTD en los mismos niveles, y DeltaFilter+ZSTD inaplicable en float32) se concluyó que las diferencias de velocidad de lectura entre configuraciones son menores que el ruido de la caché del sistema operativo. El criterio determinista es el tamaño en disco: ByteShuffle+ZSTD-9 ofrece el menor tamaño (860 MB/paso en la región de prueba) gracias al reordenamiento de bytes de los float32, que agrupa exponentes y mantisas similares antes de comprimir. Reduce el almacenamiento un 8,9 \% adicional respecto a ZSTD-1 sin penalización apreciable en lectura.
+
+La sección~\ref{diseno-del-sistema} presenta el diseño del array TileDB y el proceso ETL de carga de datos. El Anexo~D describe el proceso de ingesta con mayor nivel de detalle.
+
+\chapter{Diseño del Sistema}\label{diseno-del-sistema}
+
+El sistema está compuesto por cuatro capas articuladas en torno al array TileDB sparse como componente central de almacenamiento, tal y como muestra la Figura~\ref{fig:arquitectura}:
+
+\begin{enumerate}
+\item \textbf{Ingesta (ETL):} El script \texttt{geotiff\_to\_tiledb\_sparse.py} lee los ficheros GeoTIFF generados por Triton, aplica el filtro de celdas húmedas (H $\geq$ 0,01 m) y escribe los datos en TileDB con filtro ByteShuffle+ZSTD-9. La lectura se realiza por franjas de 5 000 filas para limitar el uso de memoria.
+\item \textbf{Almacenamiento:} Array TileDB sparse con dimensiones (time, row, col) y atributos (H, QX, QY, MH). Un fragmento por paso temporal facilita el filtrado temporal eficiente.
+\item \textbf{Análisis:} El módulo \texttt{consultas\_analiticas.py} proporciona 20 funciones que operan directamente sobre el array TileDB sin exportación previa.
+\item \textbf{Visualización y exportación:} Incluye \texttt{visualize\_tiledb.py} (visualizador matplotlib), \texttt{export\_to\_geotiff.py} (interoperabilidad SIG) y \texttt{app.py} (aplicación Streamlit con mapas interactivos, exportación y panel de ayuda).
+\end{enumerate}
+
+\section{Arquitectura del array TileDB}\label{arquitectura-del-array-tiledb}
+
+El array disperso se define con tres dimensiones y cuatro atributos, tal y como se muestra en la Tabla~\ref{tab:array-schema}:
+
+\begin{table}[ht]
+\centering
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3cm}>{\raggedright\arraybackslash}p{2cm}L}
+\toprule
+\textbf{Elemento} & \textbf{Tipo} & \textbf{Detalles} \\
+\midrule
+Dimensión time & int32 & Índice del paso temporal (0--19) \\
+Dimensión row & int32 & Fila del ráster (0--34\,199) \\
+Dimensión col & int32 & Columna del ráster (0--23\,039) \\
+\addlinespace[4pt]
+Atributo H & float32 & Profundidad instantánea \\
+Atributo QX & float32 & Caudal unitario X \\
+Atributo QY & float32 & Caudal unitario Y \\
+Atributo MH & float32 & Profundidad máxima histórica \\
+\bottomrule
+\end{tabularx}
+\caption{Dimensiones y atributos del array TileDB sparse.}
+\label{tab:array-schema}
+\end{table}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+    font=\small\sffamily,
+    node distance=10mm,
+    source/.style={rectangle, draw=black!70, fill=black!5, minimum height=11mm, minimum width=22mm, align=center, rounded corners=2pt},
+    process/.style={rectangle, draw=blue!70!black, fill=blue!10, minimum height=11mm, minimum width=22mm, align=center, rounded corners=2pt, thick},
+    storage/.style={cylinder, draw=orange!80!black, fill=orange!15, shape border rotate=90, aspect=0.25, minimum height=14mm, minimum width=26mm, align=center, thick},
+    consumer/.style={rectangle, draw=green!50!black, fill=green!10, minimum height=10mm, minimum width=24mm, align=center, rounded corners=2pt},
+    ui/.style={rectangle, draw=red!70!black, fill=red!8, minimum height=10mm, minimum width=28mm, align=center, rounded corners=2pt, thick},
+    arrow/.style={-Latex, thick, draw=black!60},
+]
+    \node[source] (geo) {GeoTIFF Triton\\\scriptsize 1 escenario de simulación};
+    \node[process, right=14mm of geo] (etl) {ETL\\\scriptsize filtrado y compresión};
+    \node[storage, right=14mm of etl] (tdb) {TileDB sparse\\\scriptsize solo celdas húmedas};
+
+    \node[consumer, below=14mm of tdb, xshift=-32mm] (queries) {Motor de consultas\\\scriptsize 20 funciones analíticas};
+    \node[consumer, below=14mm of tdb, xshift=4mm] (viz) {Visualizador};
+    \node[consumer, below=14mm of tdb, xshift=40mm] (exp) {Exportador GeoTIFF};
+
+    \node[ui, below=12mm of viz] (app) {Aplicación web Streamlit};
+
+    \draw[arrow] (geo) -- (etl);
+    \draw[arrow] (etl) -- (tdb);
+    \draw[arrow] (tdb.south) -- ++(0,-3mm) -| (queries.north);
+    \draw[arrow] (tdb.south) -- ++(0,-3mm) -| (viz.north);
+    \draw[arrow] (tdb.south) -- ++(0,-3mm) -| (exp.north);
+    \draw[arrow] (queries.south) -- (app.north);
+\end{tikzpicture}
+\caption{Arquitectura del sistema. Los GeoTIFF generados por Triton se procesan mediante el ETL (filtrado con rasterio) y se almacenan en TileDB sparse. El motor de consultas analíticas expone los datos a la aplicación Streamlit y permite exportarlos de nuevo a GeoTIFF.}
+\label{fig:arquitectura}
+\end{figure}
+
+\FloatBarrier
+\section{Proceso de carga ETL (geotiff\_to\_tiledb\_sparse.py)}\label{proceso-de-carga-etl-geotiff_to_tiledb_sparse.py}
+
+Se ha creado un script en Python para cargar todos los datos GeoTIFF a TileDB. La Figura~\ref{fig:etl-flow} describe el flujo completo; el cargador sigue estos pasos para cada paso temporal:
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+    font=\small\sffamily,
+    node distance=7mm,
+    startstop/.style={rectangle, draw=black!70, fill=black!8, minimum height=8mm, minimum width=44mm, align=center, rounded corners=4pt},
+    process/.style={rectangle, draw=blue!70!black, fill=blue!8, minimum height=9mm, minimum width=58mm, align=center, rounded corners=2pt, thick},
+    decision/.style={diamond, draw=orange!80!black, fill=orange!10, aspect=2.4, minimum height=9mm, align=center, thick, inner sep=1pt},
+    loop/.style={rectangle, draw=violet!70!black, fill=violet!8, minimum height=8mm, minimum width=58mm, align=center, dashed, thick},
+    arrow/.style={-Latex, thick, draw=black!60},
+]
+    \node[startstop] (start) {Inicio (\ttfamily --dataset)};
+    \node[loop, below=of start] (loop1) {\textbf{Bucle:} para cada paso temporal $t \in \{0, \ldots, 19\}$};
+    \node[process, below=of loop1] (read) {Lectura paralela de 4 GeoTIFF (H, QX, QY, MH)\\\scriptsize ThreadPoolExecutor, ventanas de 5 000 filas};
+    \node[process, below=of read] (filter) {Filtro de celdas húmedas\\\scriptsize H $\geq$ 0,01 m};
+    \node[process, below=of filter] (accum) {Acumulación de coordenadas (row, col) y valores};
+    \node[process, below=of accum] (write) {Escritura en TileDB sparse\\\scriptsize 1 fragmento por paso, filtro ByteShuffle + ZSTD-9};
+    \node[decision, below=of write] (more) {¿quedan pasos?};
+    \node[process, below=8mm of more] (verify) {Verificación de integridad\\\scriptsize muestreo aleatorio TileDB vs GeoTIFF};
+    \node[startstop, below=of verify] (end) {Fin};
+
+    \draw[arrow] (start) -- (loop1);
+    \draw[arrow] (loop1) -- (read);
+    \draw[arrow] (read) -- (filter);
+    \draw[arrow] (filter) -- (accum);
+    \draw[arrow] (accum) -- (write);
+    \draw[arrow] (write) -- (more);
+    \draw[arrow] (more.east) -- ++(20mm,0) |- node[pos=0.25, right, font=\scriptsize] {sí} (loop1.east);
+    \draw[arrow] (more) -- node[right, font=\scriptsize] {no} (verify);
+    \draw[arrow] (verify) -- (end);
+\end{tikzpicture}
+\caption{Diagrama de flujo del proceso ETL. Por cada escenario se iteran los 20 pasos temporales: se leen los cuatro ficheros GeoTIFF, se filtra por H $\geq$ 0,01 m y se escriben sólo las celdas húmedas en el array TileDB sparse con compresión ByteShuffle+ZSTD-9. Al finalizar se verifica la integridad mediante muestreo aleatorio.}
+\label{fig:etl-flow}
+\end{figure}
+
+\begin{enumerate}
+\item Abre los 4 ficheros GeoTIFF (H, QX, QY, MH) correspondientes con rasterio.
+\item Lee el ráster en franjas de 5 000 filas (CHUNK\_ROWS) usando lectura por ventana (windowed read) para evitar cargar 3 GB/variable en RAM.
+\item Aplica la máscara de celdas mojadas: H $\geq$ 0,01 m.
+\item Acumula las coordenadas y valores de las celdas mojadas en listas.
+\item Realiza una única escritura en TileDB por paso temporal $\rightarrow$ 1 fragmento por paso.
+\end{enumerate}
+
+La lectura paralela de las 4 bandas se realiza con ThreadPoolExecutor(max\_workers=4), reduciendo el tiempo de I/O.
+
+Memoria pico estimada: 4 bandas $\times$ 5 000 filas $\times$ 23 040 cols $\times$ 4 B $\approx$ 1,8 GB.
+
+\FloatBarrier
+\section{Gestión de múltiples escenarios}\label{gestion-de-multiples-escenarios-argumento---dataset}
+
+El sistema está diseñado para procesar y almacenar múltiples escenarios de simulación de forma independiente. Cada escenario ocupa su propio array TileDB en disco y se identifica mediante un alias corto (datos1, datos2, \ldots) que \texttt{config.py} traduce al nombre real del directorio de salida de Triton. De este modo el resto del código (ETL, consultas, aplicación web) opera siempre con el alias y no depende de los nombres largos de los ficheros fuente.
+
+El script \texttt{geotiff\_to\_tiledb\_sparse.py} acepta el argumento \texttt{-\/-dataset} para seleccionar el escenario a procesar. La ruta base donde se leen los GeoTIFF y se escribe el array TileDB se configura mediante la variable de entorno \texttt{TRITON\_BASE\_URI}, lo que permite ejecutar el mismo script tanto en local como en el servidor de producción sin modificar el código.
+
+La aplicación web descubre automáticamente los \textit{datasets} disponibles inspeccionando el directorio apuntado por \texttt{TRITON\_BASE\_URI}: cualquier subdirectorio que contenga un array TileDB válido aparece en el selector de la interfaz. Añadir un nuevo escenario consiste en ejecutar el ETL con el alias correspondiente; no es necesario modificar ningún fichero de configuración adicional.
+

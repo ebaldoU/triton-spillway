@@ -1,0 +1,69 @@
+\chapter{Estructura de Ficheros del Proyecto}\label{estructura-de-ficheros-del-proyecto}
+
+\begin{verbatim}
+TFG/
+  tiledb/
+    triton_results/
+      output_10_..._19800728_19800801/   % datos1:  TileDB sparse (~17 GB)
+      output_10_..._19810515_19810519/   % datos2:  TileDB sparse (~17 GB)
+      output_10_..._19820706_19820710/   % datos3:  TileDB sparse (~10 GB)
+      output_10_..._19830309_19830313/   % datos4:  TileDB sparse (~17 GB)
+      output_10_..._19840619_19840623/   % datos5:  TileDB sparse (~17 GB)
+      ...
+      output_10_..._20070919_20070923/   % datos28: TileDB sparse (~17 GB)
+      ...
+      output_10_..._20350408_20350412/   % datos56: TileDB sparse (~20 GB)
+spillway/
+  config.py                    % Alias datos1-datos56 y rutas base
+  geotiff_to_tiledb_sparse.py  % ETL: GeoTIFF -> TileDB sparse
+  consultas_analiticas.py      % Motor de consultas: 20 funciones
+  app.py                       % Aplicacion web Streamlit
+  comparar_datasets.py         % Comparativa multi-escenario
+  verify_tiledb.py             % Verificación TileDB vs GeoTIFF
+  benchmark_vs_geotiff.py      % Benchmark TileDB vs GeoTIFF (6 casos)
+  benchmark_queries.py         % Benchmark 5 patrones de consulta
+  export_to_geotiff.py         % Exportación TileDB -> GeoTIFF
+  query_tiledb.py              % Estadísticos por paso, área, máximos
+  query_max_depth_tiledb.py    % Celda con mayor calado, top-N
+  visualize_tiledb.py          % Visualizador interactivo matplotlib
+\end{verbatim}
+
+\chapter{Conclusiones y Trabajo Futuro}\label{conclusiones-y-trabajo-futuro}
+
+Este capítulo recoge las conclusiones derivadas del desarrollo y las líneas de trabajo futuro identificadas.
+
+\section{Conclusiones}\label{conclusiones}
+
+\subsection{Conclusiones técnicas}\label{conclusiones-tecnicas}
+
+El sistema demuestra que TileDB sparse es una solución viable para el almacenamiento y análisis de simulaciones hidráulicas de alta resolución. La aportación principal es la reducción del volumen de datos de 235 GB por simulación (GeoTIFF, 20 pasos $\times$ 4 variables) a 17,5 GB en TileDB sparse con filtro ByteShuffle+ZSTD-9: una reducción del 92,7 \% y un ratio de 13,7$\times$. Esta compresión proviene mayoritariamente del modelo sparse (solo el $\sim$8,3 \% del dominio está inundado) y, en menor medida, del filtro (-8,9 \% adicional respecto a ZSTD-1).
+
+El motor de consultas analíticas implementa 20 funciones en seis bloques que cubren desde consultas básicas hasta indicadores de peligrosidad según Russo et al. (2013). Las consultas multi-paso emplean un patrón de acumulación incremental ($\sim$10 MB constantes) que hace viable el análisis sobre más de 1 300 millones de celdas húmedas. La arquitectura multi-dataset permite incorporar nuevas simulaciones sin modificar el código: los 56 datasets procesados reutilizan el mismo \textit{pipeline} ETL y los mismos scripts analíticos.
+
+\subsection{Conclusiones experimentales}\label{conclusiones-experimentales}
+
+El \textit{benchmark} comparativo (6 casos de prueba, 3 repeticiones en caché caliente) muestra que TileDB supera a GeoTIFF en cinco de los seis patrones evaluados, con ventajas de hasta 12,4$\times$ en lecturas de instantes completos y 7,1--9,9$\times$ en cálculos de peligrosidad sobre la serie temporal. Los resultados son consistentes en los cuatro \textit{datasets} de referencia (datos1--datos4), lo que confirma que las ventajas son inherentes al modelo sparse y no específicas de una simulación concreta.
+
+En cuanto al rendimiento de las consultas, las consultas acotadas (Q5) se resuelven en 0,13 s y son aptas para uso interactivo. Las consultas de un instante completo (Q3) tardan 1,95 s. Las consultas multi-paso sobre el dominio completo (Q1) tardan 44 s y se gestionan mediante caché en la aplicación web.
+
+\subsection{Limitaciones}\label{limitaciones}
+
+Durante el desarrollo y la evaluación se identificaron las siguientes limitaciones:
+
+Consultas de píxel único: GeoTIFF supera a TileDB en 5,3$\times$ para la lectura de un único píxel a lo largo de toda la serie temporal, ya que rasterio realiza una lectura directa sin descomprimir índices dispersos.
+
+Entorno de ejecución: los experimentos se realizaron en WSL2 con 32 GB de RAM compartida. En entornos con menos memoria, las consultas multi-paso podrían requerir ajustes en el parámetro de resolución del grid acumulador.
+
+Exportación masiva: exportar todos los pasos y variables a GeoTIFF produciría $\sim$20 GB, anulando la ventaja de compresión. La exportación está concebida como herramienta puntual de interoperabilidad SIG, no de almacenamiento.
+
+Dominio específico: los parámetros geoespaciales del motor de consultas (EPSG:32614, xllcorner, yllcorner, cellsize) están ajustados al dominio de simulación utilizado. Extender el sistema a otros dominios requiere actualizar estos parámetros.
+
+\section{Trabajo Futuro}\label{trabajo-futuro}
+
+Automatización del \textit{pipeline}: detección automática de nuevos ficheros GeoTIFF y actualización incremental de TileDB sin intervención manual.
+
+Reducir pico de RAM del visualizador matplotlib (visualize\_tiledb.py) mediante query por franjas en lugar de cargar el paso completo en memoria.
+
+Explorar indexación con resolución variable (R-trees de TileDB) para acelerar consultas sobre zonas de alta densidad de celdas húmedas.
+
+Ampliar la aplicación web con exportación de informes PDF y comparativa de escenarios con más indicadores de peligrosidad.

@@ -1,0 +1,141 @@
+\chapter{Descripción de los Datos}\label{descripcion-de-los-datos}
+
+Este capítulo describe los datos de entrada del sistema: el simulador hidráulico que los genera, el formato de salida GeoTIFF, las variables físicas almacenadas en cada paso temporal y las características del dominio de simulación.
+
+\section{Simulador Triton}\label{simulador-triton}
+
+Triton \cite{triton} es un simulador hidráulico bidimensional de alto rendimiento desarrollado en el Oak Ridge National Laboratory. Resuelve las ecuaciones de Saint-Venant en lámina libre sobre una malla regular, aprovechando la paralelización masiva en GPU (\textit{Graphics Processing Unit}) para reducir drásticamente los tiempos de cómputo respecto a simuladores tradicionales de CPU. Esta capacidad lo hace adecuado para estudios a gran escala como el de este trabajo, en el que se simulan 56 episodios de crecida sobre una cuenca de $\sim$78\,000 km$^2$ con resolución de 10 m.
+
+Existen otros simuladores hidráulicos 2D ampliamente utilizados, como HEC-RAS \cite{hecras}, IBER \cite{iber} o LISFLOOD-FP \cite{lisflood}. Todos ellos comparten la misma naturaleza de resultados: series temporales de variables físicas organizadas en mallas rásteres regulares. La elección de Triton en este proyecto viene determinada por su uso en el grupo de investigación y por su rendimiento en dominios de alta resolución, pero el problema de almacenamiento y análisis que se aborda no es específico de él. El sistema desarrollado, que comprende la ingesta desde GeoTIFF y el motor de consultas sobre TileDB, es aplicable a las salidas de cualquier simulador que produzca rásters georreferenciados con la misma estructura: los únicos parámetros que cambiarían serían los nombres de las variables y las dimensiones del dominio.
+
+\section{Formato de salida: GeoTIFF}\label{formato-de-salida-geotiff}
+
+GeoTIFF (Geographic Tagged Image File Format) \cite{ogc_geotiff} es el formato más extendido para guardar datos geográficos en forma de cuadrícula (imágenes de satélite, modelos de elevación, mapas de inundación, etc.). Conceptualmente es una matriz bidimensional de valores numéricos en la que cada celda (fila, columna) representa una porción cuadrada del terreno con un valor asociado (por ejemplo, la profundidad del agua en metros). Se diferencia de una imagen convencional (JPG, PNG) en dos aspectos: las celdas guardan magnitudes físicas en lugar de colores y el fichero incluye los metadatos geográficos necesarios para saber qué zona del mundo cubre, qué tamaño tiene cada celda sobre el terreno y en qué sistema de coordenadas está representado.
+
+En este proyecto, cada GeoTIFF contiene la matriz de valores de una variable física (calado, caudal, etc.) en un instante concreto. Triton genera un fichero por cada combinación de variable y paso temporal: cuatro variables (H, QX, QY, MH) por cada uno de los 20 pasos producen 80 ficheros por escenario, que ocupan aproximadamente 235 GB en total. Este formato es muy adecuado para visualizar un mapa concreto en programas como QGIS, pero no está pensado para realizar consultas analíticas sobre toda la serie temporal (motivos detallados en la sección~\ref{inadecuacion-geotiff}), lo que motiva la búsqueda de un sistema de almacenamiento alternativo analizado en las secciones~\ref{bases-de-datos-para-arrays-multidimensionales} y~\ref{justificacion-de-tiledb}.
+
+\section{Variables almacenadas}\label{variables-almacenadas}
+
+Cada paso temporal almacena cuatro variables por celda húmeda (toda celda con calado H $\geq$ 0,01 m), recogidas en la Tabla~\ref{tab:variables}:
+
+\begin{table}[ht]
+\centering
+\begin{tabularx}{\textwidth}{>{\centering\arraybackslash}p{2cm}L>{\centering\arraybackslash}p{2cm}}
+\toprule
+\textbf{Variable} & \textbf{Descripción} & \textbf{Unidad} \\
+\midrule
+H  & Profundidad instantánea del agua & m \\
+QX & Caudal unitario en dirección X & m\textsuperscript{2}/s \\
+QY & Caudal unitario en dirección Y & m\textsuperscript{2}/s \\
+MH & Profundidad máxima acumulada desde el inicio (máximo histórico) & m \\
+\bottomrule
+\end{tabularx}
+\caption{Variables almacenadas por celda y paso temporal.}
+\label{tab:variables}
+\end{table}
+
+Solo se almacenan celdas con H $\geq$ 0,01 m (umbral de celda húmeda). El módulo del caudal unitario Q\_mod = $\sqrt{QX^2 + QY^2}$ se calcula en tiempo de consulta a partir de QX y QY.
+
+\section{Características del dominio}\label{caracteristicas-del-dominio}
+
+El dominio de simulación cubre una cuenca hidrográfica discretizada en una malla regular de 34 200 $\times$ 23 040 píxeles ($\sim$787 millones de celdas) con resolución espacial de 10 $\times$ 10 m (100 m\textsuperscript{2} por celda). Las características principales se resumen en la Tabla~\ref{tab:dominio}.
+
+Sistema de referencia: EPSG:32614 (UTM zona 14N). El dominio abarca una cuenca de $\sim$342 $\times$ 230 km en el centro-norte de Estados Unidos (Nebraska, Kansas, Iowa y Missouri). Esquina inferior-izquierda: X = 680 000 m, Y = 4 330 000 m.
+
+Resolución temporal: 20 pasos de 6 horas cada uno, cubriendo 120 horas (5 días) de simulación.
+
+Fracción húmeda media: aproximadamente el 8,3 \% de las celdas del dominio presentan agua en cada paso temporal ($\sim$65 millones de celdas de $\sim$787 millones totales). Esta escasez justifica el uso de almacenamiento disperso.
+
+La sección~\ref{analisis-de-tecnologias} justifica la elección de TileDB como tecnología de almacenamiento a partir de las características del problema.
+
+
+\noindent\begin{minipage}{\textwidth}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{5.5cm}L}
+\toprule
+\textbf{Parámetro} & \textbf{Valor} \\
+\midrule
+Resolución espacial & 34\,200 $\times$ 23\,040 píxeles (filas $\times$ columnas) \\
+Pasos temporales & 20 (intervalos de 6 h, 120 h totales) \\
+Total de celdas & 15\,759\,360\,000 \\
+Celdas con agua (H $\geq$ 0,01 m) & 1\,311\,695\,098 ($\sim$8,3 \%) \\
+\bottomrule
+\end{tabularx}
+\captionsetup{hypcap=false}\captionof{table}{Características del dominio de simulación.}
+\label{tab:dominio}
+\end{minipage}
+
+
+\chapter{Análisis de Tecnologías}\label{analisis-de-tecnologias}
+
+Antes de comenzar el desarrollo se realizó un análisis de las tecnologías disponibles para almacenar grandes volúmenes de datos ráster espacio-temporales, con el objetivo de seleccionar la más adecuada en términos de eficiencia de almacenamiento, velocidad de consulta y facilidad de integración.
+
+\section{Bases de datos para arrays multidimensionales}\label{bases-de-datos-para-arrays-multidimensionales}
+
+La primera opción considerada fue TileDB \cite{tiledb_github, tiledb_web, tiledb_cmu}, una base de datos de código abierto orientada a arrays N-dimensionales. TileDB soporta tanto arrays densos como dispersos (sparse), compresión pluggable, indexación espacial mediante R-trees y acceso sin servidor, almacenando los datos directamente en el sistema de ficheros.
+
+La segunda opción evaluada fue SciDB \cite{scidb, scidb_docs}, una base de datos nativa para arrays multidimensionales con arquitectura cliente-servidor distribuida: un nodo coordinador reparte el trabajo entre nodos trabajadores y expone los datos mediante lenguajes de consulta propios. Fue descartada por dos motivos: su edición Enterprise (la que ofrece todas las funcionalidades relevantes) es de licencia privativa, lo que limita la reproducibilidad del proyecto; y la necesidad de mantener un servicio en ejecución añade complejidad operativa innecesaria cuando los datos residen en disco local.
+
+La tercera opción considerada fue Rasdaman \cite{rasdaman}, un gestor de bases de datos de arrays N-dimensionales ampliamente utilizado en el ámbito de la observación de la Tierra (es el motor que subyace a algunos servicios de Copernicus). Ofrece un lenguaje de consulta propio (RasQL) y soporta arrays densos y dispersos. Sin embargo, fue descartado por las mismas razones que SciDB: requiere un servidor en ejecución, lo que añade complejidad operativa, y su edición comunitaria presenta limitaciones funcionales respecto a la edición comercial.
+
+También se evaluó PostGIS Raster \cite{postgis_raster}, la extensión de raster del gestor de bases de datos PostgreSQL. Es una tecnología madura y de código abierto, adecuada para análisis de rásteres 2D estáticos con SQL espacial. No obstante, no está diseñada para arrays N-dimensionales: la dimensión temporal requiere \textit{workarounds} (tablas particionadas, columnas adicionales) y carece de soporte nativo para datos dispersos, lo que la hace poco adecuada para series temporales de simulación hidráulica.
+
+Finalmente, se consideraron tres formatos del ecosistema científico fuera del modelo de base de datos:
+
+\begin{itemize}
+\item \textbf{HDF5:} Contenedor binario jerárquico ampliamente usado en ciencias físicas. Soporta compresión y \textit{chunks}, pero no implementa indexación dispersa ni motor de consultas integrado: cualquier consulta espacial requiere reimplementar el filtrado en Python.
+\item \textbf{NetCDF-4:} Capa de convenciones sobre HDF5 orientada a datos climáticos. Hereda las mismas limitaciones para datos dispersos.
+\item \textbf{Zarr:} Variante moderna inspirada en HDF5 pensada para almacenamiento en la nube. Excelente para arrays densos chunked, pero su soporte para datos dispersos es experimental y carece del modelo de fragmentos por escritura incremental que ofrece TileDB.
+\end{itemize}
+
+Finalmente se valoró el uso de estructuras de indexación con resolución variable para almacenar mayor detalle en zonas inundadas y menor en terreno seco; esta funcionalidad la cubre TileDB de forma transparente mediante sus R-trees sobre dimensiones dispersas, sin necesidad de implementación adicional.
+
+\section{Justificación de TileDB}\label{justificacion-de-tiledb}
+
+Se eligió TileDB por cuatro motivos:
+
+\begin{enumerate}
+\item \textbf{Código abierto (licencia MIT)}: Garantiza la reproducibilidad del proyecto y permite su uso y modificación sin restricciones.
+\item \textbf{Modelo sparse nativo}: Encaja de forma natural con el problema, ya que solo el $\sim$8,3 \% del dominio contiene agua en cada paso temporal (media sobre los 20 pasos); almacenar únicamente las celdas húmedas evita procesar el $\sim$92 \% vacío.
+\item \textbf{Arquitectura sin servidor}: Los arrays se almacenan directamente en el sistema de ficheros, sin necesidad de mantener un servicio en ejecución, lo que simplifica el despliegue respecto a alternativas como SciDB.
+\item \textbf{Integración Python/NumPy}: La API permite operar sobre los datos directamente desde Python sin capa intermedia, lo que facilita la integración con el resto del ecosistema científico.
+\end{enumerate}
+
+El resultado del benchmark confirma la elección: los 235 GB originales en GeoTIFF se reducen a 17,5 GB en TileDB sparse con filtro ByteShuffle+ZSTD-9, un ratio de 13,7$\times$ y una reducción del 92,7 \%, manteniendo tiempos de consulta analítica inferiores a 2 segundos para consultas acotadas y \textit{throughput} superior a 800 MB/s en lecturas masivas. La Tabla~\ref{tab:tecnologias} recoge la comparativa completa de tecnologías evaluadas.
+
+La sección~\ref{tecnologia-tiledb} describe TileDB en detalle y sus características relevantes para este proyecto.
+
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.0cm}>{\raggedright\arraybackslash}p{2.4cm}L>{\raggedright\arraybackslash}p{1.5cm}>{\raggedright\arraybackslash}p{2.2cm}>{\raggedright\arraybackslash}p{1.5cm}}
+\toprule
+\textbf{Tecnología} & \textbf{Código abierto} & \textbf{Modelo} & \textbf{Servidor} & \textbf{Disperso nativo} & \textbf{Decisión} \\
+\midrule
+TileDB & Sí (MIT) & Array disperso/denso & No & Sí & \textbf{Elegida} \\
+SciDB & Parcial (Enterprise privativa) & Array N-dimensional & Sí & Limitado & Descartada \\
+Rasdaman & Parcial (Ed. comercial) & Array N-dimensional & Sí & Sí & Descartada \\
+PostGIS Raster & Sí & Raster 2D sobre SQL & No & No & Descartada \\
+HDF5 & Sí & Contenedor jerárquico & No & No & Descartada \\
+Zarr & Sí & Array fragmentado & No & Experimental & Descartada \\
+NetCDF-4 & Sí & Capa sobre HDF5 & No & No & Descartada \\
+\bottomrule
+\end{tabularx}
+\caption{Tecnologías evaluadas para el almacenamiento del problema.}
+\label{tab:tecnologias}
+\end{table}
+
+
+\section{Lenguaje y bibliotecas}\label{lenguaje-y-librerias}
+
+El desarrollo se realizó en Python, lenguaje de referencia en el ámbito científico y geoespacial, con las siguientes bibliotecas principales:
+
+\begin{itemize}
+\item \textbf{Rasterio} \cite{rasterio}: Lectura de ficheros GeoTIFF con soporte para lectura por ventanas (windowed read), permitiendo procesar rásteres de varios GB por franjas sin cargar el fichero completo en memoria.
+\item \textbf{NumPy} \cite{numpy}: Operaciones vectorizadas sobre los arrays de datos (máscaras, estadísticas, conversión de tipos).
+\item \textbf{TileDB Python:} API para crear, escribir y consultar arrays TileDB sparse desde Python.
+\item \textbf{Matplotlib:} Visualización de rásteres, escala logarítmica (LogNorm), flechas de flujo (quiver) y panel de cursor interactivo. Se utiliza en el visualizador de escritorio (visualize\_tiledb.py).
+\item \textbf{Streamlit} \cite{streamlit}: Framework web para la aplicación interactiva. Folium y Plotly Express se emplean para mapas interactivos y gráficos temporales dentro de la aplicación.
+\end{itemize}
+
+

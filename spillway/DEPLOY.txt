@@ -1,0 +1,155 @@
+GUÍA DE DESPLIEGUE — SPILLWAY APP
+==================================
+VPS: vps-c7c6c3ef.vps.ovh.net
+IP:  <servidor>
+Usuario: ubuntu
+OS: Ubuntu 25.04
+
+
+1. ESTRUCTURA DE DIRECTORIOS EN EL VPS
+---------------------------------------
+/home/ubuntu/
+  spillway/              <- scripts de la app
+    app.py
+    consultas_analiticas.py
+    config.py
+  TFG/
+    tiledb/
+      triton_results/    <- datos TileDB (~85 GB)
+        output_10_..._19800728_19800801/   (datos1)
+        output_10_..._19810515_19810519/   (datos2)
+        output_10_..._19820706_19820710/   (datos3)
+        output_10_..._19830309_19830313/   (datos4)
+        output_10_..._19840619_19840623/   (datos5)
+  venv_triton/           <- entorno Python
+
+
+2. PRIMERA INSTALACIÓN (solo una vez)
+--------------------------------------
+
+En el VPS:
+
+  # Instalar dependencias del sistema
+  sudo apt update && sudo apt upgrade -y
+  sudo apt install -y python3-pip python3-venv python3-full
+
+  # Crear entorno virtual
+  python3 -m venv ~/venv_triton
+  source ~/venv_triton/bin/activate
+
+  # Instalar paquetes Python
+  pip install tiledb streamlit plotly folium streamlit-folium pyproj numpy
+
+  # Crear directorios
+  mkdir -p ~/spillway ~/TFG/tiledb/triton_results
+
+
+Desde WSL2 (máquina local), subir scripts:
+
+  rsync -avz \
+    /home/ebald/spillway/app.py \
+    /home/ebald/spillway/consultas_analiticas.py \
+    /home/ebald/spillway/config.py \
+    ubuntu@<servidor>:/home/ubuntu/spillway/
+
+Desde WSL2, subir datos TileDB (~85 GB, tarda ~2 horas):
+
+  rsync -avz --progress \
+    /home/ebald/TFG/tiledb/triton_results/ \
+    ubuntu@<servidor>:/home/ubuntu/TFG/tiledb/triton_results/
+
+
+3. SERVICIO SYSTEMD (arranque automático)
+------------------------------------------
+
+Archivo a crear en el VPS:
+  sudo nano /etc/systemd/system/spillway.service
+
+Contenido del archivo:
+
+  [Unit]
+  Description=Spillway - Flood Simulation Dashboard
+  After=network.target
+
+  [Service]
+  User=ubuntu
+  WorkingDirectory=/home/ubuntu/spillway
+  Environment="TRITON_BASE_URI=/home/ubuntu/TFG/tiledb/triton_results"
+  ExecStart=/home/ubuntu/venv_triton/bin/streamlit run app.py --server.port 8501 --server.headless true --server.address 127.0.0.1
+  Restart=on-failure
+  RestartSec=5
+
+  [Install]
+  WantedBy=multi-user.target
+
+Activar el servicio (solo la primera vez):
+
+  sudo systemctl daemon-reload
+  sudo systemctl enable spillway   <- arranca automáticamente al reiniciar el VPS
+  sudo systemctl start spillway
+  sudo systemctl status spillway   <- debe mostrar "active (running)"
+
+
+4. ACCESO A LA APP (cada vez que quieras usarla)
+-------------------------------------------------
+
+La app NO está expuesta a internet (seguridad).
+Para acceder se usa un túnel SSH desde tu máquina local:
+
+  ssh -L 8501:localhost:8501 ubuntu@<servidor>
+
+Mientras ese terminal esté abierto, abre en el navegador:
+
+  http://localhost:8501
+
+Al cerrar el terminal el túnel se corta, pero la app sigue corriendo en el VPS.
+
+
+5. COMANDOS ÚTILES EN EL VPS
+------------------------------
+
+Ver estado de la app:
+  sudo systemctl status spillway
+
+Reiniciar la app:
+  sudo systemctl restart spillway
+
+Ver logs en tiempo real:
+  sudo journalctl -u spillway -f
+
+Parar la app:
+  sudo systemctl stop spillway
+
+Actualizar scripts (desde WSL2):
+  rsync -avz \
+    /home/ebald/spillway/app.py \
+    /home/ebald/spillway/consultas_analiticas.py \
+    /home/ebald/spillway/config.py \
+    ubuntu@<servidor>:/home/ubuntu/spillway/
+  ssh ubuntu@<servidor> "sudo systemctl restart spillway"
+
+
+6. AÑADIR UN DATASET NUEVO
+----------------------------
+
+Desde WSL2:
+  rsync -avz --progress \
+    /home/ebald/TFG/tiledb/triton_results/<nombre_nuevo>/ \
+    ubuntu@<servidor>:/home/ubuntu/TFG/tiledb/triton_results/<nombre_nuevo>/
+
+Si el nuevo dataset tiene alias corto (p.ej. datos6), añadirlo en config.py:
+  "datos6": "<nombre_largo>",
+
+Luego actualizar config.py en el VPS y reiniciar:
+  rsync -avz /home/ebald/spillway/config.py ubuntu@<servidor>:/home/ubuntu/spillway/
+  ssh ubuntu@<servidor> "sudo systemctl restart spillway"
+
+
+7. DATASETS — TABLA DE ALIASES
+--------------------------------
+
+  datos1 -> output_10_HUC1024_ACCESS-CM2_ssp585_r1i1p1f1_RegCM_Daymet_1980_2019_19800728_19800801
+  datos2 -> output_10_HUC1024_ACCESS-CM2_ssp585_r1i1p1f1_RegCM_Daymet_1980_2019_19810515_19810519
+  datos3 -> output_10_HUC1024_ACCESS-CM2_ssp585_r1i1p1f1_RegCM_Daymet_1980_2019_19820706_19820710
+  datos4 -> output_10_HUC1024_ACCESS-CM2_ssp585_r1i1p1f1_RegCM_Daymet_1980_2019_19830309_19830313
+  datos5 -> output_10_HUC1024_ACCESS-CM2_ssp585_r1i1p1f1_RegCM_Daymet_1980_2019_19840619_19840623
