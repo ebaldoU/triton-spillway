@@ -1,4 +1,4 @@
-\documentclass[a4paper,12pt,twoside,hidelinks,openright]{report}
+\documentclass[a4paper,12pt,oneside,hidelinks]{report}
 
 \usepackage[spanish]{babel}
 \usepackage[utf8]{inputenc}
@@ -41,8 +41,16 @@
 \setlength{\oddsidemargin}{0.46cm}     % Margen izquierdo
 \setlength{\evensidemargin}{0.46cm}
 
-\usepackage[skip=6pt]{parskip}
+\usepackage[skip=9pt]{parskip}
+\usepackage{enumitem}
+\setlist{nosep, topsep=3pt, partopsep=0pt}
 \usepackage{titlesec}
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries}
+  {\chaptertitlename\ \thechapter}
+  {16pt}
+  {\Huge}
+\titlespacing*{\chapter}{0pt}{30pt}{10pt}
 \titlespacing*{\section}{0pt}{16pt}{4pt}
 \titlespacing*{\subsection}{0pt}{12pt}{2pt}
 \titlespacing*{\subsubsection}{0pt}{10pt}{2pt}
@@ -122,19 +130,18 @@ ESCUELA DE INGENIERÍA Y ARQUITECTURA\\
 \baselineskip 19pt
 \renewcommand{\labelitemi}{$-$}
 \renewcommand{\tablename}{Tabla}
+\renewcommand{\bibname}{Bibliografía}
 \renewcommand{\appendixname}{Anexos}
 \renewcommand{\appendixtocname}{Anexos}
 \renewcommand{\appendixpagename}{Anexos}
 
 \pagenumbering{Roman}
-\null\newpage
 
 \input{Capitulos/Agradecimientos}
-\clearpage\null\clearpage
+\clearpage
 \input{Capitulos/Resumen}
-\newpage
+\clearpage
 
-\cleardoublepage
 \renewcommand{\contentsname}{Índice}
 \tableofcontents
 
@@ -146,6 +153,7 @@ ESCUELA DE INGENIERÍA Y ARQUITECTURA\\
 \input{Capitulos/Capitulo1.tex}
 \input{Capitulos/Capitulo2.tex}
 \input{Capitulos/Capitulo3.tex}
+\input{Capitulos/Capitulo4.tex}
 \input{Capitulos/Conclusion.tex}
 
 %Puedes añadir más capítulos
@@ -153,7 +161,10 @@ ESCUELA DE INGENIERÍA Y ARQUITECTURA\\
 %		BIBLIOGRAFÍA Y REFERENCIAS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\bibliographystyle{unsrt} %plaindin
+\clearpage
+\phantomsection
+\addcontentsline{toc}{chapter}{\bibname}
+\bibliographystyle{unsrt}
 \bibliography{Bibliografia_TFM}
 
 \newpage
@@ -168,15 +179,15 @@ ESCUELA DE INGENIERÍA Y ARQUITECTURA\\
 %		ANEXOS
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\newpage
-\appendix
 \clearpage
+\appendix
 \addappheadtotoc
 \appendixpage
 \input{Anexos/Anexo1.tex}
 \input{Anexos/Anexo2.tex}
 \input{Anexos/Anexo3.tex}
 \input{Anexos/Anexo4.tex}
+\input{Anexos/Anexo5.tex}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
