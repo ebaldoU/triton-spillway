@@ -16,7 +16,7 @@ TFG/
 spillway/
   config.py                    % Alias datos1-datos56 y rutas base
   geotiff_to_tiledb_sparse.py  % ETL: GeoTIFF -> TileDB sparse
-  consultas_analiticas.py      % Motor de consultas: 20 funciones
+  consultas_analiticas.py      % Motor de consultas: 24 funciones
   app.py                       % Aplicacion web Streamlit
   comparar_datasets.py         % Comparativa multi-escenario
   verify_tiledb.py             % Verificación TileDB vs GeoTIFF
@@ -38,7 +38,7 @@ Este capítulo recoge las conclusiones derivadas del desarrollo y las líneas de
 
 El sistema demuestra que TileDB sparse es una solución viable para el almacenamiento y análisis de simulaciones hidráulicas de alta resolución. La aportación principal es la reducción del volumen de datos de 235 GB por simulación (GeoTIFF, 20 pasos $\times$ 4 variables) a 17,5 GB en TileDB sparse con filtro ByteShuffle+ZSTD-9: una reducción del 92,7 \% y un ratio de 13,7$\times$. Esta compresión proviene mayoritariamente del modelo sparse (solo el $\sim$8,3 \% del dominio está inundado) y, en menor medida, del filtro (-8,9 \% adicional respecto a ZSTD-1).
 
-El motor de consultas analíticas implementa 20 funciones en seis bloques que cubren desde consultas básicas hasta indicadores de peligrosidad según Russo et al. (2013). Las consultas multi-paso emplean un patrón de acumulación incremental ($\sim$10 MB constantes) que hace viable el análisis sobre más de 1 300 millones de celdas húmedas. La arquitectura multi-dataset permite incorporar nuevas simulaciones sin modificar el código: los 56 datasets procesados reutilizan el mismo \textit{pipeline} ETL y los mismos scripts analíticos.
+El motor de consultas analíticas implementa 24 funciones en ocho bloques que cubren desde consultas básicas hasta indicadores de inestabilidad hidrodinámica según los criterios de Russo et al.\ (2013) y Xia et al.\ (2014/2022), además de la zona de graves daños normativa (Real Decreto 9/2008). Las consultas multi-paso emplean un patrón de acumulación incremental ($\sim$10 MB constantes) que hace viable el análisis sobre más de 1 300 millones de celdas húmedas. La arquitectura multi-dataset permite incorporar nuevas simulaciones sin modificar el código: los 56 datasets procesados reutilizan el mismo \textit{pipeline} ETL y los mismos scripts analíticos.
 
 \subsection{Conclusiones experimentales}\label{conclusiones-experimentales}
 

@@ -260,31 +260,35 @@ La exportación reconstruye el ráster denso a partir del array sparse: las celd
 
 Entrada: dataset, paso temporal y variables. Salida: GeoTIFF georreferenciados ($\sim$257 MB por variable). Limitación: exportar los 20 pasos con las 4 variables produciría $\sim$20 GB, anulando la ventaja de compresión. La herramienta es un complemento puntual para SIG, no un formato de almacenamiento alternativo.
 
-El detalle de cada consulta, organizadas en seis bloques (A--F), se recoge en la Tabla~\ref{tab:bloques-queries} de la sección~\ref{motor-de-consultas-analiticas} y en el Anexo A. Todas admiten subconjunto espacial (bbox en km) y temporal (paso o rango de pasos); los bloques D y E implementan los criterios de peligrosidad de Russo et al. \cite{russo2013}.
+El detalle de cada consulta, organizadas en ocho bloques (A--H), se recoge en la Tabla~\ref{tab:bloques-queries} de la sección~\ref{motor-de-consultas-analiticas} y en el Anexo A. Todas admiten subconjunto espacial (bbox en km) y temporal (paso o rango de pasos).
 
 \section{Motor de consultas analíticas}\label{motor-de-consultas-analiticas}
 
-El motor de consultas analíticas es el núcleo del sistema. Proporciona 20 funciones Python que operan directamente sobre el array TileDB sparse sin exportación previa ni carga completa en memoria. Cada función acepta opcionalmente un parámetro bbox (ventana espacial en EPSG:32614) para restringir el análisis a una subregión.
+El motor de consultas analíticas es el núcleo del sistema. Proporciona 24 funciones Python que operan directamente sobre el array TileDB sparse sin exportación previa ni carga completa en memoria. Cada función acepta opcionalmente un parámetro bbox (ventana espacial en EPSG:32614) para restringir el análisis a una subregión.
 
-Las consultas multi-paso (bloques C y D) emplean acumulación incremental: se mantiene un grid de resolución reducida que se actualiza paso a paso con np.minimum.at, np.maximum.at y np.add.at, manteniendo el consumo de memoria constante ($\sim$10 MB). Las 20 funciones se organizan en seis bloques (Tabla~\ref{tab:bloques-queries}); el catálogo completo con firma y parámetros se recoge en el Anexo A.
+Las consultas multi-paso (bloque C) emplean acumulación incremental: se mantiene un grid de resolución reducida que se actualiza paso a paso con np.minimum.at, np.maximum.at y np.add.at, manteniendo el consumo de memoria constante ($\sim$10 MB). Las 24 funciones se organizan en ocho bloques (Tabla~\ref{tab:bloques-queries}); el catálogo completo con firma y parámetros se recoge en el Anexo A.
 
 
 \begin{center}
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.5cm}>{\raggedright\arraybackslash}p{4cm}L}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.2cm}>{\raggedright\arraybackslash}p{4.5cm}L}
 \toprule
 \textbf{Bloque} & \textbf{Funciones} & \textbf{Descripción} \\
 \midrule
 A. Puntuales & Q1, Q2, Q3 & Calado en punto, serie temporal y velocidad en zona \\
 B. Umbrales & Q4, Q5, Q6 & Zonas inundadas, evolución de extensión y umbral configurable \\
 C. Temporales & Q7, Q8, Q9, Q11 & Hora de llegada, duración, hora de pico y ventana de emergencia \\
-D. Russo & Q10a, Q10b, Q10c, Q11b, Q17 & Peligrosidad para adultos, niños, vehículos ligeros y semáforo Russo (5 niveles por H) \\
-E. Estadísticos & Q12, Q13, Q14, Q15 & Área, volumen, estadísticos de zona y semáforo de calado (3 niveles por H) \\
-F. Evacuación & Q16 & Ventana temporal disponible para evacuación por píxel \\
+D. Russo et al.\ (2013) & Q10a, Q10b, Q10c, Q11b, Q17 & Inestabilidad adultos/niños/vehículos por umbral simplificado (H, $Q_{mod}$) y semáforo Russo (5 niveles) \\
+E. Xia et al.\ (2014/2022) & Q10a-Xia, Q10b-Xia, Q10c-Xia & Inestabilidad adultos/niños por velocidad crítica $U_{c,p}$ y arrastre de vehículos $U_{c,v}$; tres niveles de riesgo \\
+F. Estadísticos & Q12, Q13, Q14, Q15 & Área, volumen, estadísticos de zona y semáforo de calado (3 niveles) \\
+G. Evacuación & Q16 & Ventana temporal disponible para evacuación por píxel \\
+H. Daños normativos & Q18 & Zona de graves daños según RD 9/2008: $H > 1$ m, $V > 1$ m/s ó $H{\cdot}V > 0{,}5$ m$^2$/s \\
 \bottomrule
 \end{tabularx}
-\captionsetup{hypcap=false}\captionof{table}{Organización de las 20 funciones analíticas por bloque.}
+\captionsetup{hypcap=false}\captionof{table}{Organización de las 24 funciones analíticas por bloque.}
 \label{tab:bloques-queries}
 \end{center}
+
+Los bloques D y E implementan criterios de peligrosidad complementarios. El bloque D emplea umbrales operativos simplificados de Russo et al.\ \cite{russo2013}: una celda es peligrosa para adultos si $H > 0{,}50$ m o $Q_{mod} > 0{,}50$ m²/s, y para niños si $H > 0{,}25$ m o $Q_{mod} > 0{,}15$ m²/s. El bloque E incorpora el criterio experimental de Xia et al.\ \cite{xia2014} para personas y de Xia et al.\ \cite{xia2011vehicles} para vehículos, que calcula para cada celda la velocidad crítica $U_{c,p}(H)$ a partir de la cual el flujo desestabiliza al individuo. Para personas, la fórmula depende de la estatura y masa del individuo ($h_p$, $m_p$) y de seis coeficientes experimentales; cada celda se clasifica en tres niveles: segura ($V < U_{c,p}^{\text{naranja}}$), riesgo moderado ($U_{c,p}^{\text{naranja}} \leq V < U_{c,p}^{\text{roja}}$) y riesgo alto ($V \geq U_{c,p}^{\text{roja}}$). Las dos curvas acotan la incertidumbre experimental del modelo. El criterio de vehículos aplica la misma estructura con la velocidad crítica de arrastre $U_{c,v}(H)$, que varía según el grado de sumersión del vehículo. El bloque H identifica la zona de graves daños según el Real Decreto 9/2008 \cite{rd9_2008}, que establece ese umbral cuando se cumple al menos una de las condiciones $H > 1$ m, $V > 1$ m/s o $H{\cdot}V > 0{,}5$ m²/s.
 
 
 \section{Comparativa TileDB frente a GeoTIFF}\label{benchmark-vs-geotiff}

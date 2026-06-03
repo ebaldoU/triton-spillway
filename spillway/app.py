@@ -106,6 +106,18 @@ def russo_ticktext(lang: str) -> list[str]:
     ]
 
 
+def xia_risk_colorscale():
+    """Colorscale discreta para mapas de inestabilidad Xia (valores 0/1/2).
+    0=seguro(verde) | 1=riesgo moderado(naranja) | 2=riesgo alto(rojo)."""
+    return [
+        [0.000, "#2ecc71"],
+        [0.499, "#2ecc71"],
+        [0.500, "#f39c12"],
+        [0.999, "#f39c12"],
+        [1.000, "#e74c3c"],
+    ]
+
+
 CMAP_H = [   # Degradado cyan → azul, la mitad clara es la mayor parte del rango
     [0.00, "#b3e5fc"],   # cyan muy claro
     [0.12, "#81d4fa"],
@@ -205,11 +217,12 @@ _LANG = {
         "first_arrival": "Primera llegada", "last_arrival": "Última llegada",
         "mean_duration": "Duración media", "max_duration": "Duración máx",
         "cells": "Celdas", "max_volume": "Volumen máximo",
-        "danger_area_max": "Área peligrosa máxima", "mean_intensity": "Superación media",
-        "cells_danger": "Celdas en peligro",
-        "practicable_cells": "Celdas practicables",
+        "danger_area_max": "Área con inestabilidad máxima", "mean_intensity": "Superación media del umbral",
+        "peak_intensity": "Pico de superación",
+        "cells_danger": "Celdas con inestabilidad",
+        "practicable_cells": "Celdas accesibles",
         "mean_window": "Ventana media", "min_window": "Ventana mínima",
-        "max_practicable": "Área practicable máxima",
+        "max_practicable": "Área accesible máxima",
         "pixels_flooded": "Píxeles inundados",
         "already_danger": "Agua llega ya peligrosa",
         "never_danger": "Nunca peligroso",
@@ -282,20 +295,33 @@ _LANG = {
         "hover_arrival": "Llegada", "hover_duration": "Duración",
         "hover_window": "Ventana", "hover_intensity": "Superación",
         "q8_map_title": "Duración de inundación (h) · H ≥ {v:.3f} m",
-        "q11_map_title": "Ventana practicable para vehículos de emergencia (h)",
-        "q11b_evol_title": "Evolución del área practicable (H < 0.60 m)",
-        "q11b_map_title": "Practicable emergencia (H < 0.60 m) — hora {hora} h",
+        "q11_map_title": "Ventana de acceso para vehículos de emergencia (h)",
+        "q11b_evol_title": "Evolución del área accesible para emergencia (H < 0.60 m)",
+        "q11b_map_title": "Acceso de emergencia (H < 0.60 m) — hora {hora} h",
         "q12_title": "Área inundada por hora",
         "q13_title": "Volumen de agua por hora",
         "q14_evol_title": "Evolución de los estadísticos de H en zona",
         "q14_dist_title": "Distribución de H en zona — hora {hora} h",
-        "q10_evol_prefix": "Evolución del área peligrosa",
+        "q10_evol_prefix": "Evolución del área con inestabilidad",
         "q10_map_intensity": "intensidad vs umbral",
         "q15_evol_title": "Evolución del semáforo de peligro (km² apilados)",
         "q16_map_title": "Ventana de evacuación (h) · H > {h} m ó Q_mod > {q} m²/s",
         "q16_caption": "Verde = más tiempo para evacuar · Rojo = agua llega ya peligrosa · Celdas transparentes = sin datos (secas o no alcanzan umbral).",
         "q17_map_title": "Mapa de peligrosidad (semáforo Russo) — hora {hora} h",
         "q17_caption": "🟦 Somera (≤0.25 m) · 🟨 Peligroso niños (0.25–0.50) · 🟧 Peligroso adultos (0.50–1.00) · 🟥 Crítico (1.00–2.00) · 🟪 Extremo (>2.00 m) · según umbrales Russo et al. (2013)",
+        "xia_personas_title": "Inestabilidad {tipo} — Xia et al. (2014) — hora {hora} h",
+        "xia_vehiculos_title": "Inestabilidad de vehículos — Xia et al. (2022) — hora {hora} h",
+        "xia_safe": "🟢 Zona segura", "xia_moderate": "🟡 Riesgo moderado", "xia_high": "🔴 Riesgo alto",
+        "xia_caption_personas": "Criterio de inestabilidad para {tipo}: velocidad crítica U_c,p según Xia et al. (2014). 🟢 V < curva naranja · 🟡 V entre curvas · 🔴 V ≥ curva roja.",
+        "xia_caption_vehiculos": "Criterio de arrastre para Mini Cooper según Xia et al. (2022). 🟢 V < 0.5·U_c,v · 🟡 0.5·U_c,v ≤ V < U_c,v · 🔴 V ≥ U_c,v.",
+        "q18_title": "Zona de graves daños (RD 9/2008) — hora {hora} h",
+        "q18_area": "Área graves daños",
+        "q18_caption": "Zona de graves daños según Real Decreto 9/2008 (Dominio Público Hidráulico): H > 1 m, V > 1 m/s ó H·V > 0.5 m²/s.",
+        "compare_banner": "Modo comparativo activo",
+        "compare_hint": "Los mapas y gráficos muestran la misma variable para los dos eventos seleccionados. Diferencias en color o magnitud indican cuál fue más severo o cuándo llegó el frente en cada caso.",
+        "q5_compare_title": "Evolución del área inundada — comparativa",
+        "q12_compare_title": "Área inundada por hora — comparativa",
+        "max_area_a": "Área máx. (A)", "max_area_b": "Área máx. (B)", "peak_hour_a": "Pico (A)", "peak_hour_b": "Pico (B)",
         "h_max_global": "H máximo (global)", "h_mean_global": "H medio (global)",
         "median": "Mediana",
         "q15_green_max": "🟢 Verde máximo", "q15_yellow_max": "🟡 Amarillo máximo", "q15_red_max": "🔴 Rojo máximo",
@@ -305,14 +331,14 @@ _LANG = {
         "q17_adults": "🟧 Adultos 0.50-1.0", "q17_critical": "🟥 Crítico 1.0-2.0", "q17_extreme": "🟪 Extremo >2.0",
         "russo_shallow": "Somera", "russo_children": "Niños", "russo_adults": "Adultos",
         "russo_critical": "Crítico", "russo_extreme": "Extremo",
-        "q10a_label": "Adultos (H>0.50 m ó Q_mod>0.50)", "q10b_label": "Niños (H>0.25 m ó Q_mod>0.15)",
-        "q10c_label": "Vehículos ligeros (H>0.30 m)",
+        "q10a_label": "Inestabilidad de adultos (Russo et al., 2013)", "q10b_label": "Inestabilidad de niños (Russo et al., 2013)",
+        "q10c_label": "Riesgo de arrastre para vehículos (Russo et al., 2013)",
         "q17_adults_help": "En Q15 se agrupa como 'Rojo'; aquí se desglosa más fino con Q17.",
         "range_valid": "Rango válido",
         "guide_title": "📖 Guía rápida · Cómo usar Spillway",
         "guide_body": """\
 **1. Dataset** — Selecciona el evento de inundación en el panel lateral (datos1–8, años 1980–1987).
-**2. Consulta** — Elige un bloque (A–F) y la consulta que necesites (Q1–Q17) en el panel lateral.
+**2. Consulta** — Elige un bloque (A–H) y la consulta que necesites (Q1–Q18) en el panel lateral.
 **3. Parámetros** — Ajusta hora, umbral y/o ventana espacial (bbox) según la consulta seleccionada.
 **4. Ejecutar** — Pulsa **▶ Ejecutar consulta**. Las marcadas con ⚡ Auto se lanzan solas.
 
@@ -323,9 +349,11 @@ _LANG = {
 | 🎯 A | Calado/velocidad en un punto o zona pequeña | < 5 s |
 | 💧 B | Extensión de zonas inundadas a un umbral dado | < 5 s |
 | ⏱️ C | Hora de llegada del frente, duración y hora del pico | 15–90 s |
-| ⚠️ D | Peligrosidad por criterios Russo (adultos/niños/vehículos) | 5–30 s |
-| 📊 E | Estadísticos de área, volumen y calado en zona | < 10 s |
-| 🆕 F | Tiempo disponible para evacuar antes de umbral crítico | 20–60 s |
+| ⚠️ D | Inestabilidad según Russo et al. (2013): umbrales H y Q_mod | 5–30 s |
+| ⚠️ E | Inestabilidad según Xia et al. (2014/2022): velocidad crítica | 5–30 s |
+| 🔴 F | Zona de graves daños normativa (RD 9/2008) | 5–30 s |
+| 📊 G | Estadísticos de área, volumen y calado en zona | < 10 s |
+| 🚨 H | Tiempo disponible para evacuar antes de umbral crítico | 20–60 s |
 
 > 💡 **Truco**: Para las consultas lentas (Q7, Q8, Q9, Q11, Q16) activa la **bbox** en el panel lateral para acotar el área y reducir el tiempo de cálculo ×5–×10.
 > 🔍 Usa el modo **📊 Comparar datasets** para ver dos eventos de inundación en paralelo.\
@@ -373,11 +401,12 @@ _LANG = {
         "first_arrival": "First arrival", "last_arrival": "Last arrival",
         "mean_duration": "Mean duration", "max_duration": "Max duration",
         "cells": "Cells", "max_volume": "Max volume",
-        "danger_area_max": "Max danger area", "mean_intensity": "Mean exceedance",
-        "cells_danger": "Cells at risk",
-        "practicable_cells": "Accessible cells",
+        "danger_area_max": "Max instability area", "mean_intensity": "Mean threshold exceedance",
+        "peak_intensity": "Peak exceedance",
+        "cells_danger": "Cells with instability",
+        "practicable_cells": "Accessible cells (H < 0.60 m)",
         "mean_window": "Mean window", "min_window": "Min window",
-        "max_practicable": "Max accessible area",
+        "max_practicable": "Max accessible area (emergency)",
         "pixels_flooded": "Flooded pixels",
         "already_danger": "Water arrives already dangerous",
         "never_danger": "Never dangerous",
@@ -451,19 +480,32 @@ _LANG = {
         "hover_window": "Window", "hover_intensity": "Exceedance",
         "q8_map_title": "Flood duration (h) · H ≥ {v:.3f} m",
         "q11_map_title": "Accessible window for emergency vehicles (h)",
-        "q11b_evol_title": "Accessible area evolution (H < 0.60 m)",
+        "q11b_evol_title": "Emergency accessible area evolution (H < 0.60 m)",
         "q11b_map_title": "Emergency access (H < 0.60 m) — hour {hora} h",
         "q12_title": "Flooded area by hour",
         "q13_title": "Water volume by hour",
         "q14_evol_title": "H statistics evolution in zone",
         "q14_dist_title": "H distribution in zone — hour {hora} h",
-        "q10_evol_prefix": "Dangerous area evolution",
+        "q10_evol_prefix": "Instability area evolution",
         "q10_map_intensity": "intensity vs threshold",
         "q15_evol_title": "Hazard traffic-light evolution (stacked km²)",
         "q16_map_title": "Evacuation window (h) · H > {h} m or Q_mod > {q} m²/s",
         "q16_caption": "Green = more time to evacuate · Red = water already dangerous on arrival · Transparent cells = no data (dry or below threshold).",
         "q17_map_title": "Hazard map (Russo traffic-light) — hour {hora} h",
         "q17_caption": "🟦 Shallow (≤0.25 m) · 🟨 Dangerous for children (0.25–0.50) · 🟧 Dangerous for adults (0.50–1.00) · 🟥 Critical (1.00–2.00) · 🟪 Extreme (>2.00 m) · Russo et al. (2013) thresholds",
+        "xia_personas_title": "Instability ({tipo}) — Xia et al. (2014) — hour {hora} h",
+        "xia_vehiculos_title": "Vehicle instability — Xia et al. (2022) — hour {hora} h",
+        "xia_safe": "🟢 Safe zone", "xia_moderate": "🟡 Moderate risk", "xia_high": "🔴 High risk",
+        "xia_caption_personas": "Instability criterion for {tipo}: critical velocity U_c,p from Xia et al. (2014). 🟢 V < orange curve · 🟡 V between curves · 🔴 V ≥ red curve.",
+        "xia_caption_vehiculos": "Vehicle sweep criterion for Mini Cooper from Xia et al. (2022). 🟢 V < 0.5·U_c,v · 🟡 0.5·U_c,v ≤ V < U_c,v · 🔴 V ≥ U_c,v.",
+        "q18_title": "Severe damage zone (RD 9/2008) — hour {hora} h",
+        "q18_area": "Severe damage area",
+        "q18_caption": "Severe damage zone according to Real Decreto 9/2008 (Spanish Public Water Domain Regulation): H > 1 m, V > 1 m/s or H·V > 0.5 m²/s.",
+        "compare_banner": "Comparison mode active",
+        "compare_hint": "Maps and charts show the same variable for both selected flood events. Differences in colour or magnitude indicate which event was more severe or when the flood front arrived in each case.",
+        "q5_compare_title": "Flooded area evolution — comparison",
+        "q12_compare_title": "Flooded area by hour — comparison",
+        "max_area_a": "Max area (A)", "max_area_b": "Max area (B)", "peak_hour_a": "Peak (A)", "peak_hour_b": "Peak (B)",
         "h_max_global": "Max H (global)", "h_mean_global": "Mean H (global)",
         "median": "Median",
         "q15_green_max": "🟢 Max green", "q15_yellow_max": "🟡 Max yellow", "q15_red_max": "🔴 Max red",
@@ -473,14 +515,14 @@ _LANG = {
         "q17_adults": "🟧 Adults 0.50-1.0", "q17_critical": "🟥 Critical 1.0-2.0", "q17_extreme": "🟪 Extreme >2.0",
         "russo_shallow": "Shallow", "russo_children": "Children", "russo_adults": "Adults",
         "russo_critical": "Critical", "russo_extreme": "Extreme",
-        "q10a_label": "Adults (H>0.50 m or Q_mod>0.50)", "q10b_label": "Children (H>0.25 m or Q_mod>0.15)",
-        "q10c_label": "Light vehicles (H>0.30 m)",
+        "q10a_label": "Adult instability (Russo et al., 2013)", "q10b_label": "Child instability (Russo et al., 2013)",
+        "q10c_label": "Vehicle sweep risk (Russo et al., 2013)",
         "q17_adults_help": "In Q15 grouped as 'Red'; here broken down more finely with Q17.",
         "range_valid": "Valid range",
         "guide_title": "📖 Quick guide · How to use Spillway",
         "guide_body": """\
-**1. Dataset** — Select the flood event in the side panel (datos1–8, years 1980–1987).
-**2. Query** — Choose a block (A–F) and the query you need (Q1–Q17) in the side panel.
+**1. Dataset** — Select the flood event in the side panel.
+**2. Query** — Choose a block (A–H) and the query you need (Q1–Q18) in the side panel.
 **3. Parameters** — Set the hour, threshold and/or spatial window (bbox) for the selected query.
 **4. Run** — Click **▶ Run query**. Queries marked ⚡ Auto run automatically.
 
@@ -491,12 +533,14 @@ _LANG = {
 | 🎯 A | Depth/velocity at a point or small zone | < 5 s |
 | 💧 B | Extent of flooded areas at a given threshold | < 5 s |
 | ⏱️ C | Arrival time of flood front, duration, and peak hour | 15–90 s |
-| ⚠️ D | Hazard mapping using Russo criteria (adults/children/vehicles) | 5–30 s |
-| 📊 E | Area, volume, and depth statistics for a zone | < 10 s |
-| 🆕 F | Time available to evacuate before critical threshold | 20–60 s |
+| ⚠️ D | Instability by Russo et al. (2013): H and Q_mod thresholds | 5–30 s |
+| ⚠️ E | Instability by Xia et al. (2014/2022): critical velocity | 5–30 s |
+| 🔴 F | Severe damage zone: RD 9/2008 normative criterion | 5–30 s |
+| 📊 G | Area, volume, and depth statistics for a zone | < 10 s |
+| 🚨 H | Time available to evacuate before critical threshold | 20–60 s |
 
 > 💡 **Tip**: For slow queries (Q7, Q8, Q9, Q11, Q16) enable the **bbox** in the side panel to narrow the area and reduce computation time ×5–×10.
-> 🔍 Use the **📊 Compare datasets** mode to view two flood events side by side.\
+> 🔍 Use the **📊 Compare datasets** mode to overlay two flood events and identify which was more severe, where flooding extended further, or how the front arrived at different times.\
 """,
     },
 }
@@ -1279,29 +1323,31 @@ label#spw-backdrop {
     <div id="spw-es-pane">
       <p class="spw-section">como usar</p>
       <div class="spw-steps">
-        <div class="spw-step"><div class="spw-num">1</div><div class="spw-stxt"><b>Dataset</b> &mdash; Selecciona el evento de inundacion en el panel lateral (datos1&ndash;8, años 1980&ndash;1987).</div></div>
-        <div class="spw-step"><div class="spw-num">2</div><div class="spw-stxt"><b>Consulta</b> &mdash; Elige un bloque (A&ndash;F) y la consulta que necesites (Q1&ndash;Q17).</div></div>
-        <div class="spw-step"><div class="spw-num">3</div><div class="spw-stxt"><b>Parametros</b> &mdash; Ajusta hora, umbral y ventana espacial (<code>bbox</code>) en el panel lateral.</div></div>
+        <div class="spw-step"><div class="spw-num">1</div><div class="spw-stxt"><b>Dataset</b> &mdash; Selecciona el evento de inundaci&oacute;n en el panel lateral.</div></div>
+        <div class="spw-step"><div class="spw-num">2</div><div class="spw-stxt"><b>Consulta</b> &mdash; Elige un bloque (A&ndash;H) y la consulta que necesites (Q1&ndash;Q18).</div></div>
+        <div class="spw-step"><div class="spw-num">3</div><div class="spw-stxt"><b>Par&aacute;metros</b> &mdash; Ajusta hora, umbral y ventana espacial (<code>bbox</code>) en el panel lateral.</div></div>
         <div class="spw-step"><div class="spw-num">4</div><div class="spw-stxt"><b>Ejecutar</b> &mdash; Pulsa <code>&#x25B6; Ejecutar consulta</code>. Las marcadas &#x26A1; Auto se lanzan solas.</div></div>
       </div>
       <p class="spw-section">bloques de consultas</p>
       <div class="spw-blocks">
         <div class="spw-brow"><div class="spw-bicon">&#x1F3AF;</div><div class="spw-bdesc"><b>A &mdash; Puntuales y velocidad</b>Calado H y velocidad en un punto o zona (Q1&ndash;Q3)</div></div>
-        <div class="spw-brow"><div class="spw-bicon">&#x1F4A7;</div><div class="spw-bdesc"><b>B &mdash; Umbrales espaciales</b>Extension inundada a un umbral dado (Q4&ndash;Q6)</div></div>
-        <div class="spw-brow"><div class="spw-bicon">&#x23F1;&#xFE0F;</div><div class="spw-bdesc"><b>C &mdash; Indicadores temporales</b>Hora de llegada, duracion y hora del pico (Q7&ndash;Q9, Q11)</div></div>
-        <div class="spw-brow"><div class="spw-bicon">&#x26A0;&#xFE0F;</div><div class="spw-bdesc"><b>D &mdash; Peligrosidad Russo</b>Criterios adultos / ninos / vehiculos (Q10a&ndash;Q11b, Q17)</div></div>
-        <div class="spw-brow"><div class="spw-bicon">&#x1F4CA;</div><div class="spw-bdesc"><b>E &mdash; Estadisticos espaciales</b>Area, volumen y percentiles de calado (Q12&ndash;Q15)</div></div>
-        <div class="spw-brow"><div class="spw-bicon">&#x1F195;</div><div class="spw-bdesc"><b>F &mdash; Evacuacion</b>Tiempo disponible antes del umbral critico (Q16)</div></div>
+        <div class="spw-brow"><div class="spw-bicon">&#x1F4A7;</div><div class="spw-bdesc"><b>B &mdash; Umbrales espaciales</b>Extensi&oacute;n inundada a un umbral dado (Q4&ndash;Q6)</div></div>
+        <div class="spw-brow"><div class="spw-bicon">&#x23F1;&#xFE0F;</div><div class="spw-bdesc"><b>C &mdash; Indicadores temporales</b>Hora de llegada, duraci&oacute;n y hora del pico (Q7&ndash;Q9, Q11)</div></div>
+        <div class="spw-brow"><div class="spw-bicon">&#x26A0;&#xFE0F;</div><div class="spw-bdesc"><b>D &mdash; Inestabilidad Russo (2013)</b>Criterios adultos / ni&ntilde;os / veh&iacute;culos por H y Q_mod (Q10a&ndash;Q17)</div></div>
+        <div class="spw-brow"><div class="spw-bicon">&#x26A0;&#xFE0F;</div><div class="spw-bdesc"><b>E &mdash; Inestabilidad Xia (2014/2022)</b>Velocidad cr&iacute;tica para personas y veh&iacute;culos; 3 niveles (Q10a-Xia&ndash;Q10c-Xia)</div></div>
+        <div class="spw-brow"><div class="spw-bicon">&#x1F534;</div><div class="spw-bdesc"><b>F &mdash; Da&ntilde;os normativos (RD 9/2008)</b>Zona de graves da&ntilde;os: H&gt;1 m, V&gt;1 m/s &oacute; H&middot;V&gt;0,5 m&sup2;/s (Q18)</div></div>
+        <div class="spw-brow"><div class="spw-bicon">&#x1F4CA;</div><div class="spw-bdesc"><b>G &mdash; Estad&iacute;sticos espaciales</b>&Aacute;rea, volumen y percentiles de calado (Q12&ndash;Q15)</div></div>
+        <div class="spw-brow"><div class="spw-bicon">&#x1F6A8;</div><div class="spw-bdesc"><b>H &mdash; Evacuaci&oacute;n</b>Tiempo disponible antes del umbral cr&iacute;tico (Q16)</div></div>
       </div>
       <p class="spw-section">consejos</p>
-      <div class="spw-tip"><b>bbox</b> &mdash; Para Q7, Q8, Q9, Q11 y Q16 activa la ventana espacial (<code>bbox</code>) en el panel lateral. Acota el area y reduce el tiempo de calculo <b>&times;5&ndash;&times;10</b>.</div>
+      <div class="spw-tip"><b>bbox</b> &mdash; Para Q7&ndash;Q9, Q11, Q16 y las consultas Xia activa la ventana espacial en el panel lateral. Reduce el tiempo de c&aacute;lculo <b>&times;5&ndash;&times;10</b>.</div>
       <div class="spw-tip"><b>Comparar</b> &mdash; Usa el modo <code>&#x1F4CA; Comparar datasets</code> para analizar dos eventos en paralelo.</div>
     </div>
     <div id="spw-en-pane">
       <p class="spw-section">how to use</p>
       <div class="spw-steps">
-        <div class="spw-step"><div class="spw-num">1</div><div class="spw-stxt"><b>Dataset</b> &mdash; Select the flood event in the side panel (datos1&ndash;8, years 1980&ndash;1987).</div></div>
-        <div class="spw-step"><div class="spw-num">2</div><div class="spw-stxt"><b>Query</b> &mdash; Choose a block (A&ndash;F) and the query you need (Q1&ndash;Q17).</div></div>
+        <div class="spw-step"><div class="spw-num">1</div><div class="spw-stxt"><b>Dataset</b> &mdash; Select the flood event in the side panel.</div></div>
+        <div class="spw-step"><div class="spw-num">2</div><div class="spw-stxt"><b>Query</b> &mdash; Choose a block (A&ndash;H) and the query you need (Q1&ndash;Q18).</div></div>
         <div class="spw-step"><div class="spw-num">3</div><div class="spw-stxt"><b>Parameters</b> &mdash; Set the hour, threshold and spatial window (<code>bbox</code>) in the side panel.</div></div>
         <div class="spw-step"><div class="spw-num">4</div><div class="spw-stxt"><b>Run</b> &mdash; Click <code>&#x25B6; Run query</code>. Queries marked &#x26A1; Auto run automatically.</div></div>
       </div>
@@ -1310,12 +1356,14 @@ label#spw-backdrop {
         <div class="spw-brow"><div class="spw-bicon">&#x1F3AF;</div><div class="spw-bdesc"><b>A &mdash; Point queries &amp; velocity</b>Depth H and velocity at a point or zone (Q1&ndash;Q3)</div></div>
         <div class="spw-brow"><div class="spw-bicon">&#x1F4A7;</div><div class="spw-bdesc"><b>B &mdash; Spatial thresholds</b>Flooded extent at a given depth threshold (Q4&ndash;Q6)</div></div>
         <div class="spw-brow"><div class="spw-bicon">&#x23F1;&#xFE0F;</div><div class="spw-bdesc"><b>C &mdash; Temporal indicators</b>Arrival time, flood duration, peak depth hour (Q7&ndash;Q9, Q11)</div></div>
-        <div class="spw-brow"><div class="spw-bicon">&#x26A0;&#xFE0F;</div><div class="spw-bdesc"><b>D &mdash; Russo hazard</b>Hazard criteria for adults / children / vehicles (Q10a&ndash;Q11b, Q17)</div></div>
-        <div class="spw-brow"><div class="spw-bicon">&#x1F4CA;</div><div class="spw-bdesc"><b>E &mdash; Spatial statistics</b>Area, volume, and depth percentiles (Q12&ndash;Q15)</div></div>
-        <div class="spw-brow"><div class="spw-bicon">&#x1F195;</div><div class="spw-bdesc"><b>F &mdash; Evacuation</b>Time available before critical threshold (Q16)</div></div>
+        <div class="spw-brow"><div class="spw-bicon">&#x26A0;&#xFE0F;</div><div class="spw-bdesc"><b>D &mdash; Russo instability (2013)</b>H and Q_mod thresholds for adults / children / vehicles (Q10a&ndash;Q17)</div></div>
+        <div class="spw-brow"><div class="spw-bicon">&#x26A0;&#xFE0F;</div><div class="spw-bdesc"><b>E &mdash; Xia instability (2014/2022)</b>Critical velocity for people and vehicles; 3 risk levels (Q10a-Xia&ndash;Q10c-Xia)</div></div>
+        <div class="spw-brow"><div class="spw-bicon">&#x1F534;</div><div class="spw-bdesc"><b>F &mdash; Normative damage (RD 9/2008)</b>Severe damage zone: H&gt;1 m, V&gt;1 m/s or H&middot;V&gt;0.5 m&sup2;/s (Q18)</div></div>
+        <div class="spw-brow"><div class="spw-bicon">&#x1F4CA;</div><div class="spw-bdesc"><b>G &mdash; Spatial statistics</b>Area, volume, and depth percentiles (Q12&ndash;Q15)</div></div>
+        <div class="spw-brow"><div class="spw-bicon">&#x1F6A8;</div><div class="spw-bdesc"><b>H &mdash; Evacuation</b>Time available before critical threshold (Q16)</div></div>
       </div>
       <p class="spw-section">tips</p>
-      <div class="spw-tip"><b>bbox</b> &mdash; For Q7, Q8, Q9, Q11 and Q16 enable the spatial window (<code>bbox</code>) in the side panel. Narrowing the area reduces computation time <b>&times;5&ndash;&times;10</b>.</div>
+      <div class="spw-tip"><b>bbox</b> &mdash; For Q7&ndash;Q9, Q11, Q16 and Xia queries enable the spatial window in the side panel. Reduces computation time <b>&times;5&ndash;&times;10</b>.</div>
       <div class="spw-tip"><b>Compare</b> &mdash; Use <code>&#x1F4CA; Compare datasets</code> mode to analyse two flood events side by side.</div>
     </div>
   </div>
@@ -2139,6 +2187,52 @@ def q10_peligrosidad(meta, hora, tipo, bbox):
     return stream_heatmap_single(meta, hora_idx, ["H", "QX", "QY"], _build, bbox)
 
 
+# ── Xia et al.: inestabilidad personas/vehículos ─────────────────────────────
+def q10_xia(meta, hora, tipo, bbox):
+    """Mapa de inestabilidad según Xia et al. (2014/2022).
+    tipo: 'adultos' | 'ninos' | 'vehiculos'
+    Grid de salida: NaN=seco | 0=seguro | 1=riesgo moderado | 2=riesgo alto."""
+    cell2 = _cell_km2(meta)
+    def _build(res, r_s, c_s, gr, gc):
+        H = res["H"]
+        Q_mod = np.sqrt(res["QX"]**2 + res["QY"]**2)
+        if tipo == "vehiculos":
+            risk_arr = ca.xia_risk_vehiculos(H, Q_mod)
+        else:
+            risk_arr = ca.xia_risk_personas(H, Q_mod, tipo)
+        risk_grid = np.full((gr, gc), -1, dtype=np.int8)
+        np.maximum.at(risk_grid, (r_s, c_s), risk_arr.view(np.int8))
+        grid = np.where(risk_grid >= 0, risk_grid.astype(np.float32), np.nan)
+        has = risk_grid >= 0
+        n_seg  = int((risk_grid[has] == 0).sum())
+        n_mod  = int((risk_grid[has] == 1).sum())
+        n_high = int((risk_grid[has] == 2).sum())
+        return grid, has, {
+            "n_seguro": n_seg, "n_moderado": n_mod,  "n_alto": n_high,
+            "area_seguro_km2":   n_seg  * cell2,
+            "area_moderado_km2": n_mod  * cell2,
+            "area_alto_km2":     n_high * cell2,
+        }
+    hora_idx = ca.hora_a_t(hora)
+    return stream_heatmap_single(meta, hora_idx, ["H", "QX", "QY"], _build, bbox)
+
+
+# ── Q18: zona de graves daños (RD 9/2008) ────────────────────────────────────
+def q18_graves_danos(meta, hora, bbox):
+    """Zona de graves daños: H>1m OR V>1m/s OR H·V>0.5m²/s (Real Decreto 9/2008)."""
+    cell2 = _cell_km2(meta)
+    def _build(res, r_s, c_s, gr, gc):
+        H = res["H"]
+        Q_mod = np.sqrt(res["QX"]**2 + res["QY"]**2)
+        mask = ca.graves_danos_mask(H, Q_mod)
+        grid = np.full((gr, gc), np.nan, np.float32)
+        if mask.any():
+            np.maximum.at(grid, (r_s[mask], c_s[mask]), H[mask].astype(np.float32))
+        return grid, mask, {"n": int(mask.sum()), "area_km2": int(mask.sum()) * cell2}
+    hora_idx = ca.hora_a_t(hora)
+    return stream_heatmap_single(meta, hora_idx, ["H", "QX", "QY"], _build, bbox)
+
+
 # ── Q11: ventana vehículos emergencia (multi-step) ───────────────────────────
 def q11_ventana_emergencia(meta, bbox, progress=None):
     n_steps = meta["n_steps"]
@@ -2333,6 +2427,16 @@ def q15_temporal(meta, bbox, progress=None):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @st.cache_data(show_spinner=False, ttl=7200, persist="disk")
+@st.cache_data(show_spinner=False, ttl=7200, persist="disk")
+def _c_q5(dataset: str, bbox):
+    m = get_meta(dataset); setup_ca(m)
+    return ca.evolucion_extension(bbox=bbox)
+
+@st.cache_data(show_spinner=False, ttl=7200, persist="disk")
+def _c_q12(dataset: str, bbox):
+    m = get_meta(dataset); setup_ca(m)
+    return ca.area_inundada_por_hora(bbox=bbox)
+
 def _c_q7(dataset: str, bbox):
     return q7_hora_llegada(get_meta(dataset), bbox)
 
@@ -2644,23 +2748,31 @@ GRUPOS_ES = {
         "Q7 — Hora llegada del frente":        ("q7",  "Primera hora en que el agua alcanza cada píxel."),
         "Q8 — Duración de inundación":         ("q8",  "Horas totales que cada píxel está inundado."),
         "Q9 — Hora de calado máximo":          ("q9",  "Instante en que cada píxel alcanza su H máximo."),
-        "Q11 — Ventana vehículos emergencia":  ("q11", "Horas practicables para vehículos de rescate (H < 0.60 m)."),
+        "Q11 — Ventana vehículos emergencia":  ("q11", "Horas con acceso disponible para vehículos de rescate (H < 0.60 m)."),
     },
-    "⚠️ D — Peligrosidad Russo": {
-        "Q10a — Peligrosidad adultos":         ("q10a","H > 0.50 m ó Q_mod > 0.50 m²/s."),
-        "Q10b — Peligrosidad niños":           ("q10b","H > 0.25 m ó Q_mod > 0.15 m²/s."),
-        "Q10c — Peligro vehículos ligeros":    ("q10c","H > 0.30 m (arrastre)."),
-        "Q11b — Transitabilidad emergencia":   ("q11b","Celdas practicables H < 0.60 m en un instante."),
-        "Q17 — Mapa semáforo Russo":           ("q17", "Mapa categórico por umbrales Russo: somera / niños / adultos / crítico / extremo."),
+    "⚠️ D — Peligrosidad Russo et al. (2013)": {
+        "Q10a — Inestabilidad adultos (Russo)":    ("q10a", "H > 0.50 m ó Q_mod > 0.50 m²/s."),
+        "Q10b — Inestabilidad niños (Russo)":      ("q10b", "H > 0.25 m ó Q_mod > 0.15 m²/s."),
+        "Q10c — Inestabilidad vehículos (Russo)":  ("q10c", "H > 0.30 m (criterio simplificado de calado)."),
+        "Q11b — Accesibilidad de emergencia":        ("q11b", "Celdas accesibles (H < 0.60 m) en un instante dado."),
+        "Q17 — Semáforo Russo (5 niveles)":        ("q17",  "Mapa categórico por umbrales de calado: somera / niños / adultos / crítico / extremo."),
     },
-    "📊 E — Estadísticos espaciales": {
-        "Q12 — Área inundada por hora":        ("q12", "Curva temporal del área inundada."),
-        "Q13 — Volumen por hora":              ("q13", "Volumen total Σ H × 100 m²."),
-        "Q14 — Estadísticos por zona":         ("q14", "Media, máx, std, percentiles P25/50/75/95."),
-        "Q15 — Área por nivel de peligro":     ("q15", "Verde/Amarillo/Rojo por calado."),
+    "⚠️ E — Inestabilidad Xia et al. (2014/2022)": {
+        "Q10a-Xia — Inestabilidad adultos":        ("q10a_xia", "Velocidad crítica U_c,p para adulto medio (Xia et al., 2014)."),
+        "Q10b-Xia — Inestabilidad niños":          ("q10b_xia", "Velocidad crítica U_c,p para niño de 8 años (Xia et al., 2014)."),
+        "Q10c-Xia — Inestabilidad vehículos":      ("q10c_xia", "Velocidad crítica de arrastre Mini Cooper (Xia et al., 2022)."),
     },
-    "🆕 F — Evacuación": {
-        "Q16 — Tiempo de evacuación":          ("q16", "Horas disponibles para evacuar antes del umbral crítico."),
+    "🔴 F — Daños normativos (RD 9/2008)": {
+        "Q18 — Zona de graves daños":              ("q18", "H > 1 m ó V > 1 m/s ó H·V > 0.5 m²/s."),
+    },
+    "📊 G — Estadísticos espaciales": {
+        "Q12 — Área inundada por hora":        ("q12", "Evolución temporal del área inundada (km²)."),
+        "Q13 — Volumen por hora":              ("q13", "Volumen total Σ H × 100 m² por paso temporal."),
+        "Q14 — Estadísticos por zona":         ("q14", "Media, máximo, desviación típica y percentiles de calado en zona."),
+        "Q15 — Semáforo de calado (Russo)":    ("q15", "Área por nivel: Verde H≤0,25 m · Amarillo 0,25–0,50 m · Rojo H>0,50 m."),
+    },
+    "🚨 H — Evacuación": {
+        "Q16 — Tiempo de evacuación":          ("q16", "Horas disponibles para evacuar antes de alcanzar el umbral crítico de peligro."),
     },
 }
 
@@ -2681,21 +2793,29 @@ GRUPOS_EN = {
         "Q9 — Peak depth hour":                ("q9",  "Timestep at which each pixel reaches its max H."),
         "Q11 — Emergency vehicle window":      ("q11", "Hours accessible for rescue vehicles (H < 0.60 m)."),
     },
-    "⚠️ D — Russo hazard": {
-        "Q10a — Adult hazard":                 ("q10a","H > 0.50 m or Q_mod > 0.50 m²/s."),
-        "Q10b — Child hazard":                 ("q10b","H > 0.25 m or Q_mod > 0.15 m²/s."),
-        "Q10c — Light vehicle hazard":         ("q10c","H > 0.30 m (sweep risk)."),
-        "Q11b — Emergency accessibility":      ("q11b","Accessible cells H < 0.60 m at a timestep."),
-        "Q17 — Russo hazard map":              ("q17", "Categorical map by Russo thresholds: shallow / children / adults / critical / extreme."),
+    "⚠️ D — Russo et al. (2013) hazard": {
+        "Q10a — Adult instability (Russo)":        ("q10a",     "H > 0.50 m or Q_mod > 0.50 m²/s."),
+        "Q10b — Child instability (Russo)":        ("q10b",     "H > 0.25 m or Q_mod > 0.15 m²/s."),
+        "Q10c — Vehicle instability (Russo)":      ("q10c",     "H > 0.30 m (simplified depth criterion)."),
+        "Q11b — Emergency accessibility":          ("q11b",     "Cells accessible to emergency vehicles (H < 0.60 m) at a given timestep."),
+        "Q17 — Russo traffic-light (5 levels)":    ("q17",      "Categorical depth map: shallow / children / adults / critical / extreme."),
     },
-    "📊 E — Spatial statistics": {
-        "Q12 — Flooded area by hour":          ("q12", "Time curve of flooded area."),
-        "Q13 — Volume by hour":                ("q13", "Total volume Σ H × 100 m²."),
-        "Q14 — Zone statistics":               ("q14", "Mean, max, std, percentiles P25/50/75/95."),
-        "Q15 — Area by hazard level":          ("q15", "Green/Yellow/Red by depth."),
+    "⚠️ E — Xia et al. (2014/2022) instability": {
+        "Q10a-Xia — Adult instability":            ("q10a_xia", "Critical velocity U_c,p for an average adult (Xia et al., 2014)."),
+        "Q10b-Xia — Child instability":            ("q10b_xia", "Critical velocity U_c,p for an 8-year-old child (Xia et al., 2014)."),
+        "Q10c-Xia — Vehicle instability":          ("q10c_xia", "Critical sweep velocity for Mini Cooper (Xia et al., 2022)."),
     },
-    "🆕 F — Evacuation": {
-        "Q16 — Evacuation time window":        ("q16", "Hours available to evacuate before critical threshold."),
+    "🔴 F — Normative damage (RD 9/2008)": {
+        "Q18 — Severe damage zone":                ("q18",      "H > 1 m or V > 1 m/s or H·V > 0.5 m²/s."),
+    },
+    "📊 G — Spatial statistics": {
+        "Q12 — Flooded area by hour":          ("q12", "Time curve of flooded area (km²)."),
+        "Q13 — Volume by hour":                ("q13", "Total volume Σ H × 100 m² per timestep."),
+        "Q14 — Zone statistics":               ("q14", "Mean, max, std and depth percentiles for a spatial zone."),
+        "Q15 — Depth traffic-light (Russo)":   ("q15", "Area by level: Green H≤0.25 m · Yellow 0.25–0.50 m · Red H>0.50 m."),
+    },
+    "🚨 H — Evacuation": {
+        "Q16 — Evacuation time window":        ("q16", "Hours available to evacuate before reaching the critical hazard threshold."),
     },
 }
 
@@ -2710,7 +2830,8 @@ xll, yll = meta["xll"], meta["yll"]
 xmx, ymx = meta["x_max"], meta["y_max"]
 xc, yc   = (xll + xmx) / 2, (yll + ymx) / 2
 
-param_hora   = qid in {"q1", "q3", "q4", "q6", "q10a", "q10b", "q10c", "q11b", "q14", "q15", "q17"}
+param_hora   = qid in {"q1", "q3", "q4", "q6", "q10a", "q10b", "q10c", "q11b", "q14", "q15", "q17",
+                        "q10a_xia", "q10b_xia", "q10c_xia", "q18"}
 param_punto  = qid in {"q1", "q2"}
 param_bbox   = qid not in {"q1", "q2"}
 param_umbral = qid in {"q4", "q6", "q8"}
@@ -2719,7 +2840,8 @@ param_q16    = qid == "q16"
 # Consultas que aceptan modo temporal ("todas las horas")
 TEMPORAL_SUPPORT = {"q3", "q10a", "q10b", "q10c", "q11b", "q14", "q15"}
 soporta_temporal = qid in TEMPORAL_SUPPORT
-MAP_QUERIES = {"q3", "q4", "q6", "q7", "q8", "q9", "q10a", "q10b", "q10c", "q11", "q11b", "q16", "q17"}
+MAP_QUERIES = {"q3", "q4", "q6", "q7", "q8", "q9", "q10a", "q10b", "q10c", "q11", "q11b", "q16", "q17",
+               "q10a_xia", "q10b_xia", "q10c_xia", "q18"}
 
 st.sidebar.markdown(_t("params_label"))
 
@@ -2797,6 +2919,13 @@ if comparar and dataset2:
 st.title(titulo)
 
 show_dataset_summary(dataset)
+
+if comparar and dataset2:
+    st.info(
+        f"🔄 **{_t('compare_banner')}** — "
+        f"**{_dataset_display(dataset)}** · **{_dataset_display(dataset2)}**\n\n"
+        f"{_t('compare_hint')}"
+    )
 
 LIGHT_QUERIES = {"q1", "q2", "q5", "q12", "q13"}
 auto_exec = (qid in LIGHT_QUERIES) and not comparar
@@ -2968,8 +3097,9 @@ try:
                 (ca2, dataset2, grid2, x_ax2, y_ax2),
             ]:
                 with col:
-                    st.markdown(f"**{_dataset_display(ds)}**")
-                    show(heatmap_discrete(g, xa, ya, "", bands, zmax, "h",
+                    show(heatmap_discrete(g, xa, ya,
+                                          f"{map_title} — {_dataset_display(ds)}",
+                                          bands, zmax, "h",
                                           hover_fmt=".0f", hover_label=hover_label, hover_unit="h"))
                     download_geotiff_button(g, xa, ya, qid, ds)
         else:
@@ -3076,15 +3206,30 @@ try:
 
     elif qid == "q5":
         progress.progress(0.5, text=_t("iterating"))
-        res = ca.evolucion_extension(bbox=bbox)
+        res = _c_q5(dataset, bbox)
         progress.progress(1.0, text=_t("completed"))
         areas = np.array(res["area_km2"])
-        c1, c2, c3 = st.columns(3)
-        c1.metric(_t("max_area"),  f"{areas.max():.1f} km²")
-        c2.metric(_t("peak_hour"), f"{res['horas'][int(areas.argmax())]} h")
-        c3.metric(_t("mean_area"), f"{areas.mean():.1f} km²")
-        show(make_line(res["horas"], res["area_km2"],
-            _t("q5_title"), _t("hour_axis"), "Area (km²)"))
+        if comparar and dataset2:
+            res2 = _c_q5(dataset2, bbox)
+            areas2 = np.array(res2["area_km2"])
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric(_t("max_area_a"), f"{areas.max():.1f} km²")
+            c2.metric(_t("peak_hour_a"), f"{res['horas'][int(areas.argmax())]} h")
+            c3.metric(_t("max_area_b"), f"{areas2.max():.1f} km²",
+                      f"{areas2.max()-areas.max():+.1f} km²")
+            c4.metric(_t("peak_hour_b"), f"{res2['horas'][int(areas2.argmax())]} h")
+            show(make_multi_line(res["horas"],
+                [{"name": _dataset_display(dataset),  "y": res["area_km2"],  "color": "#1565c0"},
+                 {"name": _dataset_display(dataset2), "y": res2["area_km2"], "color": "#c62828"}],
+                _t("q5_compare_title"), _t("hour_axis"), "km²"))
+            setup_ca(meta)
+        else:
+            c1, c2, c3 = st.columns(3)
+            c1.metric(_t("max_area"),  f"{areas.max():.1f} km²")
+            c2.metric(_t("peak_hour"), f"{res['horas'][int(areas.argmax())]} h")
+            c3.metric(_t("mean_area"), f"{areas.mean():.1f} km²")
+            show(make_line(res["horas"], res["area_km2"],
+                _t("q5_title"), _t("hour_axis"), "Area (km²)"))
 
     elif qid == "q7":
         def _m(stats):
@@ -3142,18 +3287,32 @@ try:
             progress.progress(0.3, text=_t("loading_step"))
             grid, x_ax, y_ax, stats = _c_q10i(dataset, hora, tipo, bbox)
             progress.progress(1.0, text=_t("completed"))
-            c1, c2, c3 = st.columns(3)
             c1, c2, c3, c4 = st.columns(4)
             c1.metric(_t("cells_danger"),    f"{stats['n']:,}")
             c2.metric(_t("area"),            f"{stats['area_km2']:.2f} km²")
-            c3.metric(_t("mean_intensity"),  f"{stats['intensity_med']:.2f}x")
-            c4.metric(_t("danger_level"),    f"{stats['intensity_max']:.2f}x")
+            c3.metric(_t("mean_intensity"),  f"{stats['intensity_med']:.2f}×")
+            c4.metric(_t("peak_intensity"),  f"{stats['intensity_max']:.2f}×")
             bands, zmax = _bands_intensidad()
-            show(heatmap_discrete(
-                grid, x_ax, y_ax,
-                f"{label} — {_t('hour')} {hora} h · {_t('q10_map_intensity')}",
-                bands, zmax, "x umbral",
-                hover_fmt=".2f", hover_label=_t("hover_intensity"), hover_unit="x"))
+            map_title_q10 = f"{label} — {_t('hour')} {hora} h · {_t('q10_map_intensity')}"
+            if comparar and dataset2:
+                grid2, x_ax2, y_ax2, stats2 = _c_q10i(dataset2, hora, tipo, bbox)
+                ca1, ca2 = st.columns(2)
+                with ca1:
+                    show(heatmap_discrete(grid, x_ax, y_ax,
+                        f"{map_title_q10} — {_dataset_display(dataset)}",
+                        bands, zmax, "x umbral",
+                        hover_fmt=".2f", hover_label=_t("hover_intensity"), hover_unit="x"))
+                    download_geotiff_button(grid, x_ax, y_ax, qid, dataset, hora)
+                with ca2:
+                    show(heatmap_discrete(grid2, x_ax2, y_ax2,
+                        f"{map_title_q10} — {_dataset_display(dataset2)}",
+                        bands, zmax, "x umbral",
+                        hover_fmt=".2f", hover_label=_t("hover_intensity"), hover_unit="x"))
+                    download_geotiff_button(grid2, x_ax2, y_ax2, qid, dataset2, hora)
+            else:
+                show(heatmap_discrete(grid, x_ax, y_ax, map_title_q10,
+                    bands, zmax, "x umbral",
+                    hover_fmt=".2f", hover_label=_t("hover_intensity"), hover_unit="x"))
 
     elif qid == "q11":
         with st.spinner(_t("calc_emergency")):
@@ -3196,14 +3355,29 @@ try:
 
     elif qid == "q12":
         progress.progress(0.5, text=_t("iterating"))
-        res = ca.area_inundada_por_hora(bbox=bbox)
+        res = _c_q12(dataset, bbox)
         progress.progress(1.0, text=_t("completed"))
         areas = np.array(res["area_km2"])
-        c1, c2 = st.columns(2)
-        c1.metric(_t("max_area"),  f"{areas.max():.1f} km²")
-        c2.metric(_t("peak_hour"), f"{res['horas'][int(areas.argmax())]} h")
-        show(make_line(res["horas"], res["area_km2"],
-            _t("q12_title"), _t("hour_axis"), "Area (km²)"))
+        if comparar and dataset2:
+            res2 = _c_q12(dataset2, bbox)
+            areas2 = np.array(res2["area_km2"])
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric(_t("max_area_a"), f"{areas.max():.1f} km²")
+            c2.metric(_t("peak_hour_a"), f"{res['horas'][int(areas.argmax())]} h")
+            c3.metric(_t("max_area_b"), f"{areas2.max():.1f} km²",
+                      f"{areas2.max()-areas.max():+.1f} km²")
+            c4.metric(_t("peak_hour_b"), f"{res2['horas'][int(areas2.argmax())]} h")
+            show(make_multi_line(res["horas"],
+                [{"name": _dataset_display(dataset),  "y": res["area_km2"],  "color": "#1565c0"},
+                 {"name": _dataset_display(dataset2), "y": res2["area_km2"], "color": "#c62828"}],
+                _t("q12_compare_title"), _t("hour_axis"), "km²"))
+            setup_ca(meta)
+        else:
+            c1, c2 = st.columns(2)
+            c1.metric(_t("max_area"),  f"{areas.max():.1f} km²")
+            c2.metric(_t("peak_hour"), f"{res['horas'][int(areas.argmax())]} h")
+            show(make_line(res["horas"], res["area_km2"],
+                _t("q12_title"), _t("hour_axis"), "Area (km²)"))
 
     elif qid == "q13":
         progress.progress(0.5, text=_t("iterating"))
@@ -3325,6 +3499,45 @@ try:
             hover_fmt=".0f", hover_label=_t("hover_window"), hover_unit="h"))
         st.caption(_t("q16_caption"))
         download_geotiff_button(grid, x_ax, y_ax, "q16", dataset)
+
+    # ── Q10a/b/c-Xia: inestabilidad según Xia et al. (2014/2022) ────────────
+    elif qid in ("q10a_xia", "q10b_xia", "q10c_xia"):
+        tipo_xia = {"q10a_xia": "adultos", "q10b_xia": "ninos", "q10c_xia": "vehiculos"}[qid]
+        progress.progress(0.3, text=_t("loading_step"))
+        grid, x_ax, y_ax, stats = q10_xia(meta, hora, tipo_xia, bbox)
+        progress.progress(1.0, text=_t("completed"))
+        c1, c2, c3 = st.columns(3)
+        c1.metric(_t("xia_safe"),     f"{stats.get('area_seguro_km2', 0):.1f} km²")
+        c2.metric(_t("xia_moderate"), f"{stats.get('area_moderado_km2', 0):.1f} km²")
+        c3.metric(_t("xia_high"),     f"{stats.get('area_alto_km2', 0):.1f} km²")
+        cmap = xia_risk_colorscale()
+        if tipo_xia == "vehiculos":
+            title = _t("xia_vehiculos_title").format(hora=hora)
+            caption = _t("xia_caption_vehiculos")
+        else:
+            tipo_label = "adultos" if tipo_xia == "adultos" else "niños"
+            title = _t("xia_personas_title").format(tipo=tipo_label, hora=hora)
+            caption = _t("xia_caption_personas").format(tipo=tipo_label)
+        show(make_heatmap(grid, x_ax, y_ax, title, cmap, "riesgo",
+            zmin=0.0, zmax=2.0,
+            cbar_tickvals=[0.33, 1.0, 1.67],
+            cbar_ticktext=[_t("xia_safe"), _t("xia_moderate"), _t("xia_high")],
+            hover_label="nivel", hover_unit="", zsmooth=False))
+        st.caption(caption)
+        download_geotiff_button(grid, x_ax, y_ax, qid, dataset, hora)
+
+    # ── Q18: zona de graves daños (RD 9/2008) ───────────────────────────────
+    elif qid == "q18":
+        progress.progress(0.3, text=_t("loading_step"))
+        grid, x_ax, y_ax, stats = q18_graves_danos(meta, hora, bbox)
+        progress.progress(1.0, text=_t("completed"))
+        st.metric(_t("q18_area"), f"{stats.get('area_km2', 0):.1f} km²")
+        show(make_heatmap(grid, x_ax, y_ax,
+            _t("q18_title").format(hora=hora),
+            [[0.0, "#ffcccc"], [1.0, "#cc0000"]], "H (m)",
+            hover_label="H", hover_unit="m"))
+        st.caption(_t("q18_caption"))
+        download_geotiff_button(grid, x_ax, y_ax, "q18", dataset, hora)
 
     progress.empty()
     elapsed = time.perf_counter() - t_start

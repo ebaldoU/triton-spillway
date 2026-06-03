@@ -1,6 +1,6 @@
 \chapter{Catálogo completo de consultas analíticas}\label{anexo-a.-catalogo-completo-de-consultas-analiticas}
 
-Este anexo recoge la descripción de las 20 consultas implementadas en el motor analítico. Las consultas que operan sobre una zona geográfica permiten delimitar esa zona mediante un rectángulo de coordenadas; si no se especifica ninguna, operan sobre el dominio completo de la simulación. El tiempo se expresa en horas de simulación, con pasos de 6 horas (hora 6, 12, 18... hasta hora 120).
+Este anexo recoge la descripción de las 24 consultas implementadas en el motor analítico. Las consultas que operan sobre una zona geográfica permiten delimitar esa zona mediante un rectángulo de coordenadas; si no se especifica ninguna, operan sobre el dominio completo de la simulación. El tiempo se expresa en horas de simulación, con pasos de 6 horas (hora 6, 12, 18... hasta hora 120).
 
 \section{Bloque A. Consultas básicas y de velocidad}\label{bloque-a.-consultas-basicas-y-de-velocidad}
 
@@ -40,9 +40,23 @@ Q10c. Peligro para vehículos ligeros: identifica las celdas donde el calado sup
 
 Q11b. Transitabilidad para vehículos de emergencia: identifica las celdas húmedas donde el calado es inferior a 0,60 m y, por tanto, todavía son accesibles para vehículos de emergencia.
 
-Q17. Semáforo global de peligrosidad: genera un mapa categórico con cinco niveles de riesgo basados en el calado. Los dos umbrales intermedios provienen de Russo et al. (2013): 0,25 m para niños y 0,50 m para adultos. Los niveles son: Somera (H $\leq$ 0,25 m), Peligrosa para niños (0,25--0,50 m), Peligrosa para adultos (0,50--1,00 m), Crítica (1,00--2,00 m) y Extrema (H $>$ 2,00 m), donde los dos últimos son niveles adicionales de severidad extrema.
+Q17. Semáforo global de peligrosidad: genera un mapa categórico con cinco niveles de riesgo basados en el calado. Los dos umbrales intermedios provienen de Russo et al.\ \cite{russo2013}: 0,25 m para niños y 0,50 m para adultos. Los niveles son: Somera (H $\leq$ 0,25 m), Peligrosa para niños (0,25--0,50 m), Peligrosa para adultos (0,50--1,00 m), Crítica (1,00--2,00 m) y Extrema (H $>$ 2,00 m). Los dos últimos niveles (Crítica y Extrema) son extensiones del criterio que gradúan la severidad extrema pero no están en la referencia original.
 
-\section{Bloque E. Estadísticos espaciales}\label{bloque-e.-estadisticos-espaciales}
+\section{Bloque E. Inestabilidad hidrodinámica (Xia et al., 2014/2022)}\label{bloque-e.-inestabilidad-xia}
+
+Este bloque aplica los modelos de inestabilidad experimental de Xia et al.\ \cite{xia2014} para personas y de Xia et al.\ \cite{xia2011vehicles} para vehículos. A diferencia del bloque D, que usa umbrales fijos sobre H y $Q_{mod}$, estos criterios computan para cada celda la velocidad crítica a partir de la cual el flujo desestabiliza al individuo o arrastra al vehículo, en función del calado local.
+
+Para personas, la velocidad crítica $U_{c,p}(H)$ depende de la estatura y masa del individuo ($h_p$, $m_p$) y de seis coeficientes experimentales. El modelo proporciona dos curvas que acotan la incertidumbre: la curva naranja ($\alpha = 3{,}472$, $\beta = 0{,}188$) define el umbral de inicio de la zona de riesgo moderado, y la curva roja ($\alpha = 7{,}867$, $\beta = 0{,}462$) el umbral de riesgo alto. Cada celda se clasifica en tres niveles: segura ($V < U_{c,p}^{\text{naranja}}$), riesgo moderado ($U_{c,p}^{\text{naranja}} \leq V < U_{c,p}^{\text{roja}}$) y riesgo alto ($V \geq U_{c,p}^{\text{roja}}$), donde $V = Q_{mod}/H$ es la velocidad media.
+
+Para vehículos, la velocidad crítica de arrastre $U_{c,v}(H)$ se obtiene de Xia et al.\ \cite{xia2011vehicles} para un Mini Cooper ($H_c = 1{,}417$ m, $\rho_c = 1\,009$ kg/m³), con parámetros distintos según el grado de sumersión: parcial ($H < H_c$: $\alpha = 1{,}225$, $\beta = -0{,}708$) y total ($H \geq H_c$: $\alpha = 0{,}932$, $\beta = 0{,}121$). La curva naranja corresponde a $0{,}5 \times U_{c,v}$ y la roja a $U_{c,v}$.
+
+Q10a-Xia. Inestabilidad de adultos (Xia et al., 2014): mapa de riesgo de inestabilidad para un adulto medio español ($h_p = 1{,}68$ m, $m_p = 73{,}76$ kg) en tres niveles: seguro, moderado y alto.
+
+Q10b-Xia. Inestabilidad de niños (Xia et al., 2014): mapa de riesgo de inestabilidad para un niño de 8 años ($h_p = 1{,}26$ m, $m_p = 25{,}64$ kg) con los mismos tres niveles. Los umbrales son más estrictos al ser la masa y estatura menores.
+
+Q10c-Xia. Inestabilidad de vehículos (Xia et al., 2022): mapa de riesgo de arrastre para un turismo tipo Mini Cooper en tres niveles. El cambio de régimen al alcanzar la altura del vehículo ($H_c$) produce un salto en la curva de velocidad crítica.
+
+\section{Bloque F. Estadísticos espaciales}\label{bloque-f.-estadisticos-espaciales}
 
 Q12. Área inundada por hora: calcula el área total inundada (en km\textsuperscript{2}) en cada paso temporal.
 
@@ -52,7 +66,19 @@ Q14. Estadísticos por zona: dada una zona y una hora, calcula media, máximo, m
 
 Q15. Semáforo de área por nivel de peligro: clasifica el área inundada en tres niveles según el calado: bajo (hasta 0,25 m), medio (entre 0,25 y 0,50 m) y alto (más de 0,50 m).
 
-\section{Bloque F. Evacuación}\label{bloque-f.-evacuacion}
+\section{Bloque G. Evacuación}\label{bloque-g.-evacuacion}
 
 Q16. Tiempo de evacuación disponible: para cada celda, calcula el tiempo disponible para evacuar antes de que la situación se vuelva peligrosa. Un valor negativo indica que la celda nunca alcanza el nivel crítico; un valor cero indica que ya es peligrosa en el momento en que el agua llega.
+
+\section{Bloque H. Daños normativos (Real Decreto 9/2008)}\label{bloque-h.-danos-normativos}
+
+Este bloque implementa el criterio legal de zona de graves daños establecido en el Real Decreto 9/2008 \cite{rd9_2008}, que modifica el Reglamento del Dominio Público Hidráulico. Según dicho reglamento, se considerará que pueden producirse graves daños sobre las personas y los bienes cuando durante la inundación se cumpla al menos una de las siguientes condiciones:
+
+\begin{itemize}
+\item Calado superior a 1 m ($H > 1$ m).
+\item Velocidad superior a 1 m/s ($V > 1$ m/s, equivalente a $Q_{mod} > H$ m²/s).
+\item Producto calado por velocidad superior a 0,5 m²/s ($H \cdot V = Q_{mod} > 0{,}5$ m²/s).
+\end{itemize}
+
+Q18. Zona de graves daños (RD 9/2008): para un paso temporal dado, identifica las celdas que cumplen al menos uno de los tres criterios anteriores y calcula el área total afectada en km². El mapa de salida muestra el calado en las celdas de graves daños, lo que permite identificar visualmente las zonas más severamente afectadas.
 

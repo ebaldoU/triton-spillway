@@ -53,6 +53,30 @@ H_NINO       = 0.25
 H_VEHICULO   = 0.30
 H_EMERGENCIA = 0.60
 
+# ── Criterio Xia et al. (2014) — Inestabilidad de personas ────
+# Parámetros: adulto medio español [20] y niño de 8 años [21]
+XIA_ADULTO_HP  = 1.68      # estatura adulto (m)
+XIA_ADULTO_MP  = 73.76     # masa adulto (kg)
+XIA_NINO_HP    = 1.26      # estatura niño (m)
+XIA_NINO_MP    = 25.64     # masa niño (kg)
+# Coeficientes experimentales [19]
+XIA_A1 = 0.633; XIA_B1 = 0.367; XIA_A2 = 1.015e-3; XIA_B2 = -4.927e-3
+XIA_RHO_F      = 1000.0    # densidad del agua (kg/m³)
+XIA_ALPHA_LOW  = 3.472;    XIA_BETA_LOW  = 0.188   # curva naranja (inicio zona moderada)
+XIA_ALPHA_HIGH = 7.867;    XIA_BETA_HIGH = 0.462   # curva roja (inicio zona alta)
+
+# ── Criterio Xia et al. (2022) — Inestabilidad de vehículos ───
+# Parámetros para Mini Cooper [22]
+XIA_VEH_HC    = 1.417      # altura del vehículo (m)
+XIA_VEH_RHO_C = 1009.0     # densidad del vehículo (kg/m³)
+XIA_VEH_A_PAR = 1.225;     XIA_VEH_B_PAR = -0.708   # parcialmente sumergido (H < H_c)
+XIA_VEH_A_TOT = 0.932;     XIA_VEH_B_TOT =  0.121   # totalmente sumergido (H ≥ H_c)
+
+# ── Graves daños — Real Decreto 9/2008 ────────────────────────
+GD_H  = 1.0    # umbral de calado (m)
+GD_V  = 1.0    # umbral de velocidad (m/s)
+GD_HV = 0.5    # umbral de producto H·V = Q_mod (m²/s)
+
 
 # ── Conversiones auxiliares ───────────────────────────────────
 
@@ -484,6 +508,63 @@ def tiempo_evacuacion(umbral_critico_m: float = H_ADULTO,
         "umbral_critico_m": umbral_critico_m,
         "umbral_qmod":      umbral_qmod,
     }
+
+
+def xia_ucrit_personas(H: np.ndarray, tipo: str = 'adultos'):
+    """Velocidades críticas de inestabilidad para personas (Xia et al., 2014).
+    Devuelve (ucrit_low, ucrit_high) para la curva naranja y la roja."""
+    h_p = XIA_ADULTO_HP if tipo == 'adultos' else XIA_NINO_HP
+    m_p = XIA_ADULTO_MP if tipo == 'adultos' else XIA_NINO_MP
+    H_s = np.maximum(H, 0.001)
+    def _u(alpha, beta):
+        inner = (m_p / (XIA_RHO_F * H_s**2)
+                 - (XIA_A1/h_p**2 + XIA_B1/(H_s * h_p)) * (XIA_A2 * m_p + XIA_B2))
+        return alpha * (H_s / h_p)**beta * np.sqrt(np.maximum(inner, 0.0))
+    return _u(XIA_ALPHA_LOW, XIA_BETA_LOW), _u(XIA_ALPHA_HIGH, XIA_BETA_HIGH)
+
+
+def xia_risk_personas(H: np.ndarray, Q_mod: np.ndarray, tipo: str = 'adultos') -> np.ndarray:
+    """Nivel de inestabilidad para personas (Xia et al., 2014).
+    0 = seguro | 1 = riesgo moderado (V ≥ curva naranja) | 2 = riesgo alto (V ≥ curva roja)."""
+    V = Q_mod / np.maximum(H, 0.001)
+    uc_low, uc_high = xia_ucrit_personas(H, tipo)
+    risk = np.zeros(len(H), dtype=np.uint8)
+    risk[V >= uc_low]  = 1
+    risk[V >= uc_high] = 2
+    return risk
+
+
+def xia_ucrit_vehiculos(H: np.ndarray):
+    """Velocidades críticas de arrastre para vehículos (Xia et al., 2022).
+    Devuelve (ucrit_low=0.5×ucrit, ucrit_high=ucrit) para curva naranja y roja."""
+    import math
+    g = 9.81
+    buoyancy = math.sqrt(
+        max((XIA_VEH_RHO_C - XIA_RHO_F) / XIA_RHO_F * 2 * g * XIA_VEH_HC, 0.0))
+    H_s = np.maximum(H, 0.001)
+    partial = H_s < XIA_VEH_HC
+    alpha = np.where(partial, XIA_VEH_A_PAR, XIA_VEH_A_TOT)
+    beta  = np.where(partial, XIA_VEH_B_PAR, XIA_VEH_B_TOT)
+    ucrit = alpha * (H_s / XIA_VEH_HC)**beta * buoyancy
+    return ucrit * 0.5, ucrit
+
+
+def xia_risk_vehiculos(H: np.ndarray, Q_mod: np.ndarray) -> np.ndarray:
+    """Nivel de riesgo de arrastre para vehículos (Xia et al., 2022).
+    0 = seguro | 1 = riesgo moderado | 2 = riesgo alto."""
+    V = Q_mod / np.maximum(H, 0.001)
+    uc_low, uc_high = xia_ucrit_vehiculos(H)
+    risk = np.zeros(len(H), dtype=np.uint8)
+    risk[V >= uc_low]  = 1
+    risk[V >= uc_high] = 2
+    return risk
+
+
+def graves_danos_mask(H: np.ndarray, Q_mod: np.ndarray) -> np.ndarray:
+    """Máscara de zona de graves daños según Real Decreto 9/2008.
+    Criterio: H > 1 m  OR  V > 1 m/s  OR  H·V > 0,5 m²/s."""
+    V = Q_mod / np.maximum(H, 0.001)
+    return (H > GD_H) | (V > GD_V) | (Q_mod > GD_HV)
 
 
 def russo_traffic_light_counts(H: np.ndarray) -> tuple[int, int, int]:
