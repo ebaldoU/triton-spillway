@@ -1,0 +1,108 @@
+\chapter{Guía de Despliegue y Estructura del Proyecto}\label{anexo-e.-guia-de-despliegue}
+
+Este anexo describe la estructura de ficheros del proyecto, los requisitos del sistema y los pasos necesarios para reproducir el entorno de desarrollo o desplegar la aplicación web en un servidor.
+
+\section{Estructura de ficheros}\label{e.1-estructura-de-ficheros}
+
+El proyecto se organiza en dos directorios: el directorio de datos (donde residen los arrays TileDB) y el directorio de código (\texttt{spillway/}). La estructura esperada es la siguiente:
+
+\begin{verbatim}
+<directorio-datos>/
+  triton_results/              % arrays TileDB (17-21 GB por escenario)
+    output_10_..._<fechas>/    % datos1
+    output_10_..._<fechas>/    % datos2
+    ...
+  datos1/                      % GeoTIFF fuente (solo para ETL)
+    H_06_00.tif
+    QX_06_00.tif
+    ...
+
+spillway/
+  config.py                    % alias de datasets y rutas base
+  geotiff_to_tiledb_sparse.py  % ETL: GeoTIFF -> TileDB sparse
+  consultas_analiticas.py      % motor de consultas: 24 funciones
+  app.py                       % aplicación web Streamlit
+  verify_tiledb.py             % verificación de integridad
+\end{verbatim}
+
+\section{Requisitos del sistema}\label{e.2-requisitos}
+
+\begin{itemize}
+\item \textbf{Sistema operativo:} Linux (Ubuntu 22.04+ recomendado) o Windows con WSL2.
+\item \textbf{Python:} 3.10 o superior.
+\item \textbf{RAM:} 16 GB mínimo recomendados para el ETL de un \textit{dataset} completo. El pico durante la ingesta ($\sim$4 GB) proviene de los acumuladores de coordenadas y los buffers de lectura por franjas; para la aplicación web en uso normal, 8 GB son suficientes.
+\item \textbf{Disco:} 17--21 GB por \textit{dataset} procesado en TileDB. Los GeoTIFF fuente ($\sim$235 GB por escenario) solo son necesarios durante la ingesta; después pueden eliminarse del servidor.
+\item \textbf{CPU:} Sin requisitos especiales; el ETL paraleliza la lectura de los 4 GeoTIFF con \texttt{ThreadPoolExecutor}.
+\end{itemize}
+
+\section{Instalación del entorno Python}\label{e.3-instalacion}
+
+Se recomienda usar un entorno virtual para aislar las dependencias:
+
+\begin{verbatim}
+python3 -m venv venv
+source venv/bin/activate        # Linux/macOS
+# venv\Scripts\activate         # Windows
+
+pip install -r requirements.txt
+\end{verbatim}
+
+Las versiones de referencia del proyecto son: TileDB 0.36.1, rasterio 1.5.0, NumPy 2.4.4 y Streamlit 1.36. El fichero \texttt{requirements.txt} del repositorio especifica las versiones mínimas compatibles.
+
+\section{Configuración de la ruta base}\label{e.4-configuracion}
+
+La variable de entorno \texttt{TRITON\_BASE\_URI} indica al sistema dónde encontrar los arrays TileDB. Debe apuntar al directorio que contiene \texttt{triton\_results/}:
+
+\begin{verbatim}
+export TRITON_BASE_URI=/ruta/al/directorio/de/datos
+\end{verbatim}
+
+Opcionalmente, \texttt{TRITON\_GTIFF\_DIR} indica el directorio raíz donde están las carpetas de GeoTIFF fuente (necesario solo para el ETL):
+
+\begin{verbatim}
+export TRITON_GTIFF_DIR=/ruta/al/directorio/de/datos
+\end{verbatim}
+
+Si \texttt{TRITON\_BASE\_URI} no se define, \texttt{config.py} deriva la ruta desde la ubicación del propio fichero. Si el directorio no existe, el error se produce al arrancar (no silenciosamente). Para evitar ambigüedades, se recomienda definir siempre la variable de forma explícita.
+
+\section{Ejecución del ETL}\label{e.5-etl}
+
+Para convertir los GeoTIFF de un escenario a TileDB:
+
+\begin{verbatim}
+cd spillway/
+python geotiff_to_tiledb_sparse.py --dataset datos1
+\end{verbatim}
+
+El proceso tarda aproximadamente 10 minutos por \textit{dataset} con un pico de RAM de $\sim$4 GB. Al finalizar, verifica automáticamente la integridad del array creado. Si el array ya existe, lo elimina y lo recrea desde cero.
+
+\section{Arranque de la aplicación en local}\label{e.6-app-local}
+
+\begin{verbatim}
+cd spillway/
+python -m streamlit run app.py
+\end{verbatim}
+
+La aplicación se sirve en \texttt{http://localhost:8501} y detecta automáticamente los \textit{datasets} disponibles en \texttt{TRITON\_BASE\_URI}.
+
+\section{Despliegue en servidor}\label{e.7-despliegue-servidor}
+
+La aplicación puede desplegarse como servicio \texttt{systemd} para que arranque automáticamente con el servidor. El flujo general es:
+
+\begin{enumerate}
+\item Transferir los arrays TileDB al servidor (por ejemplo con \texttt{rsync}), usando \texttt{-\/-delete} para eliminar fragmentos obsoletos de versiones anteriores.
+
+\item Transferir el código Python (\texttt{spillway/*.py}).
+
+\item Crear un fichero de unidad \texttt{systemd} que defina la variable \texttt{TRITON\_BASE\_URI} y ejecute \texttt{streamlit run app.py} en modo \textit{headless}.
+
+\item Habilitar e iniciar el servicio con \texttt{systemctl enable} y \texttt{systemctl start}.
+\end{enumerate}
+
+Para acceder a la aplicación en producción desde un equipo local, se puede establecer un túnel SSH:
+
+\begin{verbatim}
+ssh -L 8501:localhost:8501 usuario@servidor
+\end{verbatim}
+
+Mientras el túnel esté activo, la aplicación es accesible en \texttt{http://localhost:8501}.

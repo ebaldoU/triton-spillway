@@ -30,8 +30,8 @@ from config import resolve_dataset
 
 from config import BASE_URI as _BASE_URI_IMPORT
 BASE_URI = _BASE_URI_IMPORT
-SCRIPTS  = Path("/home/ebald/spillway")
-VENV     = Path("/home/ebald/venvs/tiledb_env")
+SCRIPTS  = Path(__file__).parent
+VENV     = Path(os.environ.get("VIRTUAL_ENV", str(Path(__file__).parent.parent / "venv")))
 H_WET    = 0.01
 H_ADULTO = 0.50
 HV_ADULTO= 0.50

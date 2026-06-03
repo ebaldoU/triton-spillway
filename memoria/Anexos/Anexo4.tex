@@ -30,7 +30,7 @@ El script llama a \texttt{create\_sparse\_array()} para crear el array con la si
 \item \textbf{Orden de celdas y tiles:} \texttt{row-major} en ambos casos.
 \item \textbf{Dimensiones:} \texttt{time} (int32, rango 0--19, tile=16), \texttt{row} (int32, rango 0--34\,199, tile=256), \texttt{col} (int32, rango 0--23\,039, tile=256).
 \item \textbf{Atributos:} H, QX, QY, MH (todos float32), con el filtro ByteShuffle + ZSTD-9 aplicado individualmente a cada atributo.
-\item \textbf{Filtro de compresión:} \texttt{tiledb.ByteShuffleFilter()} seguido de \texttt{tiledb.ZstdFilter(level=9)}, elegidos tras el benchmark del Anexo B (reducción adicional del 8,9\,\% frente a ZSTD-1 sin penalización en lectura).
+\item \textbf{Filtro de compresión:} \texttt{tiledb.ByteShuffleFilter()} seguido de \texttt{tiledb.ZstdFilter(level=9)}, elegidos tras el benchmark del \hyperref[anexo-b.-tablas-de-resultados-completas]{Anexo~B} (reducción adicional del 8,9\,\% frente a ZSTD-1 sin penalización en lectura).
 \end{itemize}
 
 Si el array ya existe en disco, el script lo elimina antes de recrearlo para evitar la acumulación de fragmentos de ejecuciones anteriores.
@@ -87,14 +87,14 @@ Tras completar la escritura de los 20 fragmentos, el script almacena en el propi
 \label{tab:etl-metadata}
 \end{table}
 
-Estos metadatos permiten al motor de consultas reconstruir el georeferenciado sin necesidad de conservar los GeoTIFF originales.
+Estos metadatos permiten al motor de consultas reconstruir el georeferenciado sin necesidad de conservar los GeoTIFF originales, lo que hace posible desplegar el sistema en un servidor donde solo se transfieren los arrays TileDB (17--21 GB por escenario) y no los datos brutos (~235 GB). La clave \texttt{zero\_rule} garantiza la interoperabilidad: cualquier celda ausente en el array equivale a valor cero, convención necesaria para que la exportación a GeoTIFF produzca rásters completos con nodata correctamente asignado.
 
 \section{Ejecución e instrucciones de uso}\label{d.6-ejecucion}
 
 \subsection{Requisitos previos}\label{d.6.1-requisitos}
 
 \begin{itemize}
-\item Los 80 ficheros GeoTIFF del escenario deben estar disponibles en el directorio fuente (por defecto \texttt{/home/ebald/TFG/\{dataset\}}).
+\item Los 80 ficheros GeoTIFF del escenario deben estar disponibles en el directorio fuente apuntado por \texttt{TRITON\_GTIFF\_DIR/<dataset>}.
 \item La variable de entorno \texttt{TRITON\_BASE\_URI} debe apuntar al directorio donde se crearán los arrays TileDB. Si no se define, se utiliza el valor por defecto configurado en \texttt{config.py}.
 \item El entorno Python debe incluir las dependencias: \texttt{tiledb>=0.30}, \texttt{rasterio>=1.3}, \texttt{numpy>=1.24}.
 \end{itemize}
@@ -102,15 +102,15 @@ Estos metadatos permiten al motor de consultas reconstruir el georeferenciado si
 \subsection{Comando de ejecución}\label{d.6.2-comando}
 
 \begin{verbatim}
-cd /home/ebald/spillway
-/home/ebald/venvs/tiledb_env/bin/python \
-    geotiff_to_tiledb_sparse.py --dataset datos1
+cd spillway/
+python geotiff_to_tiledb_sparse.py --dataset datos1
 \end{verbatim}
 
-Para ejecutar en el servidor de producción (variable de entorno necesaria):
+Si las variables de entorno no están exportadas en la sesión, pueden pasarse en línea:
 
 \begin{verbatim}
-TRITON_BASE_URI=/home/ubuntu/TFG/tiledb/triton_results \
+TRITON_BASE_URI=/ruta/triton_results \
+TRITON_GTIFF_DIR=/ruta/datos \
     python geotiff_to_tiledb_sparse.py --dataset datos1
 \end{verbatim}
 
@@ -120,7 +120,7 @@ Al finalizar la ingesta el script imprime un resumen similar al siguiente (valor
 
 \begin{verbatim}
 Dataset: datos1
-  GTIFF_DIR:  /home/ebald/TFG/datos1
+  GTIFF_DIR:  $TRITON_GTIFF_DIR/datos1
   TILEDB_URI: .../output_10_..._19800728_19800801
 Pasos encontrados: 20
 Resolución: 23040 x 34200 px  |  Franja: 5000 filas
