@@ -83,7 +83,7 @@ Si alguna variable no se define, \texttt{config.py} aplica estos valores por def
 \textbf{Variable} & \textbf{Default} \\
 \midrule
 \texttt{TRITON\_BASE\_URI} & Directorio \texttt{triton\_results/} relativo a la ubicación de \texttt{config.py} \\
-\texttt{TRITON\_GTIFF\_DIR} & Padre del padre de \texttt{TRITON\_BASE\_URI} (asume la estructura estándar del proyecto) \\
+\texttt{TRITON\_GTIFF\_DIR} & Dos niveles por encima de \texttt{TRITON\_BASE\_URI}. En la estructura estándar (\texttt{TFG/tiledb/triton\_results}), apunta a \texttt{TFG/}, donde están \texttt{datos1/}, \texttt{datos2/}, \ldots \\
 \texttt{TRITON\_OUTPUT\_DIR} & \texttt{<TRITON\_BASE\_URI>/../export} \\
 \bottomrule
 \end{tabularx}
