@@ -93,6 +93,29 @@ Si alguna variable no se define, \texttt{config.py} aplica estos valores por def
 
 Si la estructura de directorios no sigue el convenio del proyecto, se recomienda definir las tres variables de forma explícita para evitar errores silenciosos.
 
+La estructura concreta del proyecto es la siguiente:
+
+\begin{verbatim}
+TFG/
+  tiledb/
+    triton_results/              <- TRITON_BASE_URI
+      output_10_..._datos1/      <- array TileDB de datos1 (17-21 GB)
+      output_10_..._datos2/
+      ...
+      output_10_..._datos56/
+  datos1/                        <- TRITON_GTIFF_DIR/datos1
+    H_06_00.tif                    (calado, paso 1)
+    QX_06_00.tif                   (caudal X, paso 1)
+    QY_06_00.tif                   (caudal Y, paso 1)
+    MH_06_00.tif                   (calado máximo, paso 1)
+    H_12_00.tif  ...               (20 pasos x 4 variables = 80 ficheros)
+  datos2/                        <- TRITON_GTIFF_DIR/datos2
+    ...
+  export/                        <- TRITON_OUTPUT_DIR
+\end{verbatim}
+
+\noindent Los GeoTIFF de cada escenario solo son necesarios durante la ingesta con el ETL. Una vez generado el array TileDB, la carpeta \texttt{datosN/} puede eliminarse del servidor para liberar espacio (~235 GB por escenario).
+
 \section{Ejecución del ETL}\label{e.5-etl}
 
 Para convertir los GeoTIFF de un escenario a TileDB:
