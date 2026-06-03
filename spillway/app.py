@@ -219,6 +219,8 @@ _LANG = {
         "cells": "Celdas", "max_volume": "Volumen máximo",
         "danger_area_max": "Área con inestabilidad máxima", "mean_intensity": "Superación media del umbral",
         "peak_intensity": "Pico de superación",
+        "depth_level": "Nivel de calado",
+        "q13_compare_title": "Volumen de agua por hora — comparativa",
         "cells_danger": "Celdas con inestabilidad",
         "practicable_cells": "Celdas accesibles",
         "mean_window": "Ventana media", "min_window": "Ventana mínima",
@@ -403,6 +405,8 @@ _LANG = {
         "cells": "Cells", "max_volume": "Max volume",
         "danger_area_max": "Max instability area", "mean_intensity": "Mean threshold exceedance",
         "peak_intensity": "Peak exceedance",
+        "depth_level": "Depth level",
+        "q13_compare_title": "Water volume by hour — comparison",
         "cells_danger": "Cells with instability",
         "practicable_cells": "Accessible cells (H < 0.60 m)",
         "mean_window": "Mean window", "min_window": "Min window",
@@ -706,7 +710,7 @@ def _login_screen() -> bool:
             </div>""", unsafe_allow_html=True)
             user = st.text_input("Usuario / User")
             pwd  = st.text_input("Contraseña / Password", type="password")
-            ok   = st.form_submit_button("Acceder", use_container_width=True)
+            ok   = st.form_submit_button("Acceder", width="stretch")
         if ok:
             if user == _APP_USER and hashlib.sha256(pwd.encode()).hexdigest() == _APP_PASS_HASH:
                 st.session_state["authenticated"] = True
@@ -1399,6 +1403,8 @@ _MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","De
 
 def _dataset_display(long_name: str) -> str:
     """datos1 alias + fecha extraída del nombre del directorio: 'datos1 · Jul 1980'."""
+    if not long_name:
+        return "—"
     alias = dataset_label(long_name)
     if st.session_state.get("lang") == "en":
         alias = alias.replace("datos", "dataset")
@@ -1525,6 +1531,11 @@ def grid_info(meta, r_min, r_max, c_min, c_max):
     x_ax  = np.linspace(x0, x1, gc)
     y_ax  = np.linspace(y_top, y_bot, gr)
     return scale, gr, gc, x_ax, y_ax
+
+
+def cmetric(col, label: str, value: str, delta=None):
+    """Métrica con estilo nativo de Streamlit; delta opcional en pequeño debajo."""
+    col.metric(label, value, delta)
 
 
 def show(fig, **kwargs):
@@ -2513,7 +2524,7 @@ def _downsample_grid(grid: np.ndarray, new_h: int, new_w: int) -> np.ndarray:
 _EXPORT_PRESETS = [400, 800, 1200, 1800, 2400, 3200]
 
 
-def download_geotiff_button(grid, x_ax, y_ax, qid, dataset, hora=None):
+def download_geotiff_button(grid, x_ax, y_ax, qid, dataset, hora=None, ds_label=""):
     h, w        = grid.shape
     current_max = max(h, w)
     m_per_px    = (float(x_ax[-1]) - float(x_ax[0])) / w
@@ -2553,7 +2564,8 @@ def download_geotiff_button(grid, x_ax, y_ax, qid, dataset, hora=None):
                     export_x    = np.linspace(x_ax[0], x_ax[-1], new_w)
                     export_y    = np.linspace(y_ax[0], y_ax[-1], new_h)
                 data = grid_to_geotiff_bytes(export_grid, export_x, export_y)
-                st.download_button(f"{_t('download_geotiff')} — {_label(chosen)}",
+                prefix = f"{ds_label} · " if ds_label else ""
+                st.download_button(f"⬇ {prefix}{_t('download_geotiff')} — {_label(chosen)}",
                                    data, fname, mime="image/tiff")
             except Exception as e:
                 st.caption(f"{_t('geotiff_unavailable')}: {e}")
@@ -2905,7 +2917,7 @@ if (qid in MAP_QUERIES) and not modo_temporal:
     )
 
 st.sidebar.markdown("---")
-ejecutar = st.sidebar.button(_t("run_btn"), use_container_width=True, type="primary")
+ejecutar = st.sidebar.button(_t("run_btn"), width="stretch", type="primary")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -2918,17 +2930,22 @@ if comparar and dataset2:
     titulo += f" vs **{_dataset_display(dataset2)}**"
 st.title(titulo)
 
-show_dataset_summary(dataset)
-
 if comparar and dataset2:
+    col_sa, col_sb = st.columns(2)
+    with col_sa:
+        show_dataset_summary(dataset)
+    with col_sb:
+        show_dataset_summary(dataset2)
     st.info(
         f"🔄 **{_t('compare_banner')}** — "
-        f"**{_dataset_display(dataset)}** · **{_dataset_display(dataset2)}**\n\n"
+        f"**{_dataset_display(dataset)}** · **{_dataset_display(dataset2)}**  \n"
         f"{_t('compare_hint')}"
     )
+else:
+    show_dataset_summary(dataset)
 
 LIGHT_QUERIES = {"q1", "q2", "q5", "q12", "q13"}
-auto_exec = (qid in LIGHT_QUERIES) and not comparar
+auto_exec = (qid in LIGHT_QUERIES) and not comparar or qid in {"q1", "q2"}
 _badge_txt   = _t("badge_auto") if auto_exec else _t("badge_manual")
 _badge_color = "#2e7d32"       if auto_exec else "#1565c0"
 st.markdown(
@@ -3039,7 +3056,7 @@ try:
                         except (ValueError, IndexError):
                             continue
                     import pandas as pd
-                    st.dataframe(pd.DataFrame(_resultados), use_container_width=True)
+                    st.dataframe(pd.DataFrame(_resultados), width="stretch")
                     progress.progress(1.0, text=_t("completed"))
                     st.stop()
 
@@ -3080,29 +3097,40 @@ try:
                              load_fn, load_args,
                              spinner_key, render_metrics,
                              bands_fn, n_steps,
-                             map_title, hover_label_key):
-        """Renderiza Q7/Q8/Q9: carga, métricas, heatmap (single o comparativo) + descarga."""
+                             map_title, hover_label_key,
+                             compare_key=None):
+        """Renderiza Q7/Q8/Q9: carga, métricas, heatmap (single o comparativo) + descarga.
+        compare_key: (stats_field, label_i18n_key, val_fmt, delta_fmt) para métrica en modo comparativo."""
         with st.spinner(_t(spinner_key)):
             grid, x_ax, y_ax, stats = load_fn(dataset, *load_args)
         if comparar and dataset2:
-            grid2, x_ax2, y_ax2, _ = load_fn(dataset2, *load_args)
+            grid2, x_ax2, y_ax2, stats2 = load_fn(dataset2, *load_args)
         progress.progress(1.0, text=_t("completed"))
-        render_metrics(stats)
         bands, zmax = bands_fn(n_steps)
         hover_label = _t(hover_label_key)
         if comparar and dataset2:
+            fig_a = heatmap_discrete(grid,  x_ax,  y_ax,
+                                     f"{map_title} — {_dataset_display(dataset)}",
+                                     bands, zmax, "h",
+                                     hover_fmt=".0f", hover_label=hover_label, hover_unit="h")
+            fig_b = heatmap_discrete(grid2, x_ax2, y_ax2,
+                                     f"{map_title} — {_dataset_display(dataset2)}",
+                                     bands, zmax, "h",
+                                     hover_fmt=".0f", hover_label=hover_label, hover_unit="h")
             ca1, ca2 = st.columns(2)
-            for col, ds, g, xa, ya in [
-                (ca1, dataset,  grid,  x_ax,  y_ax),
-                (ca2, dataset2, grid2, x_ax2, y_ax2),
-            ]:
-                with col:
-                    show(heatmap_discrete(g, xa, ya,
-                                          f"{map_title} — {_dataset_display(ds)}",
-                                          bands, zmax, "h",
-                                          hover_fmt=".0f", hover_label=hover_label, hover_unit="h"))
-                    download_geotiff_button(g, xa, ya, qid, ds)
+            if compare_key:
+                field, label_key, val_fmt, delta_fmt = compare_key
+                vA = stats.get(field, 0)
+                vB = stats2.get(field, 0)
+                cmetric(ca1, f"{_dataset_display(dataset)} — {_t(label_key)}", val_fmt.format(vA))
+                cmetric(ca2, f"{_dataset_display(dataset2)} — {_t(label_key)}",
+                        val_fmt.format(vB), delta_fmt.format(vB - vA))
+            ca1.plotly_chart(fig_a, width="stretch", config=PLOT_CONFIG, theme=None)
+            download_geotiff_button(grid,  x_ax,  y_ax,  qid, dataset,  ds_label=_dataset_display(dataset))
+            ca2.plotly_chart(fig_b, width="stretch", config=PLOT_CONFIG, theme=None)
+            download_geotiff_button(grid2, x_ax2, y_ax2, qid, dataset2, ds_label=_dataset_display(dataset2))
         else:
+            render_metrics(stats)
             show(heatmap_discrete(grid, x_ax, y_ax, map_title,
                                   bands, zmax, "h",
                                   hover_fmt=".0f", hover_label=hover_label, hover_unit="h"))
@@ -3111,31 +3139,62 @@ try:
     if qid == "q1":
         h_val = ca.calado_en_punto(x_pt, y_pt, hora)
         progress.progress(1.0, text=_t("completed"))
-        c1, c2, c3 = st.columns(3)
-        c1.metric(_t("depth_h"), f"{h_val:.4f} m")
-        c2.metric(_t("coordinates"), f"{x_pt/1000:.2f} km, {y_pt/1000:.2f} km")
-        c3.metric(_t("hour"), f"{hora} h")
-        if h_val == 0:
-            st.warning(_t("dry_warning"))
+        def _q1_nivel(h):
+            if h == 0: return _t("dry_warning")
+            return _t("safe") if h < H_NINO else _t("caution") if h < H_ADULTO else _t("danger")
+        if comparar and dataset2:
+            setup_ca(get_meta(dataset2))
+            h_val2 = ca.calado_en_punto(x_pt, y_pt, hora)
+            setup_ca(meta)
+            ca1, ca2 = st.columns(2)
+            cmetric(ca1, f"{_dataset_display(dataset)} — {_t('depth_h')}", f"{h_val:.4f} m")
+            cmetric(ca2, f"{_dataset_display(dataset2)} — {_t('depth_h')}",
+                    f"{h_val2:.4f} m", f"{h_val2-h_val:+.4f} m")
+            st.caption(f"📍 {x_pt/1000:.2f} km, {y_pt/1000:.2f} km · {hora} h")
+            ca1.info(f"**{_dataset_display(dataset)}**: {_q1_nivel(h_val)}")
+            ca2.info(f"**{_dataset_display(dataset2)}**: {_q1_nivel(h_val2)}")
         else:
-            nivel = _t("safe") if h_val < H_NINO else _t("caution") if h_val < H_ADULTO else _t("danger")
-            st.info(f"**{_t('danger_level')}:** {nivel}")
+            c1, c2, c3 = st.columns(3)
+            c1.metric(_t("depth_h"), f"{h_val:.4f} m")
+            c2.metric(_t("coordinates"), f"{x_pt/1000:.2f} km, {y_pt/1000:.2f} km")
+            c3.metric(_t("hour"), f"{hora} h")
+            if h_val == 0:
+                st.warning(_t("dry_warning"))
+            else:
+                nivel = _q1_nivel(h_val)
+                st.info(f"**{_t('depth_level')}:** {nivel}")
 
     elif qid == "q2":
         res = ca.serie_temporal_punto(x_pt, y_pt)
         progress.progress(1.0, text=_t("completed"))
-        c1, c2, c3, c4 = st.columns(4)
-        h_arr    = np.array(res["H"])
+        h_arr     = np.array(res["H"])
         horas_arr = np.array(res["horas"])
-        wet      = h_arr > 0
+        wet       = h_arr > 0
         hora_pico = int(horas_arr[np.argmax(h_arr)]) if wet.any() else 0
-        c1.metric(_t("steps_flooded"), f"{int(wet.sum())} / {len(h_arr)}")
-        c2.metric(_t("max_h"),         f"{h_arr.max():.3f} m")
-        c3.metric(_t("peak_hour"),     f"{hora_pico} h")
-        c4.metric(_t("q2_h_mean_wet"), f"{h_arr[wet].mean():.3f} m" if wet.any() else _t("q2_dry"))
-        show(make_line(res["horas"], res["H"],
-                      f"{_t('q2_series_title')} ({x_pt/1000:.2f} km, {y_pt/1000:.2f} km)",
-                      _t("hour_axis"), f"{_t('depth_h')} (m)"))
+        pt_label  = f"({x_pt/1000:.2f} km, {y_pt/1000:.2f} km)"
+        if comparar and dataset2:
+            setup_ca(get_meta(dataset2))
+            res2 = ca.serie_temporal_punto(x_pt, y_pt)
+            setup_ca(meta)
+            h_arr2 = np.array(res2["H"])
+            wet2   = h_arr2 > 0
+            show(make_multi_line(res["horas"],
+                [{"name": _dataset_display(dataset),  "y": res["H"],  "color": "#1565c0"},
+                 {"name": _dataset_display(dataset2), "y": res2["H"], "color": "#c62828"}],
+                f"{_t('q2_series_title')} {pt_label}", f"{_t('depth_h')} (m)"))
+            ca1, ca2 = st.columns(2)
+            cmetric(ca1, f"{_dataset_display(dataset)} — H máx.", f"{h_arr.max():.3f} m")
+            cmetric(ca2, f"{_dataset_display(dataset2)} — H máx.",
+                    f"{h_arr2.max():.3f} m", f"{h_arr2.max()-h_arr.max():+.3f} m")
+        else:
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric(_t("steps_flooded"), f"{int(wet.sum())} / {len(h_arr)}")
+            c2.metric(_t("max_h"),         f"{h_arr.max():.3f} m")
+            c3.metric(_t("peak_hour"),     f"{hora_pico} h")
+            c4.metric(_t("q2_h_mean_wet"), f"{h_arr[wet].mean():.3f} m" if wet.any() else _t("q2_dry"))
+            show(make_line(res["horas"], res["H"],
+                          f"{_t('q2_series_title')} {pt_label}",
+                          _t("hour_axis"), f"{_t('depth_h')} (m)"))
 
     elif qid == "q3":
         if modo_temporal:
@@ -3154,32 +3213,38 @@ try:
             progress.progress(0.3, text=_t("loading_step"))
             grid, x_ax, y_ax, stats = _c_q3(dataset, hora, bbox)
             progress.progress(1.0, text=_t("completed"))
-            c1, c2, c3 = st.columns(3)
-            c1.metric(_t("wet_cells"), f"{stats['n']:,}")
-            c2.metric(_t("vel_max"),   f"{stats['V_max']:.3f} m/s")
-            c3.metric(_t("vel_mean"),  f"{stats['V_media']:.3f} m/s")
-            show(make_heatmap(grid, x_ax, y_ax,
-                _t("vel_map_title").format(hora=hora),
-                CMAP_VELOCIDAD, "m/s",
-                adaptive_clip=True,
-                hover_label="V",
-                hover_unit="m/s"))
+            t_vel = _t("vel_map_title").format(hora=hora)
+            hm_vel = dict(adaptive_clip=True, hover_label="V", hover_unit="m/s")
+            if comparar and dataset2:
+                grid2, x_ax2, y_ax2, stats2 = _c_q3(dataset2, hora, bbox)
+                fig_a = make_heatmap(grid,  x_ax,  y_ax,
+                                     f"{t_vel} — {_dataset_display(dataset)}",
+                                     CMAP_VELOCIDAD, "m/s", **hm_vel)
+                fig_b = make_heatmap(grid2, x_ax2, y_ax2,
+                                     f"{t_vel} — {_dataset_display(dataset2)}",
+                                     CMAP_VELOCIDAD, "m/s", **hm_vel)
+                ca1, ca2 = st.columns(2)
+                cmetric(ca1, f"{_dataset_display(dataset)} — {_t('vel_max')}", f"{stats['V_max']:.3f} m/s")
+                cmetric(ca2, f"{_dataset_display(dataset2)} — {_t('vel_max')}", f"{stats2['V_max']:.3f} m/s",
+                        f"{stats2['V_max']-stats['V_max']:+.3f} m/s")
+                ca1.plotly_chart(fig_a, width="stretch", config=PLOT_CONFIG, theme=None)
+                ca2.plotly_chart(fig_b, width="stretch", config=PLOT_CONFIG, theme=None)
+            else:
+                c1, c2, c3 = st.columns(3)
+                c1.metric(_t("wet_cells"), f"{stats['n']:,}")
+                c2.metric(_t("vel_max"),   f"{stats['V_max']:.3f} m/s")
+                c3.metric(_t("vel_mean"),  f"{stats['V_media']:.3f} m/s")
+                show(make_heatmap(grid, x_ax, y_ax, t_vel, CMAP_VELOCIDAD, "m/s", **hm_vel))
 
     # ── Q4 / Q6 ──────────────────────────────────────────────────────────────
     elif qid in {"q4", "q6"}:
         progress.progress(0.3, text=_t("loading_step"))
         grid, x_ax, y_ax, stats = q_umbral_h(meta, hora, umbral_m, bbox)
         progress.progress(1.0, text=_t("completed"))
-        c1, c2 = st.columns(2)
-        c1.metric(_t("cells"), f"{stats['n']:,}")
-        c2.metric(_t("area"),  f"{stats['area_km2']:.2f} km²")
         grid_v, x_v, y_v, visual_floor, cropped = _focus_h_visual(
             grid, x_ax, y_ax, umbral_m, auto_crop=(bbox is None)
         )
-        show(heatmap_h(
-            grid_v, x_v, y_v,
-            f"{_t('depth_h')} — {_t('hour')} {hora} h · ≥ {umbral_m:.3f} m · log",
-            cmap=CMAP_H_FOCUS))
+        map_title_q4 = f"{_t('depth_h')} — {_t('hour')} {hora} h · ≥ {umbral_m:.3f} m · log"
         notes = []
         if visual_floor > umbral_m:
             notes.append(_t("note_visual_floor").format(v=visual_floor))
@@ -3187,21 +3252,32 @@ try:
             notes.append(_t("note_cropped"))
         if bbox is None:
             notes.append(_t("note_bbox_tip"))
-        if notes:
-            st.caption(" ".join(notes))
         if comparar and dataset2:
             meta2 = get_meta(dataset2)
-            grid2, x_ax2, y_ax2, _ = q_umbral_h(meta2, hora, umbral_m, bbox)
+            grid2, x_ax2, y_ax2, stats2 = q_umbral_h(meta2, hora, umbral_m, bbox)
             grid2_v, x_v2, y_v2, _, _ = _focus_h_visual(grid2, x_ax2, y_ax2, umbral_m, auto_crop=(bbox is None))
+            fig_a = heatmap_h(grid_v,  x_v,  y_v,
+                              f"{map_title_q4} — {_dataset_display(dataset)}",  cmap=CMAP_H_FOCUS)
+            fig_b = heatmap_h(grid2_v, x_v2, y_v2,
+                              f"{map_title_q4} — {_dataset_display(dataset2)}", cmap=CMAP_H_FOCUS)
             ca1, ca2 = st.columns(2)
-            with ca1:
-                st.markdown(f"**{_dataset_display(dataset)}**")
-                download_geotiff_button(grid, x_ax, y_ax, "q4", dataset, hora)
-            with ca2:
-                st.markdown(f"**{_dataset_display(dataset2)}**")
-                show(heatmap_h(grid2_v, x_v2, y_v2, f"{_t('depth_h')} — {_dataset_display(dataset2)}", cmap=CMAP_H_FOCUS))
-                download_geotiff_button(grid2, x_ax2, y_ax2, "q4", dataset2, hora)
+            cmetric(ca1, f"{_dataset_display(dataset)} — {_t('area')}", f"{stats['area_km2']:.2f} km²")
+            cmetric(ca2, f"{_dataset_display(dataset2)} — {_t('area')}",
+                    f"{stats2['area_km2']:.2f} km²",
+                    f"{stats2['area_km2']-stats['area_km2']:+.2f} km²")
+            ca1.plotly_chart(fig_a, width="stretch", config=PLOT_CONFIG, theme=None)
+            download_geotiff_button(grid, x_ax, y_ax, "q4", dataset, hora,
+                                    ds_label=_dataset_display(dataset))
+            ca2.plotly_chart(fig_b, width="stretch", config=PLOT_CONFIG, theme=None)
+            download_geotiff_button(grid2, x_ax2, y_ax2, "q4", dataset2, hora,
+                                    ds_label=_dataset_display(dataset2))
         else:
+            c1, c2 = st.columns(2)
+            c1.metric(_t("cells"), f"{stats['n']:,}")
+            c2.metric(_t("area"),  f"{stats['area_km2']:.2f} km²")
+            show(heatmap_h(grid_v, x_v, y_v, map_title_q4, cmap=CMAP_H_FOCUS))
+            if notes:
+                st.caption(" ".join(notes))
             download_geotiff_button(grid, x_ax, y_ax, "q4", dataset, hora)
 
     elif qid == "q5":
@@ -3213,15 +3289,16 @@ try:
             res2 = _c_q5(dataset2, bbox)
             areas2 = np.array(res2["area_km2"])
             c1, c2, c3, c4 = st.columns(4)
-            c1.metric(_t("max_area_a"), f"{areas.max():.1f} km²")
+            _dA, _dB = areas.max(), areas2.max()
+            _s = "+" if _dB >= _dA else ""
+            c1.metric(_t("max_area_a"), f"{_dA:.1f} km²")
             c2.metric(_t("peak_hour_a"), f"{res['horas'][int(areas.argmax())]} h")
-            c3.metric(_t("max_area_b"), f"{areas2.max():.1f} km²",
-                      f"{areas2.max()-areas.max():+.1f} km²")
+            cmetric(c3, _t("max_area_b"), f"{_dB:.1f} km²", f"{_s}{_dB-_dA:.1f} km²")
             c4.metric(_t("peak_hour_b"), f"{res2['horas'][int(areas2.argmax())]} h")
             show(make_multi_line(res["horas"],
                 [{"name": _dataset_display(dataset),  "y": res["area_km2"],  "color": "#1565c0"},
                  {"name": _dataset_display(dataset2), "y": res2["area_km2"], "color": "#c62828"}],
-                _t("q5_compare_title"), _t("hour_axis"), "km²"))
+                _t("q5_compare_title"), "km²"))
             setup_ca(meta)
         else:
             c1, c2, c3 = st.columns(3)
@@ -3239,7 +3316,8 @@ try:
         _render_discrete_map("q7", dataset, dataset2, bbox, comparar,
             _c_q7, (bbox,), "calc_arrival", _m,
             _bands_llegada, meta["n_steps"],
-            _t("arrival_map_title"), "hover_arrival")
+            _t("arrival_map_title"), "hover_arrival",
+            compare_key=("min", "first_arrival", "{:.0f} h", "{:+.0f} h"))
 
     elif qid == "q8":
         def _m(stats):
@@ -3249,7 +3327,8 @@ try:
         _render_discrete_map("q8", dataset, dataset2, bbox, comparar,
             _c_q8, (umbral_m, bbox), "calc_duration", _m,
             _bands_duracion, meta["n_steps"],
-            _t("q8_map_title").format(v=umbral_m), "hover_duration")
+            _t("q8_map_title").format(v=umbral_m), "hover_duration",
+            compare_key=("media", "mean_duration", "{:.1f} h", "{:+.1f} h"))
 
     elif qid == "q9":
         def _m(stats):
@@ -3261,7 +3340,8 @@ try:
         _render_discrete_map("q9", dataset, dataset2, bbox, comparar,
             _c_q9, (bbox,), "calc_hmax", _m,
             _bands_llegada, meta["n_steps"],
-            _t("peak_depth_map_title"), "peak_hour_short")
+            _t("peak_depth_map_title"), "peak_hour_short",
+            compare_key=("H_max", "max_h", "{:.3f} m", "{:+.3f} m"))
 
     # ── Q10a / Q10b / Q10c ───────────────────────────────────────────────────
     elif qid in {"q10a", "q10b", "q10c"}:
@@ -3287,29 +3367,35 @@ try:
             progress.progress(0.3, text=_t("loading_step"))
             grid, x_ax, y_ax, stats = _c_q10i(dataset, hora, tipo, bbox)
             progress.progress(1.0, text=_t("completed"))
-            c1, c2, c3, c4 = st.columns(4)
-            c1.metric(_t("cells_danger"),    f"{stats['n']:,}")
-            c2.metric(_t("area"),            f"{stats['area_km2']:.2f} km²")
-            c3.metric(_t("mean_intensity"),  f"{stats['intensity_med']:.2f}×")
-            c4.metric(_t("peak_intensity"),  f"{stats['intensity_max']:.2f}×")
             bands, zmax = _bands_intensidad()
             map_title_q10 = f"{label} — {_t('hour')} {hora} h · {_t('q10_map_intensity')}"
             if comparar and dataset2:
-                grid2, x_ax2, y_ax2, stats2 = _c_q10i(dataset2, hora, tipo, bbox)
+                cmap_q10 = CMAP_PELIGRO if tipo == "adultos" else \
+                           CMAP_NARANJA if tipo == "ninos" else CMAP_DURACION
+                ga, xa_a, ya_a, sa = _c_q10p(dataset,  hora, tipo, bbox)
+                gb, xa_b, ya_b, sb = _c_q10p(dataset2, hora, tipo, bbox)
+                fig_a = heatmap_h(ga, xa_a, ya_a,
+                                  f"{label} — {_dataset_display(dataset)}", cmap=cmap_q10)
+                fig_b = heatmap_h(gb, xa_b, ya_b,
+                                  f"{label} — {_dataset_display(dataset2)}", cmap=cmap_q10)
                 ca1, ca2 = st.columns(2)
-                with ca1:
-                    show(heatmap_discrete(grid, x_ax, y_ax,
-                        f"{map_title_q10} — {_dataset_display(dataset)}",
-                        bands, zmax, "x umbral",
-                        hover_fmt=".2f", hover_label=_t("hover_intensity"), hover_unit="x"))
-                    download_geotiff_button(grid, x_ax, y_ax, qid, dataset, hora)
-                with ca2:
-                    show(heatmap_discrete(grid2, x_ax2, y_ax2,
-                        f"{map_title_q10} — {_dataset_display(dataset2)}",
-                        bands, zmax, "x umbral",
-                        hover_fmt=".2f", hover_label=_t("hover_intensity"), hover_unit="x"))
-                    download_geotiff_button(grid2, x_ax2, y_ax2, qid, dataset2, hora)
+                _da, _db = sa['area_km2'], sb['area_km2']
+                cmetric(ca1, f"{_dataset_display(dataset)} — {_t('area')}", f"{_da:.1f} km²")
+                ca1.plotly_chart(fig_a, width="stretch", config=PLOT_CONFIG, theme=None)
+                download_geotiff_button(ga, xa_a, ya_a, qid, dataset,  hora,
+                                        ds_label=_dataset_display(dataset))
+                _sign = "+" if _db >= _da else ""
+                cmetric(ca2, f"{_dataset_display(dataset2)} — {_t('area')}",
+                        f"{_db:.1f} km²", f"{_sign}{_db-_da:.1f} km²")
+                ca2.plotly_chart(fig_b, width="stretch", config=PLOT_CONFIG, theme=None)
+                download_geotiff_button(gb, xa_b, ya_b, qid, dataset2, hora,
+                                        ds_label=_dataset_display(dataset2))
             else:
+                c1, c2, c3, c4 = st.columns(4)
+                c1.metric(_t("cells_danger"),    f"{stats['n']:,}")
+                c2.metric(_t("area"),            f"{stats['area_km2']:.2f} km²")
+                c3.metric(_t("mean_intensity"),  f"{stats['intensity_med']:.2f}×")
+                c4.metric(_t("peak_intensity"),  f"{stats['intensity_max']:.2f}×")
                 show(heatmap_discrete(grid, x_ax, y_ax, map_title_q10,
                     bands, zmax, "x umbral",
                     hover_fmt=".2f", hover_label=_t("hover_intensity"), hover_unit="x"))
@@ -3318,16 +3404,34 @@ try:
         with st.spinner(_t("calc_emergency")):
             grid, x_ax, y_ax, stats = _c_q11(dataset, bbox)
         progress.progress(1.0, text=_t("completed"))
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric(_t("practicable_cells"), f"{stats['n']:,}")
-        c2.metric(_t("mean_window"),       f"{stats['media']:.1f} h")
-        c3.metric(_t("min_window"),        f"{stats['min']:.0f} h")
-        c4.metric(_t("max_practicable"),   f"{stats['max']:.0f} h")
         bands, zmax = _bands_ventana(meta["n_steps"])
-        show(heatmap_discrete(grid, x_ax, y_ax,
-            _t("q11_map_title"),
-            bands, zmax, "h", hover_fmt=".0f", hover_label=_t("hover_window"), hover_unit="h"))
-        download_geotiff_button(grid, x_ax, y_ax, "q11", dataset)
+        hw = dict(hover_fmt=".0f", hover_label=_t("hover_window"), hover_unit="h")
+        if comparar and dataset2:
+            grid2, x_ax2, y_ax2, stats2 = _c_q11(dataset2, bbox)
+            fig_a = heatmap_discrete(grid,  x_ax,  y_ax,
+                                     f"{_t('q11_map_title')} — {_dataset_display(dataset)}",
+                                     bands, zmax, "h", **hw)
+            fig_b = heatmap_discrete(grid2, x_ax2, y_ax2,
+                                     f"{_t('q11_map_title')} — {_dataset_display(dataset2)}",
+                                     bands, zmax, "h", **hw)
+            ca1, ca2 = st.columns(2)
+            cmetric(ca1, f"{_dataset_display(dataset)} — {_t('mean_window')}", f"{stats['media']:.1f} h")
+            cmetric(ca2, f"{_dataset_display(dataset2)} — {_t('mean_window')}", f"{stats2['media']:.1f} h",
+                    f"{stats2['media']-stats['media']:+.1f} h")
+            ca1.plotly_chart(fig_a, width="stretch", config=PLOT_CONFIG, theme=None)
+            download_geotiff_button(grid,  x_ax,  y_ax,  "q11", dataset,
+                                    ds_label=_dataset_display(dataset))
+            ca2.plotly_chart(fig_b, width="stretch", config=PLOT_CONFIG, theme=None)
+            download_geotiff_button(grid2, x_ax2, y_ax2, "q11", dataset2,
+                                    ds_label=_dataset_display(dataset2))
+        else:
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric(_t("practicable_cells"), f"{stats['n']:,}")
+            c2.metric(_t("mean_window"),       f"{stats['media']:.1f} h")
+            c3.metric(_t("min_window"),        f"{stats['min']:.0f} h")
+            c4.metric(_t("max_practicable"),   f"{stats['max']:.0f} h")
+            show(heatmap_discrete(grid, x_ax, y_ax, _t("q11_map_title"), bands, zmax, "h", **hw))
+            download_geotiff_button(grid, x_ax, y_ax, "q11", dataset)
 
     elif qid == "q11b":
         if modo_temporal:
@@ -3345,13 +3449,24 @@ try:
             progress.progress(0.3, text=_t("loading_step"))
             grid, x_ax, y_ax, stats = _c_q11b(dataset, hora, bbox)
             progress.progress(1.0, text=_t("completed"))
-            c1, c2 = st.columns(2)
-            c1.metric(_t("practicable_cells"), f"{stats['n']:,}")
-            c2.metric(_t("area"),              f"{stats['area_km2']:.2f} km²")
-            show(heatmap_h(
-                grid, x_ax, y_ax,
-                _t("q11b_map_title").format(hora=hora),
-                cmap="Greens"))
+            t11b = _t("q11b_map_title").format(hora=hora)
+            if comparar and dataset2:
+                grid2, x_ax2, y_ax2, stats2 = _c_q11b(dataset2, hora, bbox)
+                fig_a = heatmap_h(grid,  x_ax,  y_ax,
+                                  f"{t11b} — {_dataset_display(dataset)}",  cmap="Greens")
+                fig_b = heatmap_h(grid2, x_ax2, y_ax2,
+                                  f"{t11b} — {_dataset_display(dataset2)}", cmap="Greens")
+                ca1, ca2 = st.columns(2)
+                cmetric(ca1, f"{_dataset_display(dataset)} — {_t('area')}", f"{stats['area_km2']:.2f} km²")
+                cmetric(ca2, f"{_dataset_display(dataset2)} — {_t('area')}", f"{stats2['area_km2']:.2f} km²",
+                        f"{stats2['area_km2']-stats['area_km2']:+.2f} km²")
+                ca1.plotly_chart(fig_a, width="stretch", config=PLOT_CONFIG, theme=None)
+                ca2.plotly_chart(fig_b, width="stretch", config=PLOT_CONFIG, theme=None)
+            else:
+                c1, c2 = st.columns(2)
+                c1.metric(_t("practicable_cells"), f"{stats['n']:,}")
+                c2.metric(_t("area"),              f"{stats['area_km2']:.2f} km²")
+                show(heatmap_h(grid, x_ax, y_ax, t11b, cmap="Greens"))
 
     elif qid == "q12":
         progress.progress(0.5, text=_t("iterating"))
@@ -3362,15 +3477,16 @@ try:
             res2 = _c_q12(dataset2, bbox)
             areas2 = np.array(res2["area_km2"])
             c1, c2, c3, c4 = st.columns(4)
-            c1.metric(_t("max_area_a"), f"{areas.max():.1f} km²")
+            _dA, _dB = areas.max(), areas2.max()
+            _s = "+" if _dB >= _dA else ""
+            c1.metric(_t("max_area_a"), f"{_dA:.1f} km²")
             c2.metric(_t("peak_hour_a"), f"{res['horas'][int(areas.argmax())]} h")
-            c3.metric(_t("max_area_b"), f"{areas2.max():.1f} km²",
-                      f"{areas2.max()-areas.max():+.1f} km²")
+            cmetric(c3, _t("max_area_b"), f"{_dB:.1f} km²", f"{_s}{_dB-_dA:.1f} km²")
             c4.metric(_t("peak_hour_b"), f"{res2['horas'][int(areas2.argmax())]} h")
             show(make_multi_line(res["horas"],
                 [{"name": _dataset_display(dataset),  "y": res["area_km2"],  "color": "#1565c0"},
                  {"name": _dataset_display(dataset2), "y": res2["area_km2"], "color": "#c62828"}],
-                _t("q12_compare_title"), _t("hour_axis"), "km²"))
+                _t("q12_compare_title"), "km²"))
             setup_ca(meta)
         else:
             c1, c2 = st.columns(2)
@@ -3384,11 +3500,27 @@ try:
         res = ca.volumen_por_hora(bbox=bbox)
         progress.progress(1.0, text=_t("completed"))
         vols_mm3 = [v / 1e6 for v in res["volumen_m3"]]
-        c1, c2 = st.columns(2)
-        c1.metric(_t("max_volume"), f"{max(vols_mm3):.1f} Mm³")
-        c2.metric(_t("peak_hour"),  f"{res['horas'][int(np.argmax(vols_mm3))]} h")
-        show(make_line(res["horas"], vols_mm3,
-            _t("q13_title"), _t("hour_axis"), "Volume (Mm³)", color="#00838f"))
+        if comparar and dataset2:
+            setup_ca(get_meta(dataset2))
+            res2 = ca.volumen_por_hora(bbox=bbox)
+            setup_ca(meta)
+            vols2 = [v / 1e6 for v in res2["volumen_m3"]]
+            _vA, _vB = max(vols_mm3), max(vols2)
+            _s = "+" if _vB >= _vA else ""
+            c1, c2 = st.columns(2)
+            cmetric(c1, f"{_dataset_display(dataset)} — {_t('max_volume')}", f"{_vA:.1f} Mm³")
+            cmetric(c2, f"{_dataset_display(dataset2)} — {_t('max_volume')}",
+                    f"{_vB:.1f} Mm³", f"{_s}{_vB-_vA:.1f} Mm³")
+            show(make_multi_line(res["horas"],
+                [{"name": _dataset_display(dataset),  "y": vols_mm3, "color": "#1565c0"},
+                 {"name": _dataset_display(dataset2), "y": vols2,    "color": "#c62828"}],
+                _t("q13_compare_title"), "Mm³"))
+        else:
+            c1, c2 = st.columns(2)
+            c1.metric(_t("max_volume"), f"{max(vols_mm3):.1f} Mm³")
+            c2.metric(_t("peak_hour"),  f"{res['horas'][int(np.argmax(vols_mm3))]} h")
+            show(make_line(res["horas"], vols_mm3,
+                _t("q13_title"), _t("hour_axis"), "Volume (Mm³)", color="#00838f"))
 
     elif qid == "q14":
         bbox_q14 = bbox if bbox else (xc - 25000, yc - 25000, xc + 25000, yc + 25000)
@@ -3411,6 +3543,28 @@ try:
             progress.progress(1.0, text=_t("completed"))
             if res.get("n_celdas", 0) == 0:
                 st.warning(_t("zone_dry"))
+            elif comparar and dataset2:
+                setup_ca(get_meta(dataset2))
+                res2 = ca.stats_zona(*bbox_q14, hora)
+                setup_ca(meta)
+                _bars = ["P25", "P50", "P75", "P95", _t("mean_h"), _t("max_h")]
+                _cols = ["#90caf9"]*4 + ["#ff9800", "#e53935"]
+                fig_a = make_bar(_bars,
+                    [res["H_P25"], res["H_P50"], res["H_P75"], res["H_P95"],
+                     res["H_media"], res["H_max"]],
+                    f"{_dataset_display(dataset)} — hora {hora} h", "H (m)", _cols)
+                fig_b = make_bar(_bars,
+                    [res2.get("H_P25",0), res2.get("H_P50",0), res2.get("H_P75",0),
+                     res2.get("H_P95",0), res2.get("H_media",0), res2.get("H_max",0)],
+                    f"{_dataset_display(dataset2)} — hora {hora} h", "H (m)", _cols)
+                ca1, ca2 = st.columns(2)
+                cmetric(ca1, f"{_dataset_display(dataset)} — {_t('mean_h')}",
+                        f"{res['H_media']:.3f} m")
+                cmetric(ca2, f"{_dataset_display(dataset2)} — {_t('mean_h')}",
+                        f"{res2.get('H_media',0):.3f} m",
+                        f"{res2.get('H_media',0)-res['H_media']:+.3f} m")
+                ca1.plotly_chart(fig_a, width="stretch", config=PLOT_CONFIG, theme=None)
+                ca2.plotly_chart(fig_b, width="stretch", config=PLOT_CONFIG, theme=None)
             else:
                 cols = st.columns(5)
                 cols[0].metric(_t("wet_cells"), f"{res['n_celdas']:,}")
@@ -3442,16 +3596,36 @@ try:
             progress.progress(0.5, text=_t("calc_areas"))
             res = q15_area_peligro(meta, hora, bbox)
             progress.progress(1.0, text=_t("completed"))
-            c1, c2, c3, c4 = st.columns(4)
-            c1.metric(_t("q15_green_label"),  f"{res['verde']:.1f} km²")
-            c2.metric(_t("q15_yellow_label"), f"{res['amarillo']:.1f} km²")
-            c3.metric(_t("q15_red_label"),    f"{res['rojo']:.1f} km²")
-            c4.metric(_t("area"),             f"{res['total']:.1f} km²")
-            show(make_bar(
-                [_t("q15_green_bar"), _t("q15_yellow_bar"), _t("q15_red_bar")],
-                [res["verde"], res["amarillo"], res["rojo"]],
-                f"{_t('danger_level')} — {_t('hour')} {hora} h", "Area (km²)",
-                ["#2ecc71", "#f39c12", "#e74c3c"]))
+            if comparar and dataset2:
+                res2 = q15_area_peligro(get_meta(dataset2), hora, bbox)
+                fig_a = make_bar(
+                    [_t("q15_green_bar"), _t("q15_yellow_bar"), _t("q15_red_bar")],
+                    [res["verde"], res["amarillo"], res["rojo"]],
+                    f"{_dataset_display(dataset)} — hora {hora} h", "Area (km²)",
+                    ["#2ecc71", "#f39c12", "#e74c3c"])
+                fig_b = make_bar(
+                    [_t("q15_green_bar"), _t("q15_yellow_bar"), _t("q15_red_bar")],
+                    [res2["verde"], res2["amarillo"], res2["rojo"]],
+                    f"{_dataset_display(dataset2)} — hora {hora} h", "Area (km²)",
+                    ["#2ecc71", "#f39c12", "#e74c3c"])
+                ca1, ca2 = st.columns(2)
+                cmetric(ca1, f"{_dataset_display(dataset)} — {_t('q15_red_label')}",
+                        f"{res['rojo']:.1f} km²")
+                cmetric(ca2, f"{_dataset_display(dataset2)} — {_t('q15_red_label')}",
+                        f"{res2['rojo']:.1f} km²", f"{res2['rojo']-res['rojo']:+.1f} km²")
+                ca1.plotly_chart(fig_a, width="stretch", config=PLOT_CONFIG, theme=None)
+                ca2.plotly_chart(fig_b, width="stretch", config=PLOT_CONFIG, theme=None)
+            else:
+                c1, c2, c3, c4 = st.columns(4)
+                c1.metric(_t("q15_green_label"),  f"{res['verde']:.1f} km²")
+                c2.metric(_t("q15_yellow_label"), f"{res['amarillo']:.1f} km²")
+                c3.metric(_t("q15_red_label"),    f"{res['rojo']:.1f} km²")
+                c4.metric(_t("area"),             f"{res['total']:.1f} km²")
+                show(make_bar(
+                    [_t("q15_green_bar"), _t("q15_yellow_bar"), _t("q15_red_bar")],
+                    [res["verde"], res["amarillo"], res["rojo"]],
+                    f"{_t('danger_level')} — {_t('hour')} {hora} h", "Area (km²)",
+                    ["#2ecc71", "#f39c12", "#e74c3c"]))
 
     # ── Q17 Mapa semáforo Russo ──────────────────────────────────────────────
     elif qid == "q17":
@@ -3461,44 +3635,79 @@ try:
         russo_cmap, tvals, _, zmax = russo_colorscale()
         ttext = russo_ticktext(st.session_state.get("lang", "es"))
         cell_km2 = _cell_km2(meta)
-        # Niveles calculados sobre el grid ya cargado (downsample render-res, sin segunda lectura TileDB)
-        v_c, a_c, r_c = ca.russo_traffic_light_counts(grid)
-        verde, amarillo, rojo = v_c * cell_km2, a_c * cell_km2, r_c * cell_km2
-        c1, c2, c3, c4, c5 = st.columns(5)
-        c1.metric(_t("q17_shallow"),   f"{verde:.1f} km²")
-        c2.metric(_t("q17_children"),  f"{amarillo:.1f} km²")
-        c3.metric(_t("q17_adults"),    f"{rojo:.1f} km²",
-                  help=_t("q17_adults_help"))
-        v1   = float(((grid > 1.00) & (grid <= 2.00)).sum() * cell_km2)
-        v2   = float((grid > 2.00).sum() * cell_km2)
-        c4.metric(_t("q17_critical"),  f"{v1:.1f} km²")
-        c5.metric(_t("q17_extreme"),   f"{v2:.1f} km²")
-        show(make_heatmap(grid, x_ax, y_ax,
-            _t("q17_map_title").format(hora=hora),
-            russo_cmap, "H (m)", zmin=0.0, zmax=zmax,
-            cbar_tickvals=tvals, cbar_ticktext=ttext,
-            hover_label="H", hover_unit="m", zsmooth=False))
+        t17 = _t("q17_map_title").format(hora=hora)
+        hm17 = dict(zmin=0.0, zmax=zmax, cbar_tickvals=tvals, cbar_ticktext=ttext,
+                    hover_label="H", hover_unit="m", zsmooth=False)
+        if comparar and dataset2:
+            grid2, x_ax2, y_ax2, _ = q_umbral_h(get_meta(dataset2), hora, H_WET, bbox)
+            fig_a = make_heatmap(grid,  x_ax,  y_ax,
+                                 f"{t17} — {_dataset_display(dataset)}",  russo_cmap, "H (m)", **hm17)
+            fig_b = make_heatmap(grid2, x_ax2, y_ax2,
+                                 f"{t17} — {_dataset_display(dataset2)}", russo_cmap, "H (m)", **hm17)
+            v_c,  a_c,  r_c  = ca.russo_traffic_light_counts(grid)
+            v_c2, a_c2, r_c2 = ca.russo_traffic_light_counts(grid2)
+            ca1, ca2 = st.columns(2)
+            cmetric(ca1, f"{_dataset_display(dataset)} — {_t('q17_adults')}",
+                    f"{a_c * cell_km2:.1f} km²")
+            cmetric(ca2, f"{_dataset_display(dataset2)} — {_t('q17_adults')}",
+                    f"{a_c2 * cell_km2:.1f} km²",
+                    f"{(a_c2-a_c)*cell_km2:+.1f} km²")
+            ca1.plotly_chart(fig_a, width="stretch", config=PLOT_CONFIG, theme=None)
+            download_geotiff_button(grid,  x_ax,  y_ax,  "q17", dataset,  hora,
+                                    ds_label=_dataset_display(dataset))
+            ca2.plotly_chart(fig_b, width="stretch", config=PLOT_CONFIG, theme=None)
+            download_geotiff_button(grid2, x_ax2, y_ax2, "q17", dataset2, hora,
+                                    ds_label=_dataset_display(dataset2))
+        else:
+            v_c, a_c, r_c = ca.russo_traffic_light_counts(grid)
+            verde, amarillo, rojo = v_c * cell_km2, a_c * cell_km2, r_c * cell_km2
+            c1, c2, c3, c4, c5 = st.columns(5)
+            c1.metric(_t("q17_shallow"),  f"{verde:.1f} km²")
+            c2.metric(_t("q17_children"), f"{amarillo:.1f} km²")
+            c3.metric(_t("q17_adults"),   f"{rojo:.1f} km²", help=_t("q17_adults_help"))
+            v1 = float(((grid > 1.00) & (grid <= 2.00)).sum() * cell_km2)
+            v2 = float((grid > 2.00).sum() * cell_km2)
+            c4.metric(_t("q17_critical"), f"{v1:.1f} km²")
+            c5.metric(_t("q17_extreme"),  f"{v2:.1f} km²")
+            show(make_heatmap(grid, x_ax, y_ax, t17, russo_cmap, "H (m)", **hm17))
+            download_geotiff_button(grid, x_ax, y_ax, "q17", dataset, hora)
         st.caption(_t("q17_caption"))
-        download_geotiff_button(grid, x_ax, y_ax, "q17", dataset, hora)
 
     elif qid == "q16":
         with st.spinner(_t("calc_evacuation")):
             grid, x_ax, y_ax, stats = _c_q16(dataset, umbral_h16, umbral_q16, bbox)
         progress.progress(1.0, text=_t("completed"))
-        c1, c2, c3, c4 = st.columns(4)
-        pct_peli = stats['ya_peli'] / stats['n'] * 100 if stats['n'] > 0 else 0
-        c1.metric(_t("min_window"),      f"{stats['min']:.0f} h")
-        c2.metric(_t("mean_window"),     f"{stats['media']:.1f} h")
-        c3.metric(_t("already_danger"),  f"{pct_peli:.1f}%")
-        c4.metric(_t("never_danger"),    f"{stats['nunca']:,}")
         bands, zmax = _bands_ventana(meta["n_steps"])
-        show(heatmap_discrete(
-            grid, x_ax, y_ax,
-            _t("q16_map_title").format(h=umbral_h16, q=umbral_q16),
-            bands, zmax, "h",
-            hover_fmt=".0f", hover_label=_t("hover_window"), hover_unit="h"))
+        t16 = _t("q16_map_title").format(h=umbral_h16, q=umbral_q16)
+        hw16 = dict(hover_fmt=".0f", hover_label=_t("hover_window"), hover_unit="h")
+        if comparar and dataset2:
+            grid2, x_ax2, y_ax2, stats2 = _c_q16(dataset2, umbral_h16, umbral_q16, bbox)
+            fig_a = heatmap_discrete(grid,  x_ax,  y_ax,
+                                     f"{t16} — {_dataset_display(dataset)}",
+                                     bands, zmax, "h", **hw16)
+            fig_b = heatmap_discrete(grid2, x_ax2, y_ax2,
+                                     f"{t16} — {_dataset_display(dataset2)}",
+                                     bands, zmax, "h", **hw16)
+            ca1, ca2 = st.columns(2)
+            cmetric(ca1, f"{_dataset_display(dataset)} — {_t('mean_window')}", f"{stats['media']:.1f} h")
+            cmetric(ca2, f"{_dataset_display(dataset2)} — {_t('mean_window')}", f"{stats2['media']:.1f} h",
+                    f"{stats2['media']-stats['media']:+.1f} h")
+            ca1.plotly_chart(fig_a, width="stretch", config=PLOT_CONFIG, theme=None)
+            download_geotiff_button(grid,  x_ax,  y_ax,  "q16", dataset,
+                                    ds_label=_dataset_display(dataset))
+            ca2.plotly_chart(fig_b, width="stretch", config=PLOT_CONFIG, theme=None)
+            download_geotiff_button(grid2, x_ax2, y_ax2, "q16", dataset2,
+                                    ds_label=_dataset_display(dataset2))
+        else:
+            pct_peli = stats['ya_peli'] / stats['n'] * 100 if stats['n'] > 0 else 0
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric(_t("min_window"),     f"{stats['min']:.0f} h")
+            c2.metric(_t("mean_window"),    f"{stats['media']:.1f} h")
+            c3.metric(_t("already_danger"), f"{pct_peli:.1f}%")
+            c4.metric(_t("never_danger"),   f"{stats['nunca']:,}")
+            show(heatmap_discrete(grid, x_ax, y_ax, t16, bands, zmax, "h", **hw16))
+            download_geotiff_button(grid, x_ax, y_ax, "q16", dataset)
         st.caption(_t("q16_caption"))
-        download_geotiff_button(grid, x_ax, y_ax, "q16", dataset)
 
     # ── Q10a/b/c-Xia: inestabilidad según Xia et al. (2014/2022) ────────────
     elif qid in ("q10a_xia", "q10b_xia", "q10c_xia"):
@@ -3506,38 +3715,82 @@ try:
         progress.progress(0.3, text=_t("loading_step"))
         grid, x_ax, y_ax, stats = q10_xia(meta, hora, tipo_xia, bbox)
         progress.progress(1.0, text=_t("completed"))
-        c1, c2, c3 = st.columns(3)
-        c1.metric(_t("xia_safe"),     f"{stats.get('area_seguro_km2', 0):.1f} km²")
-        c2.metric(_t("xia_moderate"), f"{stats.get('area_moderado_km2', 0):.1f} km²")
-        c3.metric(_t("xia_high"),     f"{stats.get('area_alto_km2', 0):.1f} km²")
-        cmap = xia_risk_colorscale()
+        cmap_xia = xia_risk_colorscale()
+        hm_kwargs = dict(zmin=0.0, zmax=2.0,
+                         cbar_tickvals=[0.33, 1.0, 1.67],
+                         cbar_ticktext=[_t("xia_safe"), _t("xia_moderate"), _t("xia_high")],
+                         hover_label="nivel", hover_unit="", zsmooth=False)
         if tipo_xia == "vehiculos":
-            title = _t("xia_vehiculos_title").format(hora=hora)
+            base_title = _t("xia_vehiculos_title").format(hora=hora)
             caption = _t("xia_caption_vehiculos")
         else:
             tipo_label = "adultos" if tipo_xia == "adultos" else "niños"
-            title = _t("xia_personas_title").format(tipo=tipo_label, hora=hora)
+            base_title = _t("xia_personas_title").format(tipo=tipo_label, hora=hora)
             caption = _t("xia_caption_personas").format(tipo=tipo_label)
-        show(make_heatmap(grid, x_ax, y_ax, title, cmap, "riesgo",
-            zmin=0.0, zmax=2.0,
-            cbar_tickvals=[0.33, 1.0, 1.67],
-            cbar_ticktext=[_t("xia_safe"), _t("xia_moderate"), _t("xia_high")],
-            hover_label="nivel", hover_unit="", zsmooth=False))
+        if comparar and dataset2:
+            grid2, x_ax2, y_ax2, stats2 = q10_xia(get_meta(dataset2), hora, tipo_xia, bbox)
+            fig_a = make_heatmap(grid,  x_ax,  y_ax,
+                                 f"{base_title} — {_dataset_display(dataset)}",
+                                 cmap_xia, "riesgo", **hm_kwargs)
+            fig_b = make_heatmap(grid2, x_ax2, y_ax2,
+                                 f"{base_title} — {_dataset_display(dataset2)}",
+                                 cmap_xia, "riesgo", **hm_kwargs)
+            ca1, ca2 = st.columns(2)
+            cmetric(ca1, f"{_dataset_display(dataset)} — {_t('xia_high')}",
+                    f"{stats.get('area_alto_km2',0):.1f} km²")
+            cmetric(ca2, f"{_dataset_display(dataset2)} — {_t('xia_high')}",
+                    f"{stats2.get('area_alto_km2',0):.1f} km²",
+                    f"{stats2.get('area_alto_km2',0)-stats.get('area_alto_km2',0):+.1f} km²")
+            ca1.plotly_chart(fig_a, width="stretch", config=PLOT_CONFIG, theme=None)
+            download_geotiff_button(grid,  x_ax,  y_ax,  qid, dataset,  hora,
+                                    ds_label=_dataset_display(dataset))
+            ca2.plotly_chart(fig_b, width="stretch", config=PLOT_CONFIG, theme=None)
+            download_geotiff_button(grid2, x_ax2, y_ax2, qid, dataset2, hora,
+                                    ds_label=_dataset_display(dataset2))
+        else:
+            c1, c2, c3 = st.columns(3)
+            c1.metric(_t("xia_safe"),     f"{stats.get('area_seguro_km2', 0):.1f} km²")
+            c2.metric(_t("xia_moderate"), f"{stats.get('area_moderado_km2', 0):.1f} km²")
+            c3.metric(_t("xia_high"),     f"{stats.get('area_alto_km2', 0):.1f} km²")
+            show(make_heatmap(grid, x_ax, y_ax, base_title, cmap_xia, "riesgo", **hm_kwargs))
         st.caption(caption)
-        download_geotiff_button(grid, x_ax, y_ax, qid, dataset, hora)
+        if not comparar:
+            download_geotiff_button(grid, x_ax, y_ax, qid, dataset, hora)
 
     # ── Q18: zona de graves daños (RD 9/2008) ───────────────────────────────
     elif qid == "q18":
         progress.progress(0.3, text=_t("loading_step"))
         grid, x_ax, y_ax, stats = q18_graves_danos(meta, hora, bbox)
         progress.progress(1.0, text=_t("completed"))
-        st.metric(_t("q18_area"), f"{stats.get('area_km2', 0):.1f} km²")
-        show(make_heatmap(grid, x_ax, y_ax,
-            _t("q18_title").format(hora=hora),
-            [[0.0, "#ffcccc"], [1.0, "#cc0000"]], "H (m)",
-            hover_label="H", hover_unit="m"))
+        cmap18 = [[0.0, "#ff9999"], [1.0, "#cc0000"]]
+        t18 = _t("q18_title").format(hora=hora)
+        if comparar and dataset2:
+            grid2, x_ax2, y_ax2, stats2 = q18_graves_danos(get_meta(dataset2), hora, bbox)
+            fig_a = make_heatmap(grid, x_ax, y_ax,
+                f"{t18} — {_dataset_display(dataset)}", cmap18, "H (m)",
+                hover_label="H", hover_unit="m", zsmooth=False)
+            fig_b = make_heatmap(grid2, x_ax2, y_ax2,
+                f"{t18} — {_dataset_display(dataset2)}", cmap18, "H (m)",
+                hover_label="H", hover_unit="m", zsmooth=False)
+            ca1, ca2 = st.columns(2)
+            _aA = stats.get('area_km2', 0); _aB = stats2.get('area_km2', 0)
+            _s18 = "+" if _aB >= _aA else ""
+            cmetric(ca1, f"{_dataset_display(dataset)} — {_t('q18_area')}", f"{_aA:.1f} km²")
+            cmetric(ca2, f"{_dataset_display(dataset2)} — {_t('q18_area')}",
+                    f"{_aB:.1f} km²", f"{_s18}{_aB-_aA:.1f} km²")
+            ca1.plotly_chart(fig_a, width="stretch", config=PLOT_CONFIG, theme=None)
+            download_geotiff_button(grid, x_ax, y_ax, "q18", dataset, hora,
+                                    ds_label=_dataset_display(dataset))
+            ca2.plotly_chart(fig_b, width="stretch", config=PLOT_CONFIG, theme=None)
+            download_geotiff_button(grid2, x_ax2, y_ax2, "q18", dataset2, hora,
+                                    ds_label=_dataset_display(dataset2))
+        else:
+            st.metric(_t("q18_area"), f"{stats.get('area_km2', 0):.1f} km²")
+            show(make_heatmap(grid, x_ax, y_ax, t18, cmap18, "H (m)",
+                hover_label="H", hover_unit="m", zsmooth=False))
         st.caption(_t("q18_caption"))
-        download_geotiff_button(grid, x_ax, y_ax, "q18", dataset, hora)
+        if not comparar:
+            download_geotiff_button(grid, x_ax, y_ax, "q18", dataset, hora)
 
     progress.empty()
     elapsed = time.perf_counter() - t_start

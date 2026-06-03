@@ -18,9 +18,7 @@ import numpy as np
 import rasterio
 from rasterio.transform import from_origin
 import tiledb
-from config import resolve_dataset
-
-OUTPUT_DIR = Path("/home/ebald/TFG/export")
+from config import BASE_URI, OUTPUT_DIR, resolve_dataset
 ALL_VARS   = ["H", "QX", "QY", "MH"]
 NODATA     = -9999.0
 
@@ -104,7 +102,7 @@ def main() -> None:
                         help=f"Directorio de salida (defecto: {OUTPUT_DIR})")
     args = parser.parse_args()
 
-    tiledb_uri = f"/home/ebald/TFG/tiledb/triton_results/{resolve_dataset(args.dataset)}"
+    tiledb_uri = f"{BASE_URI}/{resolve_dataset(args.dataset)}"
     output_dir = Path(args.out)
     vars_ = ALL_VARS if args.var == "all" else [args.var.upper()]
 

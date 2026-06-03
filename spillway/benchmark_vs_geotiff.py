@@ -32,7 +32,7 @@ import numpy as np
 import rasterio
 import rasterio.windows
 import tiledb
-from config import resolve_dataset
+from config import BASE_URI, GTIFF_BASE_URI, resolve_dataset
 
 
 # ── Configuración ─────────────────────────────────────────────
@@ -255,8 +255,8 @@ def main():
                         help="Dataset a comparar")
     args = parser.parse_args()
 
-    tiledb_uri = f"/home/ebald/TFG/tiledb/triton_results/{resolve_dataset(args.dataset)}"
-    gtiff_dir  = Path(f"/home/ebald/TFG/{args.dataset}")
+    tiledb_uri = f"{BASE_URI}/{resolve_dataset(args.dataset)}"
+    gtiff_dir  = Path(GTIFF_BASE_URI) / args.dataset
     have_gtiff = gtiff_dir.exists() and any(gtiff_dir.glob("*.tif"))
 
     load_domain_constants(tiledb_uri)

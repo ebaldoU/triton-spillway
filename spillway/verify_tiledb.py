@@ -20,7 +20,7 @@ import numpy as np
 import rasterio
 import rasterio.windows
 import tiledb
-from config import BASE_URI, resolve_dataset
+from config import BASE_URI, GTIFF_BASE_URI, resolve_dataset
 
 TOLERANCE      = 1e-4
 PASS_THRESHOLD = 99.0
@@ -75,7 +75,7 @@ def main() -> None:
     args = parser.parse_args()
 
     uri       = f"{BASE_URI}/{resolve_dataset(args.dataset)}"
-    gtiff_dir = Path(f"/home/ebald/TFG/{args.dataset}")
+    gtiff_dir = Path(GTIFF_BASE_URI) / args.dataset
 
     print(f"Verificando {args.dataset}  |  paso {args.step}  |  N={args.n}")
 

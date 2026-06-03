@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import numpy as np
 import tiledb
-from config import resolve_dataset
+from config import BASE_URI, resolve_dataset
 
 
 DEFAULT_STEP  = "01_00"
@@ -246,7 +246,7 @@ def main() -> None:
                         help="Modo: full | H | QX | QY | MH (defecto: full)")
     args = parser.parse_args()
 
-    uri  = f"/home/ebald/TFG/tiledb/triton_results/{resolve_dataset(args.dataset)}"
+    uri  = f"{BASE_URI}/{resolve_dataset(args.dataset)}"
     step = args.step
     mode = args.mode.upper()
 

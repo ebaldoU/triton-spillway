@@ -27,7 +27,7 @@ import time
 import numpy as np
 import rasterio
 import tiledb
-from config import BASE_URI, resolve_dataset
+from config import BASE_URI, GTIFF_BASE_URI, resolve_dataset
 
 
 DEPTH_THRESHOLD  = 0.01   # 1 cm
@@ -88,10 +88,10 @@ def main() -> None:
     parser.add_argument("--dataset", required=True,
                         help="Dataset a cargar, p. ej. datos1, datos2, datos3… (resuelve las rutas GTIFF_DIR y TILEDB_URI).")
     parser.add_argument("--gtiff-dir",
-                        help="Directorio fuente con los GeoTIFFs. Por defecto: /home/ebald/TFG/{dataset}")
+                        help="Directorio fuente con los GeoTIFFs (defecto: $TRITON_GTIFF_DIR/<dataset>)")
     args = parser.parse_args()
 
-    gtiff_dir  = Path(args.gtiff_dir) if args.gtiff_dir else Path(f"/home/ebald/TFG/{args.dataset}")
+    gtiff_dir  = Path(args.gtiff_dir) if args.gtiff_dir else Path(GTIFF_BASE_URI) / args.dataset
     tiledb_uri = f"{BASE_URI}/{resolve_dataset(args.dataset)}"
 
     t_start = time.perf_counter()

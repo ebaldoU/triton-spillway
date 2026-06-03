@@ -14,7 +14,7 @@ import json
 
 import numpy as np
 import tiledb
-from config import resolve_dataset
+from config import BASE_URI, resolve_dataset
 
 
 def query_max_depth(uri: str, top_n: int) -> None:
@@ -71,7 +71,7 @@ def main() -> None:
     parser.add_argument("--top", type=int, default=5, metavar="N",
                         help="Número de celdas a mostrar (defecto: 5)")
     args = parser.parse_args()
-    query_max_depth(f"/home/ebald/TFG/tiledb/triton_results/{resolve_dataset(args.dataset)}", args.top)
+    query_max_depth(f"{BASE_URI}/{resolve_dataset(args.dataset)}", args.top)
 
 
 if __name__ == "__main__":

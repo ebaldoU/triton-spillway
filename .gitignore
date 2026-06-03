@@ -1,38 +1,47 @@
-# Datos (nunca subir al repo)
+# Datos TileDB y GeoTIFF (pesados, no se suben al repo)
 triton_results/
 datos*/
 *.tif
 *.tiff
+export/
 
-# Python
+# Entornos virtuales
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
 *.pyd
 .venv/
 venv/
+venv_triton/
+tiledb_env/
 *.egg-info/
 
+# Secretos y configuración local
+.env
+spillway/.streamlit/secrets.toml
+secrets.toml
+
 # Archivos compilados LaTeX
-memoria/*.aux
-memoria/*.log
-memoria/*.out
-memoria/*.toc
-memoria/*.lof
-memoria/*.lot
-memoria/*.fls
-memoria/*.fdb_latexmk
-memoria/*.synctex.gz
-memoria/*.bbl
-memoria/*.blg
-memoria/*.idx
-memoria/*.ilg
-memoria/*.ind
-memoria/_minted*/
-memoria/auto/
+memoria/**/*.aux
+memoria/**/*.log
+memoria/**/*.out
+memoria/**/*.toc
+memoria/**/*.lof
+memoria/**/*.lot
+memoria/**/*.fls
+memoria/**/*.fdb_latexmk
+memoria/**/*.synctex.gz
+memoria/**/*.bbl
+memoria/**/*.blg
+memoria/**/*.idx
+memoria/**/*.ilg
+memoria/**/*.ind
+memoria/**/_minted*/
+memoria/**/auto/
 
 # Archivos temporales / sistema
 *.zip
 *.Zone.Identifier
 .DS_Store
 Thumbs.db
+*.log

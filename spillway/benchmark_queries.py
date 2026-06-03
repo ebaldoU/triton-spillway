@@ -24,7 +24,7 @@ import time
 
 import numpy as np
 import tiledb
-from config import resolve_dataset
+from config import BASE_URI, resolve_dataset
 
 
 # ── Configuración ─────────────────────────────────────────────
@@ -86,7 +86,7 @@ def main() -> None:
     parser.add_argument("--dataset", required=True,
                         help="Dataset a medir")
     args = parser.parse_args()
-    tiledb_uri = f"/home/ebald/TFG/tiledb/triton_results/{resolve_dataset(args.dataset)}"
+    tiledb_uri = f"{BASE_URI}/{resolve_dataset(args.dataset)}"
 
     print(f"\n{'═'*72}")
     print(f"  BENCHMARK DE CONSULTAS — TileDB Triton  ({args.dataset})")

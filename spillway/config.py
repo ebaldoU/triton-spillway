@@ -1,9 +1,19 @@
 import os
+from pathlib import Path
 
 BASE_URI = os.environ.get(
     "TRITON_BASE_URI",
-    "/home/ebald/TFG/tiledb/triton_results",
+    str(Path(__file__).parent.parent / "triton_results"),
 )
+
+# Directorio raíz donde están las carpetas de GeoTIFFs fuente (datos1/, datos2/, ...)
+GTIFF_BASE_URI = os.environ.get(
+    "TRITON_GTIFF_DIR",
+    str(Path(BASE_URI).parent.parent),
+)
+
+# Directorio de salida para exportaciones
+OUTPUT_DIR = Path(os.environ.get("TRITON_OUTPUT_DIR", str(Path(BASE_URI).parent / "export")))
 
 DATASET_ALIASES = {
     "datos1": "output_10_HUC1024_ACCESS-CM2_ssp585_r1i1p1f1_RegCM_Daymet_1980_2019_19800728_19800801",

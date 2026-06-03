@@ -24,7 +24,7 @@ import time
 
 import numpy as np
 import tiledb
-from config import resolve_dataset
+from config import BASE_URI, resolve_dataset
 
 FLOOD_THRESHOLD = 0.011   # m
 TOP_N           = 10
@@ -197,7 +197,7 @@ def main() -> None:
     parser.add_argument("--dataset", required=True,
                         help="Dataset a consultar")
     args = parser.parse_args()
-    query_all(f"/home/ebald/TFG/tiledb/triton_results/{resolve_dataset(args.dataset)}")
+    query_all(f"{BASE_URI}/{resolve_dataset(args.dataset)}")
 
 
 if __name__ == "__main__":
