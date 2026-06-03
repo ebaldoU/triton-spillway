@@ -112,53 +112,156 @@ La Figura~\ref{fig:tiledb-estructura} ilustra cómo TileDB organiza físicamente
 
 \begin{figure}[ht]
 \centering
-\begin{tikzpicture}[x=0.72cm, y=0.72cm, font=\small\sffamily]
-  %% --- Eje tiempo: 20 fragmentos apilados ---
-  \def\nf{6}  %% número de láminas visibles (las últimas representan "...")
-  \def\sep{0.45}
-  \def\W{5.5}
-  \def\H{3.2}
-  \foreach \i in {0,...,5} {
-    \pgfmathsetmacro\dx{\i*\sep}
-    \pgfmathsetmacro\dy{\i*\sep*0.55}
-    \pgfmathsetmacro\alpha{int(\i*20/5)}
-    \ifnum\i<5
-      \fill[blue!7!white, draw=blue!40, line width=0.5pt]
-        (\dx, \dy) rectangle (\dx+\W, \dy+\H);
-      \node[blue!60!black, font=\tiny\bfseries] at (\dx+\W/2, \dy+\H+0.18) {$t_{\alpha}$};
-    \else
-      \node[gray!55, font=\normalsize\bfseries] at (\dx+\W/2+0.2, \dy+\H/2) {$\cdots$};
+\begin{tikzpicture}[x=1cm, y=1cm, font=\small\sffamily]
+
+  %% ── Parámetros globales ──────────────────────────────────────────
+  \def\W{5.0}    % ancho cara frontal (columnas)
+  \def\H{3.2}    % alto cara frontal (filas)
+  \def\ox{0.38}  % offset oblicuo X por fragmento
+  \def\oy{0.28}  % offset oblicuo Y por fragmento
+  \def\NV{7}     % fragmentos visibles en el stack
+
+  %% ── Stack de fragmentos: de atrás a delante ─────────────────────
+  \foreach \k in {6,5,4,3,2,1,0} {
+    \pgfmathsetmacro\dx{\k*\ox}
+    \pgfmathsetmacro\dy{\k*\oy}
+    \pgfmathsetmacro\tcol{int(\k*4)}   %% t_0, t_4, t_8 ...
+    % Cara superior
+    \fill[blue!14, draw=blue!30, line width=0.35pt]
+      (\dx,\dy+\H) -- (\dx+\ox,\dy+\H+\oy) --
+      (\dx+\W+\ox,\dy+\H+\oy) -- (\dx+\W,\dy+\H) -- cycle;
+    % Cara lateral derecha
+    \fill[blue!22, draw=blue!30, line width=0.35pt]
+      (\dx+\W,\dy) -- (\dx+\W+\ox,\dy+\oy) --
+      (\dx+\W+\ox,\dy+\H+\oy) -- (\dx+\W,\dy+\H) -- cycle;
+    % Cara frontal
+    \fill[blue!8, draw=blue!38, line width=0.5pt]
+      (\dx,\dy) rectangle (\dx+\W,\dy+\H);
+    % Etiqueta de paso temporal
+    \ifnum\k>0
+      \node[blue!55!black, font=\tiny, anchor=west]
+        at (\dx+\W+\ox+0.07, \dy+\H/2+\oy/2)
+        {$t_{\tcol}$};
     \fi
   }
-  %% Puntos dispersos en la primera lámina (celdas húmedas)
-  \foreach \px/\py in {1.0/0.8, 1.4/1.1, 2.1/0.6, 2.5/1.4, 3.2/0.9,
-                        3.6/1.7, 1.8/2.0, 2.8/2.3, 4.1/1.2, 4.5/0.7} {
-    \fill[blue!65!black] (\px,\py) circle(1.5pt);
+
+  %% ── Grid disperso en la cara frontal (fragmento t_0) ────────────
+  % Mini-rejilla 10 x 7 representando el dominio espacial
+  \def\cs{0.5}   % tamaño celda X
+  \def\rs{0.457} % tamaño celda Y
+  % Celdas secas (gris claro)
+  \foreach \ci in {0,...,9} {
+    \foreach \ri in {0,...,6} {
+      \fill[gray!18] (\ci*\cs+0.03, \ri*\rs+0.03)
+                     rectangle (\ci*\cs+\cs-0.03, \ri*\rs+\rs-0.03);
+    }
   }
-  \node[blue!65!black, font=\tiny, align=center] at (2.5,0.25) {celdas húmedas ($\sim$8\,\%)};
-  %% Etiqueta del eje tiempo
-  \draw[-latex, thick, draw=blue!50!black]
-    (-0.3, 0.2) -- ++({\nf*\sep+0.2}, {(\nf*0.55*\sep)+0.2});
-  \node[blue!60!black, font=\small, rotate=27, above=2pt] at (0.8,0.7) {tiempo (20 fragmentos)};
-  %% Etiquetas ejes espaciales
-  \draw[-latex, thick, draw=gray!60] (-0.3,0) -- (5.8,0);
-  \node[gray!60, font=\tiny, below=3pt] at (2.8,-0.05) {col (0\,--\,23\,039)};
-  \draw[-latex, thick, draw=gray!60] (-0.3,0) -- (-0.3,3.5);
-  \node[gray!60, font=\tiny, rotate=90, left=4pt] at (-0.3,1.8) {row (0\,--\,34\,199)};
-  %% Cuadro atributos a la derecha
-  \def\ax{7.2}
-  \draw[draw=orange!70!black, fill=orange!8, rounded corners=3pt, thick]
-    (\ax, 0.3) rectangle (\ax+2.5, 3.0);
-  \node[orange!70!black, font=\small\bfseries, above=2pt] at (\ax+1.25, 3.0) {Atributos};
-  \foreach \lab/\desc/\yy in {H/Calado/2.4, QX/Caudal\,X/1.8, QY/Caudal\,Y/1.2, MH/H\,máx./0.6} {
-    \node[font=\tiny, align=left] at (\ax+1.25, \yy) {\textbf{\lab} — \desc};
+  % Celdas húmedas (~8 %): 6 de 70 ≈ 8.6 %
+  \foreach \ci/\ri in {1/1, 2/3, 3/5, 5/2, 6/4, 7/1, 8/5, 4/3, 2/0, 9/3} {
+    \fill[blue!60] (\ci*\cs+0.03, \ri*\rs+0.03)
+                   rectangle (\ci*\cs+\cs-0.03, \ri*\rs+\rs-0.03);
   }
-  \node[orange!55!black, font=\tiny, below=2pt] at (\ax+1.25, 0.3) {float32, ByteShuffle+ZSTD-9};
-  %% Flecha conectando lámina a atributos
-  \draw[-latex, thick, draw=orange!60!black, dashed]
-    ({5.5+5*\sep+0.15}, {5*0.55*\sep+\H/2}) -- (\ax-0.1, 1.7);
+  % Etiqueta "t_0" sobre la cara frontal
+  \node[blue!75!black, font=\scriptsize\bfseries] at (\W/2, -0.22) {$t_0$};
+
+  %% ── "..." entre fragmentos visibles y t_19 ───────────────────────
+  \pgfmathsetmacro\dxlast{(\NV+0.5)*\ox}
+  \pgfmathsetmacro\dylast{(\NV+0.5)*\oy}
+  \node[gray!55, font=\normalsize\bfseries]
+    at (\W/2+\dxlast, \H/2+\dylast) {$\cdots$};
+  \node[blue!50!black, font=\tiny, anchor=west]
+    at (\W+(\NV+1)*\ox+0.08, \H/2+(\NV+1)*\oy/2)
+    {$t_{19}$};
+
+  %% ── Ejes de coordenadas ──────────────────────────────────────────
+  % Eje col (→)
+  \draw[-{latex}, gray!60, thick] (0,-0.45) -- (\W+0.25,-0.45);
+  \node[gray!58, font=\scriptsize, below=1pt] at (\W/2,-0.45)
+    {columna \quad (0\,–\,23\,039)};
+  % Eje row (↑)
+  \draw[-{latex}, gray!60, thick] (-0.4,0) -- (-0.4,\H+0.25);
+  \node[gray!58, font=\scriptsize, rotate=90, above=2pt] at (-0.4,\H/2)
+    {fila \quad (0\,–\,34\,199)};
+  % Eje tiempo (oblicuo)
+  \draw[-{latex}, blue!55!black, thick]
+    (0,\H+0.15) -- ++({\NV*\ox+0.25},{\NV*\oy+0.25});
+  \node[blue!60!black, font=\scriptsize, rotate=36, above=3pt]
+    at ({\NV*\ox/2+0.2},\H+{\NV*\oy/2+0.3}) {tiempo (20 fragmentos)};
+
+  %% ── Leyenda celdas ───────────────────────────────────────────────
+  \fill[blue!60] (0.15,\H+0.95) rectangle (0.45,\H+1.22);
+  \node[right, font=\tiny] at (0.5,\H+1.07) {celda húmeda ($\sim$8\,\% del dominio)};
+  \fill[gray!18, draw=gray!40, line width=0.3pt]
+    (3.4,\H+0.95) rectangle (3.7,\H+1.22);
+  \node[right, font=\tiny] at (3.75,\H+1.07) {celda seca (no almacenada)};
+
+  %% ── Cuadro de estructura por celda ──────────────────────────────
+  \def\bx{6.5}
+  \def\by{-0.1}
+  \def\bw{4.0}
+
+  % Cabecera
+  \fill[blue!45!black, rounded corners=3pt]
+    (\bx,\by+4.65) rectangle (\bx+\bw,\by+5.15);
+  \node[white, font=\small\bfseries] at (\bx+\bw/2,\by+4.9)
+    {Estructura de cada celda};
+
+  % Marco
+  \draw[blue!35!black, rounded corners=3pt, thick, fill=blue!2]
+    (\bx,\by) rectangle (\bx+\bw,\by+4.65);
+
+  % ── Sección coordenadas
+  \node[blue!55!black, font=\tiny\bfseries, anchor=west]
+    at (\bx+0.15,\by+4.38) {COORDENADAS};
+  \draw[gray!25, line width=0.5pt]
+    (\bx+0.1,\by+4.22) -- (\bx+\bw-0.1,\by+4.22);
+  \foreach \lbl/\rng/\ypos in {
+    time/{int32, rango 0\,–\,19}/3.95,
+    row/{int32, rango 0\,–\,34\,199}/3.55,
+    col/{int32, rango 0\,–\,23\,039}/3.15%
+  }{
+    \node[font=\tiny, anchor=west] at (\bx+0.2,\by+\ypos)
+      {\texttt{\lbl}};
+    \node[font=\tiny, gray!60, anchor=east] at (\bx+\bw-0.15,\by+\ypos)
+      {\rng};
+  }
+
+  % Separador
+  \draw[gray!30, line width=0.6pt]
+    (\bx+0.1,\by+2.9) -- (\bx+\bw-0.1,\by+2.9);
+
+  % ── Sección atributos
+  \node[orange!65!black, font=\tiny\bfseries, anchor=west]
+    at (\bx+0.15,\by+2.65) {ATRIBUTOS (float32)};
+  \draw[gray!25, line width=0.5pt]
+    (\bx+0.1,\by+2.48) -- (\bx+\bw-0.1,\by+2.48);
+  \foreach \lbl/\desc/\ypos in {
+    H/{Calado instantáneo (m)}/2.18,
+    QX/{Caudal unitario X (m\textsuperscript{2}/s)}/1.75,
+    QY/{Caudal unitario Y (m\textsuperscript{2}/s)}/1.32,
+    MH/{Calado máximo histórico (m)}/0.89%
+  }{
+    \node[font=\tiny\bfseries, anchor=west] at (\bx+0.2,\by+\ypos)
+      {\texttt{\lbl}};
+    \node[font=\tiny, gray!55, anchor=west] at (\bx+0.75,\by+\ypos)
+      {— \desc};
+  }
+
+  % ── Sección compresión y tamaño
+  \draw[gray!30, line width=0.6pt]
+    (\bx+0.1,\by+0.65) -- (\bx+\bw-0.1,\by+0.65);
+  \node[orange!65!black, font=\tiny, align=center] at (\bx+\bw/2,\by+0.42)
+    {Filtro: ByteShuffle + ZSTD-9};
+  \node[gray!60, font=\tiny, align=center] at (\bx+\bw/2,\by+0.15)
+    {$\sim$17,5 GB por escenario (20 pasos)};
+
+  %% ── Flecha fragmento → estructura celda
+  \draw[-{latex}, blue!40!black, thick, dashed]
+    (\W+0.15, \H/2)
+    to[out=0, in=180] (\bx-0.12, \by+2.5);
+
 \end{tikzpicture}
-\caption{Estructura interna del array TileDB sparse. Los 20 pasos temporales se almacenan en 20 fragmentos independientes (láminas azules), cada uno con únicamente las celdas húmedas (puntos), que representan el $\sim$8\,\% del dominio. Cada celda almacena cuatro atributos (H, QX, QY, MH) codificados en float32 con filtro ByteShuffle+ZSTD-9. El tamaño resultante es aproximado ($\sim$17,5 GB para un escenario tipo) y varía según la extensión de inundación de cada simulación.}
+\caption{Estructura interna del array TileDB sparse. \textbf{Izquierda:} los 20 pasos temporales se almacenan como 20 fragmentos independientes apilados en la dimensión temporal. La cara frontal del fragmento $t_0$ muestra el dominio espacial (fila $\times$ columna): las celdas húmedas (azul, $\sim$8\,\% del total) se almacenan con sus coordenadas; las celdas secas (gris) no se guardan. \textbf{Derecha:} cada celda húmeda almacena sus tres coordenadas (time, row, col) y cuatro atributos en float32 (H, QX, QY, MH), comprimidos con ByteShuffle+ZSTD-9. El resultado son $\sim$17,5 GB por escenario frente a los $\sim$235 GB de los GeoTIFF originales.}
 \label{fig:tiledb-estructura}
 \end{figure}
 
