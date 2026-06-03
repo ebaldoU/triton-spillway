@@ -49,21 +49,40 @@ pip install -r requirements.txt
 
 Las versiones de referencia del proyecto son: TileDB 0.36.1, rasterio 1.5.0, NumPy 2.4.4 y Streamlit 1.36. El fichero \texttt{requirements.txt} del repositorio especifica las versiones mínimas compatibles.
 
-\section{Configuración de la ruta base}\label{e.4-configuracion}
+\section{Configuración de las rutas}\label{e.4-configuracion}
 
-La variable de entorno \texttt{TRITON\_BASE\_URI} indica al sistema dónde encontrar los arrays TileDB. Debe apuntar al directorio que contiene \texttt{triton\_results/}:
+El sistema expone tres variables de entorno para configurar las rutas de datos:
+
+\begin{itemize}
+\item \texttt{TRITON\_BASE\_URI}: directorio que contiene \texttt{triton\_results/} con los arrays TileDB. Usada por todos los componentes.
+\item \texttt{TRITON\_GTIFF\_DIR}: directorio raíz con las carpetas de GeoTIFF fuente (\texttt{datos1/}, \texttt{datos2/}, \ldots). Solo necesaria para el ETL.
+\item \texttt{TRITON\_OUTPUT\_DIR}: directorio donde se guardan las exportaciones a GeoTIFF. Opcional.
+\end{itemize}
 
 \begin{verbatim}
-export TRITON_BASE_URI=/ruta/al/directorio/de/datos
+export TRITON_BASE_URI=/ruta/triton_results
+export TRITON_GTIFF_DIR=/ruta/datos        # solo para el ETL
+export TRITON_OUTPUT_DIR=/ruta/export      # opcional
 \end{verbatim}
 
-Opcionalmente, \texttt{TRITON\_GTIFF\_DIR} indica el directorio raíz donde están las carpetas de GeoTIFF fuente (necesario solo para el ETL):
+Si alguna variable no se define, \texttt{config.py} aplica estos valores por defecto:
 
-\begin{verbatim}
-export TRITON_GTIFF_DIR=/ruta/al/directorio/de/datos
-\end{verbatim}
+\begin{table}[ht]
+\centering
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{4cm}L}
+\toprule
+\textbf{Variable} & \textbf{Default} \\
+\midrule
+\texttt{TRITON\_BASE\_URI} & Directorio \texttt{triton\_results/} relativo a la ubicación de \texttt{config.py} \\
+\texttt{TRITON\_GTIFF\_DIR} & Padre del padre de \texttt{TRITON\_BASE\_URI} (asume la estructura estándar del proyecto) \\
+\texttt{TRITON\_OUTPUT\_DIR} & \texttt{<TRITON\_BASE\_URI>/../export} \\
+\bottomrule
+\end{tabularx}
+\caption{Valores por defecto de las variables de entorno cuando no se definen explícitamente.}
+\label{tab:env-defaults}
+\end{table}
 
-Si \texttt{TRITON\_BASE\_URI} no se define, \texttt{config.py} deriva la ruta desde la ubicación del propio fichero. Si el directorio no existe, el error se produce al arrancar (no silenciosamente). Para evitar ambigüedades, se recomienda definir siempre la variable de forma explícita.
+Si la estructura de directorios no sigue el convenio del proyecto, se recomienda definir las tres variables de forma explícita para evitar errores silenciosos.
 
 \section{Ejecución del ETL}\label{e.5-etl}
 

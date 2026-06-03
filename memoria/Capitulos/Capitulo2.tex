@@ -1,12 +1,12 @@
 \chapter{Tecnología: TileDB}\label{tecnologia-tiledb}
 
-Este capítulo describe el funcionamiento interno de TileDB: el modelo de datos, los modos de almacenamiento, la gestión de fragmentos y el mecanismo de compresión, con el objetivo de justificar las decisiones de diseño adoptadas en el capítulo siguiente.
+Este capítulo describe el funcionamiento interno de TileDB: el modelo de datos sparse, la gestión de fragmentos y el mecanismo de compresión, con el objetivo de justificar las decisiones de diseño adoptadas en el capítulo siguiente.
 
 \section{¿Qué es TileDB?}\label{que-es-tiledb}
 
 TileDB es una base de datos orientada a arrays multidimensionales de código abierto. A diferencia de las bases de datos relacionales (tablas), TileDB organiza los datos en arrays N-dimensionales, lo que lo hace especialmente eficiente para datos científicos, rásteres geoespaciales y series temporales densas o dispersas.
 
-TileDB no requiere servidor: los arrays se almacenan directamente en el sistema de ficheros local (o en la nube) como directorios con metadatos, fragmentos de datos y ficheros de índice. El acceso se realiza mediante la biblioteca Python (o C/C++/R) sin ningún servicio en ejecución.
+TileDB no requiere servidor: los arrays se almacenan directamente en el sistema de ficheros local (o en la nube) como directorios con metadatos, fragmentos de datos y ficheros de índice. El acceso se realiza mediante la biblioteca Python (o C/C++/R) sin ningún servicio en ejecución. Esta arquitectura sin servidor reduce la complejidad operativa respecto a alternativas como SciDB o Rasdaman, que exigen un demonio en ejecución continua, lo que es especialmente relevante para despliegues en máquinas de uso compartido o con recursos limitados.
 
 \section{Arrays sparse vs. densos}\label{arrays-sparse-vs.-densos}
 
@@ -65,23 +65,23 @@ En este proyecto se utiliza el modo disperso porque solo el $\sim$8,3 \% del dom
 
 Cada escritura en TileDB crea un fragmento independiente en disco. En este proyecto se realiza una escritura por paso temporal, lo que produce \textbf{20 fragmentos} (uno por cada intervalo de 6 horas). Mantenerlos separados tiene una ventaja importante: TileDB puede filtrar por la dimensión \texttt{time} leyendo solo los fragmentos relevantes, lo que acelera las consultas acotadas temporalmente.
 
-La API de TileDB ofrece \texttt{tiledb.consolidate()} para fusionar todos los fragmentos en uno solo, y \texttt{tiledb.vacuum()} para eliminar los fragmentos anteriores. En este proyecto esta operación \textbf{no se aplica}: la consolidación agrupa celdas de distintos pasos temporales en los mismos tiles, lo que obliga a leer datos innecesarios en consultas que solo acceden a uno o pocos pasos (\textit{tile amplification}). Las pruebas realizadas durante el benchmark de configuración (véase Anexo B, grupo G4) confirman que mantener un fragmento por paso temporal es la opción más eficiente para el filtrado por tiempo; la consolidación en un único fragmento penaliza las consultas multi-paso por \textit{tile amplification}.
+La API de TileDB ofrece \texttt{tiledb.consolidate()} para fusionar todos los fragmentos en uno solo, y \texttt{tiledb.vacuum()} para eliminar los fragmentos anteriores. En este proyecto esta operación \textbf{no se aplica}: la consolidación agrupa celdas de distintos pasos temporales en los mismos tiles, lo que obliga a leer datos innecesarios en consultas que solo acceden a uno o pocos pasos (\textit{tile amplification}). Las pruebas realizadas durante el benchmark de configuración (véase \hyperref[anexo-b.-tablas-de-resultados-completas]{Anexo~B}, grupo G4) confirman que mantener un fragmento por paso temporal es la opción más eficiente para el filtrado por tiempo; la consolidación en un único fragmento penaliza las consultas multi-paso por \textit{tile amplification}.
 
 \section{Compresión}\label{compresion}
 
 Se utilizó el filtro ByteShuffle+ZSTD nivel 9 \cite{tiledb_compression_tutorial, tiledb_compression, tiledb_docs_compression}. Tras un \textit{benchmark} exhaustivo de 15 configuraciones (ZSTD puro niveles 1, 3, 5 y 9, ByteShuffle+ZSTD y BitShuffle+ZSTD en los mismos niveles, y DeltaFilter+ZSTD inaplicable en float32) se concluyó que las diferencias de velocidad de lectura entre configuraciones son menores que el ruido de la caché del sistema operativo. El criterio determinista es el tamaño en disco: ByteShuffle+ZSTD-9 ofrece el menor tamaño (860 MB/paso en la región de prueba) gracias al reordenamiento de bytes de los float32, que agrupa exponentes y mantisas similares antes de comprimir. Reduce el almacenamiento un 8,9 \% adicional respecto a ZSTD-1 sin penalización apreciable en lectura.
 
-La sección~\ref{diseno-del-sistema} presenta el diseño del array TileDB y el proceso ETL de carga de datos. El Anexo~D describe el proceso de ingesta con mayor nivel de detalle.
+La sección~\ref{diseno-del-sistema} presenta el diseño del array TileDB y el proceso ETL de carga de datos. El \hyperref[anexo-d.-proceso-de-ingesta-etl-detallado]{Anexo~D} describe el proceso de ingesta con mayor nivel de detalle.
 
 \chapter{Diseño del Sistema}\label{diseno-del-sistema}
 
 El sistema está compuesto por cuatro capas articuladas en torno al array TileDB sparse como componente central de almacenamiento, tal y como muestra la Figura~\ref{fig:arquitectura}:
 
 \begin{enumerate}
-\item \textbf{Ingesta (ETL):} El script \texttt{geotiff\_to\_tiledb\_sparse.py} lee los ficheros GeoTIFF generados por Triton, aplica el filtro de celdas húmedas (H $\geq$ 0,01 m) y escribe los datos en TileDB con filtro ByteShuffle+ZSTD-9. La lectura se realiza por franjas de 5 000 filas para limitar el uso de memoria.
+\item \textbf{Ingesta (ETL):} El módulo de ingesta lee los ficheros GeoTIFF generados por Triton, aplica el filtro de celdas húmedas (H $\geq$ 0,01 m) y escribe los datos en TileDB con filtro ByteShuffle+ZSTD-9. La lectura se realiza por franjas de 5 000 filas para limitar el uso de memoria.
 \item \textbf{Almacenamiento:} Array TileDB sparse con dimensiones (time, row, col) y atributos (H, QX, QY, MH). Un fragmento por paso temporal facilita el filtrado temporal eficiente.
-\item \textbf{Análisis:} El módulo \texttt{consultas\_analiticas.py} proporciona 20 funciones que operan directamente sobre el array TileDB sin exportación previa.
-\item \textbf{Visualización y exportación:} Incluye \texttt{visualize\_tiledb.py} (visualizador matplotlib), \texttt{export\_to\_geotiff.py} (interoperabilidad SIG) y \texttt{app.py} (aplicación Streamlit con mapas interactivos, exportación y panel de ayuda).
+\item \textbf{Análisis:} El motor de consultas proporciona 20 funciones que operan directamente sobre el array TileDB sin exportación previa.
+\item \textbf{Visualización y exportación:} Un visualizador interactivo, un exportador a GeoTIFF para interoperabilidad SIG y la aplicación web Streamlit con mapas interactivos, comparativa multi-escenario y panel de ayuda.
 \end{enumerate}
 
 \section{Arquitectura del array TileDB}\label{arquitectura-del-array-tiledb}
@@ -107,6 +107,60 @@ Atributo MH & float32 & Profundidad máxima histórica \\
 \caption{Dimensiones y atributos del array TileDB sparse.}
 \label{tab:array-schema}
 \end{table}
+
+La Figura~\ref{fig:tiledb-estructura} ilustra cómo TileDB organiza físicamente estos datos: 20 fragmentos independientes (uno por paso temporal) almacenan únicamente las coordenadas y valores de las celdas húmedas, con los cuatro atributos codificados juntos mediante ByteShuffle+ZSTD-9.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[x=0.72cm, y=0.72cm, font=\small\sffamily]
+  %% --- Eje tiempo: 20 fragmentos apilados ---
+  \def\nf{6}  %% número de láminas visibles (las últimas representan "...")
+  \def\sep{0.45}
+  \def\W{5.5}
+  \def\H{3.2}
+  \foreach \i in {0,...,5} {
+    \pgfmathsetmacro\dx{\i*\sep}
+    \pgfmathsetmacro\dy{\i*\sep*0.55}
+    \pgfmathsetmacro\alpha{int(\i*20/5)}
+    \ifnum\i<5
+      \fill[blue!7!white, draw=blue!40, line width=0.5pt]
+        (\dx, \dy) rectangle (\dx+\W, \dy+\H);
+      \node[blue!60!black, font=\tiny\bfseries] at (\dx+\W/2, \dy+\H+0.18) {$t_{\alpha}$};
+    \else
+      \node[gray!55, font=\normalsize\bfseries] at (\dx+\W/2+0.2, \dy+\H/2) {$\cdots$};
+    \fi
+  }
+  %% Puntos dispersos en la primera lámina (celdas húmedas)
+  \foreach \px/\py in {1.0/0.8, 1.4/1.1, 2.1/0.6, 2.5/1.4, 3.2/0.9,
+                        3.6/1.7, 1.8/2.0, 2.8/2.3, 4.1/1.2, 4.5/0.7} {
+    \fill[blue!65!black] (\px,\py) circle(1.5pt);
+  }
+  \node[blue!65!black, font=\tiny, align=center] at (2.5,0.25) {celdas húmedas ($\sim$8\,\%)};
+  %% Etiqueta del eje tiempo
+  \draw[-latex, thick, draw=blue!50!black]
+    (-0.3, 0.2) -- ++({\nf*\sep+0.2}, {(\nf*0.55*\sep)+0.2});
+  \node[blue!60!black, font=\small, rotate=27, above=2pt] at (0.8,0.7) {tiempo (20 fragmentos)};
+  %% Etiquetas ejes espaciales
+  \draw[-latex, thick, draw=gray!60] (-0.3,0) -- (5.8,0);
+  \node[gray!60, font=\tiny, below=3pt] at (2.8,-0.05) {col (0\,--\,23\,039)};
+  \draw[-latex, thick, draw=gray!60] (-0.3,0) -- (-0.3,3.5);
+  \node[gray!60, font=\tiny, rotate=90, left=4pt] at (-0.3,1.8) {row (0\,--\,34\,199)};
+  %% Cuadro atributos a la derecha
+  \def\ax{7.2}
+  \draw[draw=orange!70!black, fill=orange!8, rounded corners=3pt, thick]
+    (\ax, 0.3) rectangle (\ax+2.5, 3.0);
+  \node[orange!70!black, font=\small\bfseries, above=2pt] at (\ax+1.25, 3.0) {Atributos};
+  \foreach \lab/\desc/\yy in {H/Calado/2.4, QX/Caudal\,X/1.8, QY/Caudal\,Y/1.2, MH/H\,máx./0.6} {
+    \node[font=\tiny, align=left] at (\ax+1.25, \yy) {\textbf{\lab} — \desc};
+  }
+  \node[orange!55!black, font=\tiny, below=2pt] at (\ax+1.25, 0.3) {float32, ByteShuffle+ZSTD-9};
+  %% Flecha conectando lámina a atributos
+  \draw[-latex, thick, draw=orange!60!black, dashed]
+    ({5.5+5*\sep+0.15}, {5*0.55*\sep+\H/2}) -- (\ax-0.1, 1.7);
+\end{tikzpicture}
+\caption{Estructura interna del array TileDB sparse. Los 20 pasos temporales se almacenan en 20 fragmentos independientes (láminas azules), cada uno con únicamente las celdas húmedas (puntos), que representan el $\sim$8\,\% del dominio. Cada celda almacena cuatro atributos (H, QX, QY, MH) codificados en float32 con filtro ByteShuffle+ZSTD-9. El tamaño resultante es aproximado ($\sim$17,5 GB para un escenario tipo) y varía según la extensión de inundación de cada simulación.}
+\label{fig:tiledb-estructura}
+\end{figure}
 
 \begin{figure}[ht]
 \centering
@@ -189,7 +243,7 @@ Se ha creado un script en Python para cargar todos los datos GeoTIFF a TileDB. L
 \item Realiza una única escritura en TileDB por paso temporal $\rightarrow$ 1 fragmento por paso.
 \end{enumerate}
 
-La lectura paralela de las 4 bandas se realiza con ThreadPoolExecutor(max\_workers=4), reduciendo el tiempo de I/O.
+La lectura paralela de las 4 bandas se realiza con \texttt{ThreadPoolExecutor(max\_workers=4)}, reduciendo el tiempo de I/O.
 
 Memoria pico estimada: 4 bandas $\times$ 5 000 filas $\times$ 23 040 cols $\times$ 4 B $\approx$ 1,8 GB.
 
@@ -198,7 +252,31 @@ Memoria pico estimada: 4 bandas $\times$ 5 000 filas $\times$ 23 040 cols $\time
 
 El sistema está diseñado para procesar y almacenar múltiples escenarios de simulación de forma independiente. Cada escenario ocupa su propio array TileDB en disco y se identifica mediante un alias corto (datos1, datos2, \ldots) que \texttt{config.py} traduce al nombre real del directorio de salida de Triton. De este modo el resto del código (ETL, consultas, aplicación web) opera siempre con el alias y no depende de los nombres largos de los ficheros fuente.
 
-El script \texttt{geotiff\_to\_tiledb\_sparse.py} acepta el argumento \texttt{-\/-dataset} para seleccionar el escenario a procesar. La ruta base donde se leen los GeoTIFF y se escribe el array TileDB se configura mediante la variable de entorno \texttt{TRITON\_BASE\_URI}, lo que permite ejecutar el mismo script tanto en local como en el servidor de producción sin modificar el código.
+El módulo de ingesta acepta el argumento \texttt{-\/-dataset} para seleccionar el escenario a procesar. Dos variables de entorno controlan las rutas:
 
-La aplicación web descubre automáticamente los \textit{datasets} disponibles inspeccionando el directorio apuntado por \texttt{TRITON\_BASE\_URI}: cualquier subdirectorio que contenga un array TileDB válido aparece en el selector de la interfaz. Añadir un nuevo escenario consiste en ejecutar el ETL con el alias correspondiente; no es necesario modificar ningún fichero de configuración adicional.
+\begin{itemize}
+\item \texttt{TRITON\_BASE\_URI}: directorio donde se crearán los arrays TileDB, bajo el subdirectorio \texttt{triton\_results/}.
+\item \texttt{TRITON\_GTIFF\_DIR}: directorio raíz donde están las carpetas de GeoTIFF fuente (\texttt{datos1/}, \texttt{datos2/}, etc.), cada una con los 80 ficheros del escenario correspondiente.
+\end{itemize}
+
+Un ejemplo de invocación para el escenario \texttt{datos1} en local:
+
+\begin{verbatim}
+TRITON_BASE_URI=/ruta/datos/triton_results \
+TRITON_GTIFF_DIR=/ruta/datos \
+  python geotiff_to_tiledb_sparse.py --dataset datos1
+\end{verbatim}
+
+La estructura de directorios esperada es:
+
+\begin{verbatim}
+/ruta/datos/
+  triton_results/        <- TRITON_BASE_URI
+    output_10_.../       <- arrays TileDB generados
+  datos1/                <- TRITON_GTIFF_DIR/datos1
+    H_06_00.tif
+    QX_06_00.tif  ...
+\end{verbatim}
+
+La aplicación web descubre automáticamente los \textit{datasets} disponibles inspeccionando el directorio \texttt{triton\_results/} apuntado por \texttt{TRITON\_BASE\_URI}: cualquier subdirectorio que contenga un array TileDB válido aparece en el selector de la interfaz. La fecha de inicio del escenario se extrae del nombre del directorio fuente (formato \texttt{..\_YYYYMMDD\_YYYYMMDD}), sin necesidad de lectura adicional del array. Añadir un nuevo escenario consiste en ejecutar el ETL con el alias correspondiente; no es necesario modificar ningún fichero de configuración adicional.
 

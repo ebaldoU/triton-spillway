@@ -104,7 +104,8 @@ Exportar las variables de entorno antes de ejecutar cualquier comando:
 
 ```bash
 export TRITON_BASE_URI=/ruta/a/datos/triton_results
-export TRITON_GTIFF_DIR=/ruta/a/datos   # solo necesario para el ETL
+export TRITON_GTIFF_DIR=/ruta/a/datos        # solo necesario para el ETL
+export TRITON_OUTPUT_DIR=/ruta/a/datos/export # opcional, para export_to_geotiff.py
 ```
 
 ### 2. Cargar datos (ETL)
