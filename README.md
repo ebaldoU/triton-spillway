@@ -73,26 +73,30 @@ pip install -r requirements.txt
 
 El sistema usa variables de entorno para localizar los datos. No hay rutas absolutas en el código.
 
-| Variable | Descripción | Defecto |
-|---|---|---|
-| `TRITON_BASE_URI` | Directorio con los arrays TileDB (`triton_results/`) | `<repo>/../triton_results` |
-| `TRITON_GTIFF_DIR` | Directorio raíz con los GeoTIFF fuente (`datos1/`, `datos2/`…) | padre de `TRITON_BASE_URI` |
-| `TRITON_OUTPUT_DIR` | Directorio de exportación GeoTIFF | `<TRITON_BASE_URI>/../export` |
+| Variable | Apunta a… | Debe contener | Defecto |
+|---|---|---|---|
+| `TRITON_BASE_URI` | El directorio `triton_results/` | Un subdirectorio por dataset (arrays TileDB, ~17-21 GB cada uno) | `<repo>/../triton_results` |
+| `TRITON_GTIFF_DIR` | El directorio raíz de los GeoTIFF | Un subdirectorio por escenario, nombrado con el alias definido en `config.py` (p.ej. `datos1/`), con 80 ficheros `.tif` cada uno (4 variables × 20 pasos) | Padre de `TRITON_BASE_URI` |
+| `TRITON_OUTPUT_DIR` | El directorio de exportación | Se crea automáticamente; recibe los GeoTIFF exportados por `export_to_geotiff.py` | `<TRITON_BASE_URI>/../export` |
 
-Ejemplo de estructura de datos esperada:
+Estructura de directorios esperada:
 
 ```
 /ruta/a/datos/
-  triton_results/          ← TRITON_BASE_URI
-    output_10_..._datos1/  ← array TileDB (~17 GB)
+  triton_results/              ← TRITON_BASE_URI
+    output_10_..._datos1/      ← array TileDB de datos1 (~17 GB)
     output_10_..._datos2/
     ...
-  datos1/                  ← TRITON_GTIFF_DIR/datos1 (GeoTIFF fuente)
-    H_06_00.tif
-    QX_06_00.tif
-    ...
-  export/                  ← TRITON_OUTPUT_DIR
+  <alias>/                       ← TRITON_GTIFF_DIR/<alias>
+    H_06_00.tif                  (calado, paso 1)
+    QX_06_00.tif                 (caudal X, paso 1)
+    QY_06_00.tif                 (caudal Y, paso 1)
+    MH_06_00.tif                 (calado máximo, paso 1)
+    H_12_00.tif  ...             (20 pasos × 4 variables = 80 ficheros)
+  export/                      ← TRITON_OUTPUT_DIR (opcional)
 ```
+
+> `TRITON_GTIFF_DIR` solo se necesita durante el ETL. Una vez generados los arrays TileDB, la aplicación web solo usa `TRITON_BASE_URI`.
 
 ---
 
