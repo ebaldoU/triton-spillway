@@ -60,7 +60,7 @@ El sistema expone tres variables de entorno. La Tabla~\ref{tab:env-vars} describ
 \textbf{Variable} & \textbf{Apunta a\ldots} & \textbf{Debe contener} \\
 \midrule
 \texttt{TRITON\_BASE\_URI} & El directorio \texttt{triton\_results/} & Un subdirectorio por escenario (array TileDB de 17--21 GB cada uno). Los crea el ETL automáticamente. \\
-\texttt{TRITON\_GTIFF\_DIR} & Raíz de los GeoTIFF fuente & Un subdirectorio por escenario nombrado con el alias definido en \texttt{config.py} (p.~ej. \texttt{datos1/} si ese es el alias elegido), con 80 ficheros GeoTIFF cada uno (4 variables $\times$ 20 pasos). Solo necesaria para el ETL. \\
+\texttt{TRITON\_GTIFF\_DIR} & Raíz de los GeoTIFF fuente & Un subdirectorio por escenario nombrado con el alias del \textit{dataset} (\texttt{datos1/}, \texttt{datos2/}, \ldots), con 80 ficheros GeoTIFF cada uno (4 variables $\times$ 20 pasos). Solo necesaria para el ETL. \\
 \texttt{TRITON\_OUTPUT\_DIR} & Directorio de exportación & Lo crea el sistema al exportar. Recibe los GeoTIFF generados por la exportación. Opcional. \\
 \bottomrule
 \end{tabularx}
