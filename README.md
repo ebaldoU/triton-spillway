@@ -128,6 +128,25 @@ python -m streamlit run app.py
 
 Abre `http://localhost:8501` en el navegador. La aplicación detecta automáticamente todos los datasets disponibles en `TRITON_BASE_URI`.
 
+Cada consulta espacial incluye un botón para descargar el resultado como GeoTIFF directamente desde la interfaz.
+
+### Exportación en bulk a GeoTIFF (opcional)
+
+Para exportar varios pasos o variables de golpe desde línea de comandos:
+
+```bash
+# Exportar el calado (H) del paso 10_00
+python export_to_geotiff.py --dataset datos1 --paso 10_00 --var H
+
+# Exportar todas las variables de un paso
+python export_to_geotiff.py --dataset datos1 --paso 10_00 --var all
+
+# Especificar directorio de salida
+python export_to_geotiff.py --dataset datos1 --paso 10_00 --var H --out /ruta/salida
+```
+
+Los ficheros se guardan en `TRITON_OUTPUT_DIR` (~257 MB por variable y paso).
+
 ---
 
 ## Datos
