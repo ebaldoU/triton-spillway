@@ -21,6 +21,9 @@ tiledb_env/
 spillway/.streamlit/secrets.toml
 secrets.toml
 
+# PDF compilado de la memoria (se regenera con pdflatex)
+memoria/main.pdf
+
 # Archivos compilados LaTeX
 memoria/**/*.aux
 memoria/**/*.log

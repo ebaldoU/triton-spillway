@@ -141,15 +141,6 @@ def load_domain_constants(uri: str) -> None:
     YLLCORNER  = float(tr[5]) + float(tr[4]) * NROWS   # esquina inferior izquierda
 
 
-def _encode_key(rows: np.ndarray, cols: np.ndarray) -> np.ndarray:
-    """Codifica (row, col) como int64 para operaciones groupby vectorizadas."""
-    return rows.astype(np.int64) * NCOLS + cols.astype(np.int64)
-
-
-def _decode_key(keys: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
-    return (keys // NCOLS).astype(np.int32), (keys % NCOLS).astype(np.int32)
-
-
 # ═══════════════════════════════════════════════════════════════
 # BLOQUE A — Consultas puntuales y de velocidad
 # ═══════════════════════════════════════════════════════════════

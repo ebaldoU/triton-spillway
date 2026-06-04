@@ -6,3 +6,5 @@ folium>=0.16.0
 streamlit-folium>=0.20.0
 pyproj>=3.6.0
 numpy>=1.26.0
+pandas>=2.0.0
+Pillow>=10.0.0

@@ -16,6 +16,7 @@ import hashlib
 import json
 import os
 import sys
+import threading
 import time
 
 # Carga .env local si existe (para desarrollo local sin variables de entorno del sistema)
@@ -1437,18 +1438,21 @@ def get_meta(dataset: str) -> dict:
     }
 
 
+_ca_lock = threading.Lock()
+
 def setup_ca(meta: dict):
     """Apunta el módulo consultas_analiticas al dataset actual."""
-    if ca.TILEDB_URI == meta["uri"]:
-        return
-    ca.TILEDB_URI = meta["uri"]
-    ca.NCOLS      = meta["ncols"]
-    ca.NROWS      = meta["nrows"]
-    ca.CELLSIZE   = meta["cellsize"]
-    ca.CELL_AREA  = meta["cellsize"] ** 2
-    ca.XLLCORNER  = meta["xll"]
-    ca.YLLCORNER  = meta["yll"]
-    ca.N_STEPS    = meta["n_steps"]
+    with _ca_lock:
+        if ca.TILEDB_URI == meta["uri"]:
+            return
+        ca.TILEDB_URI = meta["uri"]
+        ca.NCOLS      = meta["ncols"]
+        ca.NROWS      = meta["nrows"]
+        ca.CELLSIZE   = meta["cellsize"]
+        ca.CELL_AREA  = meta["cellsize"] ** 2
+        ca.XLLCORNER  = meta["xll"]
+        ca.YLLCORNER  = meta["yll"]
+        ca.N_STEPS    = meta["n_steps"]
 
 
 # ── Conversión UTM ↔ WGS84 ────────────────────────────────────────────────────
@@ -2438,7 +2442,6 @@ def q15_temporal(meta, bbox, progress=None):
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @st.cache_data(show_spinner=False, ttl=7200, persist="disk")
-@st.cache_data(show_spinner=False, ttl=7200, persist="disk")
 def _c_q5(dataset: str, bbox):
     m = get_meta(dataset); setup_ca(m)
     return ca.evolucion_extension(bbox=bbox)
@@ -2448,6 +2451,12 @@ def _c_q12(dataset: str, bbox):
     m = get_meta(dataset); setup_ca(m)
     return ca.area_inundada_por_hora(bbox=bbox)
 
+@st.cache_data(show_spinner=False, ttl=7200, persist="disk")
+def _c_q13(dataset: str, bbox):
+    m = get_meta(dataset); setup_ca(m)
+    return ca.volumen_por_hora(bbox=bbox)
+
+@st.cache_data(show_spinner=False, ttl=7200, persist="disk")
 def _c_q7(dataset: str, bbox):
     return q7_hora_llegada(get_meta(dataset), bbox)
 
@@ -2945,7 +2954,7 @@ else:
     show_dataset_summary(dataset)
 
 LIGHT_QUERIES = {"q1", "q2", "q5", "q12", "q13"}
-auto_exec = (qid in LIGHT_QUERIES) and not comparar or qid in {"q1", "q2"}
+auto_exec = (qid in LIGHT_QUERIES) and not comparar
 _badge_txt   = _t("badge_auto") if auto_exec else _t("badge_manual")
 _badge_color = "#2e7d32"       if auto_exec else "#1565c0"
 st.markdown(
@@ -3125,10 +3134,12 @@ try:
                 cmetric(ca1, f"{_dataset_display(dataset)} — {_t(label_key)}", val_fmt.format(vA))
                 cmetric(ca2, f"{_dataset_display(dataset2)} — {_t(label_key)}",
                         val_fmt.format(vB), delta_fmt.format(vB - vA))
-            ca1.plotly_chart(fig_a, width="stretch", config=PLOT_CONFIG, theme=None)
-            download_geotiff_button(grid,  x_ax,  y_ax,  qid, dataset,  ds_label=_dataset_display(dataset))
-            ca2.plotly_chart(fig_b, width="stretch", config=PLOT_CONFIG, theme=None)
-            download_geotiff_button(grid2, x_ax2, y_ax2, qid, dataset2, ds_label=_dataset_display(dataset2))
+            with ca1:
+                ca1.plotly_chart(fig_a, width="stretch", config=PLOT_CONFIG, theme=None)
+                download_geotiff_button(grid,  x_ax,  y_ax,  qid, dataset,  ds_label=_dataset_display(dataset))
+            with ca2:
+                ca2.plotly_chart(fig_b, width="stretch", config=PLOT_CONFIG, theme=None)
+                download_geotiff_button(grid2, x_ax2, y_ax2, qid, dataset2, ds_label=_dataset_display(dataset2))
         else:
             render_metrics(stats)
             show(heatmap_discrete(grid, x_ax, y_ax, map_title,
@@ -3254,7 +3265,9 @@ try:
             notes.append(_t("note_bbox_tip"))
         if comparar and dataset2:
             meta2 = get_meta(dataset2)
+            setup_ca(meta2)
             grid2, x_ax2, y_ax2, stats2 = q_umbral_h(meta2, hora, umbral_m, bbox)
+            setup_ca(meta)
             grid2_v, x_v2, y_v2, _, _ = _focus_h_visual(grid2, x_ax2, y_ax2, umbral_m, auto_crop=(bbox is None))
             fig_a = heatmap_h(grid_v,  x_v,  y_v,
                               f"{map_title_q4} — {_dataset_display(dataset)}",  cmap=CMAP_H_FOCUS)
@@ -3497,13 +3510,11 @@ try:
 
     elif qid == "q13":
         progress.progress(0.5, text=_t("iterating"))
-        res = ca.volumen_por_hora(bbox=bbox)
+        res = _c_q13(dataset, bbox)
         progress.progress(1.0, text=_t("completed"))
         vols_mm3 = [v / 1e6 for v in res["volumen_m3"]]
         if comparar and dataset2:
-            setup_ca(get_meta(dataset2))
-            res2 = ca.volumen_por_hora(bbox=bbox)
-            setup_ca(meta)
+            res2 = _c_q13(dataset2, bbox)
             vols2 = [v / 1e6 for v in res2["volumen_m3"]]
             _vA, _vB = max(vols_mm3), max(vols2)
             _s = "+" if _vB >= _vA else ""
@@ -3646,18 +3657,31 @@ try:
                                  f"{t17} — {_dataset_display(dataset2)}", russo_cmap, "H (m)", **hm17)
             v_c,  a_c,  r_c  = ca.russo_traffic_light_counts(grid)
             v_c2, a_c2, r_c2 = ca.russo_traffic_light_counts(grid2)
+            crit1  = float(((grid  > 1.00) & (grid  <= 2.00)).sum())
+            crit2  = float(((grid2 > 1.00) & (grid2 <= 2.00)).sum())
+            extr1  = float((grid  > 2.00).sum())
+            extr2  = float((grid2 > 2.00).sum())
             ca1, ca2 = st.columns(2)
-            cmetric(ca1, f"{_dataset_display(dataset)} — {_t('q17_adults')}",
-                    f"{a_c * cell_km2:.1f} km²")
-            cmetric(ca2, f"{_dataset_display(dataset2)} — {_t('q17_adults')}",
-                    f"{a_c2 * cell_km2:.1f} km²",
-                    f"{(a_c2-a_c)*cell_km2:+.1f} km²")
-            ca1.plotly_chart(fig_a, width="stretch", config=PLOT_CONFIG, theme=None)
-            download_geotiff_button(grid,  x_ax,  y_ax,  "q17", dataset,  hora,
-                                    ds_label=_dataset_display(dataset))
-            ca2.plotly_chart(fig_b, width="stretch", config=PLOT_CONFIG, theme=None)
-            download_geotiff_button(grid2, x_ax2, y_ax2, "q17", dataset2, hora,
-                                    ds_label=_dataset_display(dataset2))
+            for _lbl, _v1, _v2 in [
+                (_t("q17_shallow"),  v_c,   v_c2),
+                (_t("q17_children"), a_c,   a_c2),
+                (_t("q17_adults"),   r_c,   r_c2),
+                (_t("q17_critical"), crit1, crit2),
+                (_t("q17_extreme"),  extr1, extr2),
+            ]:
+                cmetric(ca1, f"{_dataset_display(dataset)} — {_lbl}",
+                        f"{_v1 * cell_km2:.1f} km²")
+                cmetric(ca2, f"{_dataset_display(dataset2)} — {_lbl}",
+                        f"{_v2 * cell_km2:.1f} km²",
+                        f"{(_v2 - _v1) * cell_km2:+.1f} km²")
+            with ca1:
+                ca1.plotly_chart(fig_a, width="stretch", config=PLOT_CONFIG, theme=None)
+                download_geotiff_button(grid,  x_ax,  y_ax,  "q17", dataset,  hora,
+                                        ds_label=_dataset_display(dataset))
+            with ca2:
+                ca2.plotly_chart(fig_b, width="stretch", config=PLOT_CONFIG, theme=None)
+                download_geotiff_button(grid2, x_ax2, y_ax2, "q17", dataset2, hora,
+                                        ds_label=_dataset_display(dataset2))
         else:
             v_c, a_c, r_c = ca.russo_traffic_light_counts(grid)
             verde, amarillo, rojo = v_c * cell_km2, a_c * cell_km2, r_c * cell_km2

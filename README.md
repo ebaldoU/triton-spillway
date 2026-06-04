@@ -28,12 +28,6 @@ spillway/
   geotiff_to_tiledb_sparse.py  # ETL: GeoTIFF → TileDB sparse
   verify_tiledb.py             # Verificación de integridad TileDB vs GeoTIFF
   export_to_geotiff.py         # Exportación TileDB → GeoTIFF (interoperabilidad SIG)
-  visualize_tiledb.py          # Visualizador interactivo matplotlib
-  query_tiledb.py              # Estadísticos por paso, área, máximos
-  query_max_depth_tiledb.py    # Celda con mayor calado, top-N
-  comparar_datasets.py         # Comparativa multi-escenario por línea de comandos
-  benchmark_vs_geotiff.py      # Benchmark TileDB vs GeoTIFF (6 casos)
-  benchmark_queries.py         # Benchmark 5 patrones de consulta
 
 memoria/
   main.tex                     # Memoria TFG en LaTeX (compilar con pdflatex)
@@ -55,7 +49,7 @@ memoria/
 
 ```bash
 # 1. Clonar el repositorio
-git clone https://github.com/ebaldovin/triton-spillway.git
+git clone https://github.com/ebaldoU/triton-spillway.git
 cd triton-spillway
 
 # 2. Crear entorno virtual
@@ -75,8 +69,8 @@ El sistema usa variables de entorno para localizar los datos. No hay rutas absol
 
 | Variable | Apunta a… | Debe contener | Defecto |
 |---|---|---|---|
-| `TRITON_BASE_URI` | El directorio `triton_results/` | Un subdirectorio por dataset (arrays TileDB, ~17-21 GB cada uno) | `<repo>/../triton_results` |
-| `TRITON_GTIFF_DIR` | El directorio raíz de los GeoTIFF | Un subdirectorio por escenario, nombrado con el alias definido en `config.py` (p.ej. `datos1/`), con 80 ficheros `.tif` cada uno (4 variables × 20 pasos) | Padre de `TRITON_BASE_URI` |
+| `TRITON_BASE_URI` | El directorio `triton_results/` | Un subdirectorio por dataset (arrays TileDB, ~17-21 GB cada uno) | `<repo>/triton_results` (hermano de `spillway/`) |
+| `TRITON_GTIFF_DIR` | El directorio raíz de los GeoTIFF | Un subdirectorio por escenario, nombrado con el alias definido en `config.py` (p.ej. `datos1/`), con 80 ficheros `.tif` cada uno (4 variables × 20 pasos) | Dos niveles por encima de `TRITON_BASE_URI` |
 | `TRITON_OUTPUT_DIR` | El directorio de exportación | Se crea automáticamente; recibe los GeoTIFF exportados por `export_to_geotiff.py` | `<TRITON_BASE_URI>/../export` |
 
 Estructura de directorios esperada:
