@@ -160,7 +160,7 @@ La Figura~\ref{fig:tiledb-estructura} ilustra cómo TileDB organiza físicamente
   }
 
   %% ── Etiquetas de pasos temporales en la cara lateral ────────────
-  \node[blue!70!black, font=\scriptsize\bfseries, below=4pt] at (\FW/2, 0) {$t_0$};
+  \node[blue!70!black, font=\scriptsize\bfseries, below=4pt] at (\FW/2, -0.35) {$t_0$};
   \foreach \k/\tlabel in {2/$t_8$, 4/$t_{16}$} {
     \pgfmathsetmacro{\DX}{\k*\OX}
     \pgfmathsetmacro{\DY}{\k*\OY}
@@ -195,7 +195,7 @@ La Figura~\ref{fig:tiledb-estructura} ilustra cómo TileDB organiza físicamente
     at (2.0, \FH+0.8) {tiempo (20 fragmentos)};
 
   %% ── Leyenda (debajo del stack, fuera del área de texto) ─────────
-  \pgfmathsetmacro{\LY}{-1.2}
+  \pgfmathsetmacro{\LY}{-1.55}
   \fill[blue!58] (0.5,\LY+0.08) rectangle (0.85,\LY+0.38);
   \node[right, font=\tiny] at (0.9,\LY+0.22) {celda h\'{u}meda (${\sim}8\%$)};
   \fill[gray!16, draw=gray!35, line width=0.3pt]
@@ -205,7 +205,7 @@ La Figura~\ref{fig:tiledb-estructura} ilustra cómo TileDB organiza físicamente
   %% ── Cuadro «Estructura por celda» ────────────────────────────────
   \pgfmathsetmacro{\BX}{7.0}
   \pgfmathsetmacro{\BY}{-0.5}
-  \pgfmathsetmacro{\BW}{3.5}
+  \pgfmathsetmacro{\BW}{4.2}
 
   % Cabecera
   \fill[blue!40!black, rounded corners=3pt]
