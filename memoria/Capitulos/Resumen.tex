@@ -4,15 +4,14 @@
 \vspace{1cm}
 {\Large \bfseries RESUMEN}
 
-\vspace{2.5cm}
+\vspace{1.5cm}
 \end{center}
 
 
-Este trabajo diseña e implementa un sistema de almacenamiento y análisis eficiente para simulaciones hidráulicas de alta resolución. Las simulaciones del simulador Triton generan hasta 235 GB de datos GeoTIFF por escenario (20 pasos temporales $\times$ 4 variables); el \textit{pipeline} ETL desarrollado reduce este volumen a 17,5 GB en un array TileDB sparse con filtro ByteShuffle+ZSTD-9, una reducción del 92,7\,\% (ratio 13,7$\times$) gracias al almacenamiento exclusivo de las celdas húmedas, que representan solo el $\sim$8,3\,\% del dominio.
+Este trabajo diseña e implementa un sistema de almacenamiento y análisis eficiente para simulaciones hidráulicas de alta resolución. Las simulaciones del simulador Triton generan hasta 235 GB de datos GeoTIFF por escenario; el \textit{pipeline} ETL desarrollado los transforma en un array TileDB sparse con filtro ByteShuffle+ZSTD-9, reduciéndolos a 17,5 GB (reducción del 92,7\,\%, ratio 13,7$\times$) al almacenar exclusivamente las celdas húmedas, que representan solo el $\sim$8,3\,\% del dominio.
 
-El sistema incluye un motor de 24 consultas analíticas en ocho bloques que cubren consultas básicas, umbrales espaciales, indicadores temporales por píxel, inestabilidad hidrodinámica para personas y vehículos (criterios de Russo et al.\ y Xia et al.), zona de graves daños normativa y tiempo de evacuación disponible. Un \textit{benchmark} comparativo frente a GeoTIFF muestra que TileDB supera al formato original en 5 de 6 patrones de acceso, con ventajas de hasta 12,4$\times$, y se valida sobre cuatro \textit{datasets} independientes con resultados consistentes.
+El sistema incluye un motor de 24 consultas analíticas en ocho bloques, que cubren desde consultas básicas de calado y velocidad hasta indicadores de inestabilidad hidrodinámica según los criterios de Russo et al.\ y Xia et al., zona de graves daños normativa (Real Decreto 9/2008) y tiempo de evacuación disponible. Un \textit{benchmark} frente a GeoTIFF muestra ventajas de hasta 12,4$\times$ en cinco de seis patrones de acceso, con resultados consistentes sobre cuatro \textit{datasets} independientes. La validación funcional confirma la exactitud de las consultas mediante comparación sistemática con los datos originales.
 
-El sistema se ha aplicado a 56 simulaciones reales sobre una cuenca de $\sim$78\,000 km$^2$ en el centro de Estados Unidos, abarcando episodios históricos y de proyección climática futura, y es generalizable a las salidas de cualquier simulador hidráulico 2D con estructura equivalente.
+El sistema se ha aplicado a 56 simulaciones sobre una cuenca de $\sim$78\,000 km$^2$ en el centro de Estados Unidos, y es generalizable a las salidas de cualquier simulador hidráulico 2D con estructura equivalente. La interfaz de usuario es una aplicación web Streamlit con mapas interactivos, comparativa multi-escenario y exportación a GeoTIFF, desplegada en producción sobre un servidor remoto.
 
-Como interfaz de usuario se desarrolla una aplicación web con Streamlit que expone las 24 consultas mediante mapas interactivos, comparativa multi-escenario y exportación de resultados a GeoTIFF.
 

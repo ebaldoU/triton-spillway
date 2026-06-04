@@ -12,11 +12,9 @@ Q3. Velocidad en una zona: dada una zona y una hora, calcula la velocidad del ag
 
 \section{Bloque B. Umbrales espaciales}\label{bloque-b.-umbrales-espaciales}
 
-Q4. Mapa de zonas inundadas: devuelve todas las celdas con calado superior a un umbral mínimo (por defecto 1 cm) en un paso temporal concreto, junto con la extensión total inundada.
+Q4/Q6. Mapa de zonas inundadas con umbral configurable: devuelve todas las celdas con calado superior a un umbral dado en un paso temporal concreto, junto con la extensión total afectada. Q4 y Q6 ejecutan la misma función subyacente; se distinguen en la interfaz únicamente por su umbral predeterminado: Q4 emplea el umbral de celda húmeda (H $\geq$ 0,01 m), adecuado para mapear la mancha de inundación completa, mientras que Q6 expone el umbral como parámetro libre, lo que permite al usuario analizar, por ejemplo, las zonas con calado superior a 0,5 m o a 1 m sin modificar la definición de celda húmeda.
 
 Q5. Evolución de la extensión inundada: calcula el área inundada en cada uno de los 20 pasos temporales, permitiendo ver cómo avanza la inundación a lo largo del tiempo.
-
-Q6. Zonas sobre umbral personalizado: igual que Q4, pero con un umbral de calado definido por el usuario.
 
 \section{Bloque C. Indicadores temporales por celda}\label{bloque-c.-indicadores-temporales-por-celda}
 
@@ -30,7 +28,7 @@ Q11. Ventana de paso para vehículos de emergencia: para cada celda, calcula el 
 
 \section{Bloque D. Indicadores de peligrosidad (Russo et al., 2013)}\label{bloque-d.-indicadores-de-peligrosidad-russo-et-al.-2013}
 
-Los umbrales utilizados en este bloque son los criterios operativos derivados de los resultados experimentales de Russo et al. \cite{russo2013}, alineados con las guías técnicas españolas para clasificación de zonas inundables. Son umbrales conservadores destinados a uso operativo; los valores de instabilidad estricta determinados experimentalmente en el paper original son ligeramente superiores.
+Las consultas Q10a, Q10b, Q10c y Q11b de este bloque emplean umbrales operativos derivados de los resultados experimentales de Russo et al.\ \cite{russo2013}, alineados con las guías técnicas españolas para clasificación de zonas inundables. Son umbrales conservadores destinados a uso operativo; los valores de instabilidad estricta determinados experimentalmente en el artículo original son ligeramente superiores. Q17 combina esos umbrales con tramos adicionales propios de esta aplicación, como se detalla en su descripción.
 
 Q10a. Peligro para adultos: identifica las celdas peligrosas para adultos con calado superior a 0,50 m o caudal unitario superior a 0,50 m\textsuperscript{2}/s.
 
@@ -40,21 +38,21 @@ Q10c. Peligro para vehículos ligeros: identifica las celdas donde el calado sup
 
 Q11b. Transitabilidad para vehículos de emergencia: identifica las celdas húmedas donde el calado es inferior a 0,60 m y, por tanto, todavía son accesibles para vehículos de emergencia.
 
-Q17. Semáforo global de peligrosidad: genera un mapa categórico con cinco niveles de riesgo basados en el calado. Los dos umbrales intermedios provienen de Russo et al.\ \cite{russo2013}: 0,25 m para niños y 0,50 m para adultos. Los niveles son: Somera (H $\leq$ 0,25 m), Peligrosa para niños (0,25--0,50 m), Peligrosa para adultos (0,50--1,00 m), Crítica (1,00--2,00 m) y Extrema (H $>$ 2,00 m). Los dos últimos niveles (Crítica y Extrema) son extensiones del criterio que gradúan la severidad extrema pero no están en la referencia original.
+Q17. Semáforo global de peligrosidad: genera un mapa categórico con cinco niveles de riesgo basados en el calado. Los umbrales de 0,25 m y 0,50 m se apoyan en los criterios de Russo et al.\ \cite{russo2013} para niños y adultos respectivamente; los niveles superiores de 1,0 m y 2,0 m se introducen en esta aplicación como escalones adicionales de severidad para mejorar la interpretación visual del riesgo y no proceden de esa referencia. Los cinco niveles son: Somera (H $\leq$ 0,25 m), Peligrosa para niños (0,25--0,50 m), Peligrosa para adultos (0,50--1,00 m), Crítica (1,00--2,00 m) y Extrema (H $>$ 2,00 m).
 
 \section{Bloque E. Inestabilidad hidrodinámica (Xia et al., 2014/2022)}\label{bloque-e.-inestabilidad-xia}
 
-Este bloque aplica los modelos de inestabilidad experimental de Xia et al.\ \cite{xia2014} para personas y de Xia et al.\ \cite{xia2011vehicles} para vehículos. A diferencia del bloque D, que usa umbrales fijos sobre H y $Q_{mod}$, estos criterios computan para cada celda la velocidad crítica a partir de la cual el flujo desestabiliza al individuo o arrastra al vehículo, en función del calado local.
+Este bloque aplica los modelos de inestabilidad experimental de Xia et al.\ \cite{xia2014} para personas y de Xia et al.\ \cite{xia2011vehicles} para vehículos. A diferencia del bloque D, que usa umbrales fijos sobre H y $Q_{mod}$, estos criterios computan para cada celda la velocidad crítica a partir de la cual el flujo desestabiliza al individuo o al vehículo, en función del calado local.
 
 Para personas, la velocidad crítica $U_{c,p}(H)$ depende de la estatura y masa del individuo ($h_p$, $m_p$) y de seis coeficientes experimentales. El modelo proporciona dos curvas que acotan la incertidumbre: la curva naranja ($\alpha = 3{,}472$, $\beta = 0{,}188$) define el umbral de inicio de la zona de riesgo moderado, y la curva roja ($\alpha = 7{,}867$, $\beta = 0{,}462$) el umbral de riesgo alto. Cada celda se clasifica en tres niveles: segura ($V < U_{c,p}^{\text{naranja}}$), riesgo moderado ($U_{c,p}^{\text{naranja}} \leq V < U_{c,p}^{\text{roja}}$) y riesgo alto ($V \geq U_{c,p}^{\text{roja}}$), donde $V = Q_{mod}/H$ es la velocidad media.
 
-Para vehículos, la velocidad crítica de arrastre $U_{c,v}(H)$ se obtiene de Xia et al.\ \cite{xia2011vehicles} para un Mini Cooper ($H_c = 1{,}417$ m, $\rho_c = 1\,009$ kg/m³), con parámetros distintos según el grado de sumersión: parcial ($H < H_c$: $\alpha = 1{,}225$, $\beta = -0{,}708$) y total ($H \geq H_c$: $\alpha = 0{,}932$, $\beta = 0{,}121$). La curva naranja corresponde a $0{,}5 \times U_{c,v}$ y la roja a $U_{c,v}$.
+Para vehículos, la velocidad crítica de inestabilidad $U_{c,v}(H)$ se obtiene de Xia et al.\ \cite{xia2011vehicles} para un Mini Cooper ($H_c = 1{,}417$ m, $\rho_c = 1\,009$ kg/m³), con parámetros distintos según el grado de sumersión: parcial ($H < H_c$: $\alpha = 1{,}225$, $\beta = -0{,}708$) y total ($H \geq H_c$: $\alpha = 0{,}932$, $\beta = 0{,}121$). La curva naranja corresponde a $0{,}5 \times U_{c,v}$ y la roja a $U_{c,v}$.
 
 Q10a-Xia. Inestabilidad de adultos (Xia et al., 2014): mapa de riesgo de inestabilidad para un adulto medio español ($h_p = 1{,}68$ m, $m_p = 73{,}76$ kg) en tres niveles: seguro, moderado y alto.
 
 Q10b-Xia. Inestabilidad de niños (Xia et al., 2014): mapa de riesgo de inestabilidad para un niño de 8 años ($h_p = 1{,}26$ m, $m_p = 25{,}64$ kg) con los mismos tres niveles. Los umbrales son más estrictos al ser la masa y estatura menores.
 
-Q10c-Xia. Inestabilidad de vehículos (Xia et al., 2022): mapa de riesgo de arrastre para un turismo tipo Mini Cooper en tres niveles. El cambio de régimen al alcanzar la altura del vehículo ($H_c$) produce un salto en la curva de velocidad crítica.
+Q10c-Xia. Inestabilidad de vehículos (Xia et al., 2022): mapa de riesgo de inestabilidad para un turismo tipo Mini Cooper en tres niveles. El cambio de régimen al alcanzar la altura del vehículo ($H_c$) produce un salto en la curva de velocidad crítica.
 
 \section{Bloque F. Estadísticos espaciales}\label{bloque-f.-estadisticos-espaciales}
 
@@ -68,7 +66,7 @@ Q15. Semáforo de área por nivel de peligro: clasifica el área inundada en tre
 
 \section{Bloque G. Evacuación}\label{bloque-g.-evacuacion}
 
-Q16. Tiempo de evacuación disponible: para cada celda, calcula el tiempo disponible para evacuar antes de que la situación se vuelva peligrosa. Un valor negativo indica que la celda nunca alcanza el nivel crítico; un valor cero indica que ya es peligrosa en el momento en que el agua llega.
+Q16. Tiempo de evacuación disponible: para cada celda, calcula el tiempo disponible para evacuar antes de que la situación se vuelva peligrosa. Los tiempos válidos son siempre positivos (de 6 a 120 horas), por lo que el valor \textbf{$-$1} se usa como centinela para las celdas que nunca alcanzan el nivel crítico en toda la simulación: al quedar fuera del rango válido, no puede confundirse con un tiempo real y no requiere un campo booleano adicional. Un valor cero indica que la celda ya es peligrosa en el primer instante en que el agua llega.
 
 \section{Bloque H. Daños normativos (Real Decreto 9/2008)}\label{bloque-h.-danos-normativos}
 

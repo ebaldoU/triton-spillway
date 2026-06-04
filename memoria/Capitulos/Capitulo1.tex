@@ -36,6 +36,85 @@ MH & Profundidad máxima acumulada desde el inicio (máximo histórico) & m \\
 
 Solo se almacenan celdas con H $\geq$ 0,01 m (umbral de celda húmeda). El módulo del caudal unitario Q\_mod = $\sqrt{QX^2 + QY^2}$ se calcula en tiempo de consulta a partir de QX y QY.
 
+La Figura~\ref{fig:hidraulica-datos} ilustra el ciclo completo de datos: cómo el simulador produce GeoTIFF en cada instante, qué variables contiene cada fichero y cómo varía la mancha de inundación a lo largo del tiempo.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[x=0.7cm, y=0.7cm, font=\small\sffamily]
+
+  %% ---- Bloque simulador (izquierda) ----
+  \draw[draw=gray!60, fill=gray!8, rounded corners=3pt, thick]
+    (-0.2,0) rectangle (3.6,5.2);
+  \node[font=\small\bfseries, gray!70] at (1.7,5.6) {Triton (simulador)};
+  \node[font=\tiny, align=center, gray!60] at (1.7,-0.5) {Saint-Venant 2D};
+  \foreach \y/\lbl in {0.5/t_0, 1.5/t_1, 2.5/\cdots, 3.5/t_{18}, 4.5/t_{19}} {
+    \draw[fill=blue!10, draw=blue!40] (0.1,\y-0.35) rectangle (3.3,\y+0.35);
+    \node[font=\tiny] at (1.7,\y) {paso $\lbl$ (6 h)};
+  }
+
+  %% ---- Flecha ETL ----
+  \draw[-Latex, thick, draw=orange!70!black, line width=1.2pt]
+    (3.8,2.6) -- (5.0,2.6)
+    node[midway, above, font=\tiny\bfseries, orange!70!black] {80 GeoTIFF}
+    node[midway, below, font=\tiny, orange!50!black] {$\sim$235 GB};
+
+  %% ---- Grid de variables (centro) ----
+  \def\gx{5.2}
+  \def\gy{0.4}
+  \def\cw{1.05}
+  \def\ch{0.82}
+  % Cabeceras columnas (variables)
+  \foreach \i/\vn in {0/H, 1/QX, 2/QY, 3/MH} {
+    \node[font=\tiny\bfseries, blue!70!black] at (\gx+\i*\cw+\cw/2, \gy+5*\ch+0.3) {\vn};
+  }
+  % Cabeceras filas (pasos)
+  \foreach \j/\tn in {4/t_0, 3/t_1, 2/\cdots, 1/t_{18}, 0/t_{19}} {
+    \node[font=\tiny, gray!60, left=1pt] at (\gx, \gy+\j*\ch+\ch/2) {$\tn$};
+  }
+  % Celdas del grid — coloreadas según variable
+  \foreach \j in {0,...,4} {
+    \foreach \i in {0,...,3} {
+      \pgfmathsetmacro\colA{int(\i==0)*18}
+      \pgfmathsetmacro\colB{int(\i==1)*18}
+      \pgfmathsetmacro\colC{int(\i==3)*12}
+      \fill[blue!\colA!white, green!\colB!white, orange!\colC!white,
+            draw=gray!40, line width=0.4pt]
+        (\gx+\i*\cw, \gy+\j*\ch) rectangle +(\cw,\ch);
+      \node[font=\scriptsize, gray!55] at (\gx+\i*\cw+\cw/2, \gy+\j*\ch+\ch/2) {map};
+    }
+  }
+  \node[font=\tiny, gray!55, below=2pt] at (\gx+2*\cw, \gy-0.1) {80 ficheros GeoTIFF};
+
+  %% ---- Serie temporal de calado (derecha) ----
+  \def\rx{10.6}
+  \def\rw{4.2}
+  \def\rh{3.2}
+  \draw[-Latex, gray!40] (\rx,0.4) -- (\rx+\rw+0.3,0.4) node[right, font=\tiny, gray!55] {h};
+  \draw[-Latex, gray!40] (\rx,0.4) -- (\rx,0.4+\rh+0.2) node[above, font=\tiny, gray!55] {H (m)};
+  % Curva de calado en un punto (forma de campana)
+  \draw[blue!65!black, thick, smooth] plot[tension=0.6] coordinates {
+    (\rx+0.1,0.4) (\rx+0.5,0.5) (\rx+1.0,0.8) (\rx+1.6,1.9)
+    (\rx+2.0,2.9) (\rx+2.5,3.0) (\rx+3.0,2.4) (\rx+3.5,1.2)
+    (\rx+3.9,0.5) (\rx+\rw+0.05,0.42)
+  };
+  % Ticks de tiempo
+  \foreach \xi/\lab in {0.1/6, 1.6/42, 2.5/60, 4.0/120} {
+    \draw[gray!50, very thin] (\rx+\xi,0.35) -- (\rx+\xi,0.45);
+    \node[gray!55, font=\tiny, below=1pt] at (\rx+\xi,0.35) {\lab h};
+  }
+  % Etiqueta
+  \node[blue!65!black, font=\tiny, above right=2pt] at (\rx+2.5,3.0) {pico};
+  \node[font=\tiny, gray!55, below=10pt] at (\rx+\rw/2+0.1,0.4) {Q2: serie temporal en un punto};
+  \node[font=\small\bfseries, gray!70, above=4pt] at (\rx+\rw/2, 0.4+\rh+0.2) {Ejemplo de consulta};
+
+  %% Flechas de conexión
+  \draw[-Latex, thick, draw=gray!50] (\gx+4*\cw+0.1,\gy+2.5*\ch) -- (\rx-0.2,\gy+2.5*\ch);
+
+\end{tikzpicture}
+\caption{Flujo de datos hidráulicos: Triton produce un GeoTIFF por variable y paso temporal (80 ficheros, $\sim$235 GB). Cada fichero es una matriz 2D del dominio. Una consulta típica (Q2: serie temporal de calado en un punto) extrae la secuencia temporal en una celda concreta, cruzando los 20 pasos de H.}
+\label{fig:hidraulica-datos}
+\end{figure}
+
 \section{Características del dominio}\label{caracteristicas-del-dominio}
 
 El dominio de simulación cubre una cuenca hidrográfica discretizada en una malla regular de 34 200 $\times$ 23 040 píxeles ($\sim$787 millones de celdas) con resolución espacial de 10 $\times$ 10 m (100 m\textsuperscript{2} por celda). Las características principales se resumen en la Tabla~\ref{tab:dominio}.

@@ -3,7 +3,7 @@
 
 Las simulaciones hidráulicas de alta resolución generan grandes volúmenes de datos rasterizados que representan variables físicas: profundidad del agua, caudales, máximos históricos en cada celda de un dominio espacial a lo largo del tiempo. El simulador utilizado en este proyecto, Triton \cite{triton}, produce sus resultados en formato GeoTIFF (Geographic Tagged Image File Format) \cite{ogc_geotiff}, un formato ráster estándar que integra los metadatos de georreferenciación sistema de coordenadas, resolución espacial y origen en el propio fichero, ampliamente adoptado en SIG (Sistemas de Información Geográfica) pero diseñado para el acceso secuencial, no para consultas analíticas sobre grandes series temporales.
 
-El contexto de aplicación de este trabajo son las inundaciones fluviales, fenómenos de gran impacto socioeconómico cuya predicción y análisis requieren simular la propagación del agua sobre el terreno durante episodios de crecida. Los simuladores hidráulicos 2D resuelven numéricamente las ecuaciones de Saint-Venant \cite{saintvenant1871} sobre una malla espacial regular, produciendo para cada celda y paso temporal estimaciones de la profundidad del agua y los caudales. Estos resultados permiten evaluar la extensión de la mancha de inundación, identificar zonas de riesgo según criterios de peligrosidad hidrodinámica y comparar el comportamiento del sistema hídrico entre distintos escenarios. El Anexo C ofrece una descripción más detallada de este contexto para lectores no familiarizados con la modelización hidráulica.
+El contexto de aplicación de este trabajo son las inundaciones fluviales, fenómenos de gran impacto socioeconómico cuya predicción y análisis requieren simular la propagación del agua sobre el terreno durante episodios de crecida. Los simuladores hidráulicos 2D resuelven numéricamente las ecuaciones de Saint-Venant \cite{saintvenant1871} sobre una malla espacial regular, produciendo para cada celda y paso temporal estimaciones de la profundidad del agua y los caudales. Estos resultados permiten evaluar la extensión de la mancha de inundación, identificar zonas de riesgo según criterios de peligrosidad hidrodinámica y comparar el comportamiento del sistema hídrico entre distintos escenarios. El \hyperref[anexo-c.-contexto-de-las-simulaciones-hidraulicas]{Anexo~C} ofrece una descripción más detallada de este contexto para lectores no familiarizados con la modelización hidráulica.
 
 El objetivo principal de este TFG es diseñar e implementar un sistema de almacenamiento y análisis que permita almacenar estos resultados de forma compacta y eficiente, habilitando consultas analíticas rápidas y visualizaciones interactivas sin necesidad de cargar los rásteres completos en memoria. La Figura~\ref{fig:contexto-problema} resume el contraste entre el enfoque original y la solución propuesta.
 
@@ -71,6 +71,7 @@ El objetivo principal de este TFG es diseñar e implementar un sistema de almace
 \caption{Contexto y problemática del trabajo. Los GeoTIFF de Triton organizan los datos por variable y paso temporal (80 ficheros independientes), lo que obliga a lecturas masivas en serie para consultas multi-temporales. El proceso ETL (\textit{Extract, Transform, Load}) los convierte en un array TileDB sparse 3D (tiempo, fila, columna) que almacena únicamente las celdas húmedas y permite responder las mismas consultas mediante una sola operación indexada.}
 \label{fig:contexto-problema}
 \end{figure}
+\FloatBarrier
 
 La problemática de partida combina tres dimensiones que se refuerzan entre sí: un volumen de datos considerable, un formato de almacenamiento no diseñado para análisis y unos patrones de acceso que el formato no cubre con eficiencia.
 
@@ -94,7 +95,7 @@ El usuario final no consulta los datos como rásteres aislados, sino como una co
 \item \textbf{Consultas comparativas}: Contraste de métricas entre varios escenarios simulados (por ejemplo, año seco frente a año húmedo).
 \end{itemize}
 
-Tres de estos cinco patrones (espaciales acotados, multi-temporales y peligrosidad) son los que penalizan severamente la lectura directa de GeoTIFF: o requieren leer muchas veces fracciones pequeñas del dominio, o requieren recorrer todos los pasos temporales.
+Tres de estos cinco patrones (espaciales acotados, multi-temporales y peligrosidad) son los que penalizan severamente la lectura directa de GeoTIFF: o requieren leer muchas veces fracciones pequeñas del dominio, o requieren recorrer todos los pasos temporales. Estos cinco patrones determinan directamente el diseño de las 24 consultas del motor analítico, que implementan estrategias específicas para cada uno mediante indexación sparse y acumulación incremental.
 
 \section{Oportunidad: dominio mayoritariamente seco}\label{oportunidad-sparse}
 
