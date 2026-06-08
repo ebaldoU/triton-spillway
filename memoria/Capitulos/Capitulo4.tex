@@ -28,13 +28,22 @@ En todos los casos el valor leído de TileDB coincide exactamente con el valor d
 
 \section{Validación funcional de las consultas}\label{validacion-funcional}
 
-Además de la integridad del almacenamiento, es necesario verificar que las funciones analíticas calculan correctamente los indicadores que declaran. Para ello se emplea una estrategia de oráculo: para un subconjunto de consultas representativas, el resultado del motor analítico se compara contra un cálculo de referencia realizado directamente sobre los GeoTIFF originales con \texttt{rasterio} y NumPy, sin pasar por TileDB. Este enfoque permite aislar errores del motor analítico de posibles errores del ETL: si el ETL es correcto pero el motor no, el oráculo (que lee los GeoTIFF directamente) detectará la discrepancia; si ambos fallan de la misma forma, la validación de integridad de la sección anterior los habría detectado previamente.
+Además de la integridad del almacenamiento, es necesario verificar que las funciones analíticas calculan correctamente los indicadores que declaran. Antes de presentar las pruebas conviene identificar las fuentes de error que podrían afectar al sistema:
+
+\begin{itemize}
+  \item \textbf{Errores de implementación.} Fórmulas incorrectas, umbrales mal aplicados o conversiones de índices erróneas en el código del motor. Son los errores más graves y producirían discrepancias no nulas respecto a cualquier referencia independiente.
+  \item \textbf{Errores de representación en punto flotante.} Los datos se almacenan en float32 ($\sim$7 dígitos significativos). Al acumular sumas o multiplicaciones en un orden diferente al del oráculo pueden aparecer diferencias del orden de $10^{-5}$ que no constituyen un error de diseño sino una consecuencia esperada de la aritmética finita.
+  \item \textbf{Pérdida por compresión.} TileDB almacena los datos con ZSTD, un algoritmo de compresión \emph{sin pérdida}. Los valores recuperados son bit a bit idénticos a los escritos durante el ETL, por lo que esta fuente de error queda descartada.
+  \item \textbf{Errores del ETL.} El proceso de conversión GeoTIFF$\to$TileDB podría introducir errores al mapear coordenadas, filtrar celdas o convertir tipos. Estos quedan cubiertos por la validación de la Sección~\ref{validacion-etl}.
+\end{itemize}
+
+Para detectar los errores de implementación se emplea una estrategia de oráculo: el resultado del motor analítico se compara contra un cálculo de referencia realizado directamente sobre los GeoTIFF originales con \texttt{rasterio} y NumPy, sin pasar por TileDB. Este enfoque permite aislar errores del motor analítico de posibles errores del ETL: si el ETL es correcto pero el motor no, el oráculo detectará la discrepancia; si ambos fallan de la misma forma, la validación de integridad de la Sección~\ref{validacion-etl} los habría detectado previamente.
 
 \subsection{Consultas puntuales y espaciales}\label{validacion-puntuales}
 
 \textbf{Q1 (calado en punto).} Para 50 puntos aleatorios en 5 pasos temporales distintos, el valor devuelto por \texttt{calado\_en\_punto(x, y, t)} coincide con la lectura directa del GeoTIFF de H en la celda (fila, columna) correspondiente. Discrepancias: 0 de 250 comparaciones.
 
-\textbf{Q4 (mapa de zonas inundadas).} El número de celdas devueltas por \texttt{q\_umbral\_h(meta, t, H\_WET)} para cuatro pasos temporales y cuatro \textit{datasets} se contrasta contra el recuento de píxeles con $H \geq 0{,}01$ m en el GeoTIFF de H. Las áreas calculadas difieren en menos de $10^{-3}$ km² (error de redondeo por conversión de celdas a superficie). Discrepancias significativas: 0.
+\textbf{Q4 (mapa de zonas inundadas).} El número de celdas devueltas por \texttt{q\_umbral\_h(meta, t, H\_WET)} para cuatro pasos temporales y cuatro \textit{datasets} se contrasta contra el recuento de píxeles con $H \geq 0{,}01$ m en el GeoTIFF de H. El recuento de celdas coincide exactamente; las áreas en km² difieren en menos de $10^{-3}$ km² por el redondeo de la conversión de celdas a superficie, no por un error de cálculo. Discrepancias: 0.
 
 \textbf{Q3 (velocidad en zona).} La velocidad máxima $V_{\max} = Q_{mod}/H$ calculada por el motor sobre una zona de $50\times50$ km coincide con la calculada directamente sobre los GeoTIFF de H, QX y QY para la misma ventana espacial, con una diferencia máxima de $10^{-5}$ m/s atribuible al orden de operaciones en punto flotante.
 
@@ -63,7 +72,7 @@ La Tabla~\ref{tab:validacion-resumen} sintetiza los resultados de validación fu
 
 \begin{table}[ht]
 \centering
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.5cm}L>{\centering\arraybackslash}p{2.5cm}>{\centering\arraybackslash}p{2.5cm}}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.2cm}L>{\centering\arraybackslash}p{3.0cm}>{\centering\arraybackslash}p{2.5cm}}
 \toprule
 \textbf{Consulta} & \textbf{Oráculo} & \textbf{Comparaciones} & \textbf{Discrepancias} \\
 \midrule
