@@ -295,14 +295,50 @@ La aplicación web constituye la capa de presentación del sistema y el principa
 \medskip\noindent\textbf{Selección de escenario.}
 Al arrancar, la aplicación descubre automáticamente los \textit{datasets} disponibles en el directorio \texttt{triton\_results/} y permite seleccionar el escenario activo desde la barra lateral. El selector muestra el alias del \textit{dataset} junto con su fecha de inicio (por ejemplo, \textit{datos1 · Jul 1980}), extraída del nombre del directorio. Un panel colapsable opcional muestra los metadatos del escenario: pasos temporales, extensión del dominio y resolución espacial.
 
+\begin{figure}[ht]
+\centering
+\fbox{\begin{minipage}{0.55\textwidth}\centering\vspace{2.8cm}
+\textit{[CAPTURA: barra lateral con selector de escenario, metadatos del dataset activo y controles de idioma]}
+\vspace{2.8cm}\end{minipage}}
+\caption{Barra lateral de la aplicación: selector de escenario, metadatos del \textit{dataset} activo y controles de configuración.}
+\label{fig:app-sidebar}
+\end{figure}
+
 \medskip\noindent\textbf{Organización de las consultas.}
 Las 24 consultas se presentan en los ocho bloques del motor analítico (A--H) como secciones desplegables. Cada consulta indica su modo de ejecución: automático (resultado inmediato al cambiar los parámetros) o manual (requiere confirmación explícita), distinguiendo las consultas aptas para uso interactivo de las que implican tiempos de cómputo elevados.
 
 \medskip\noindent\textbf{Presentación de resultados.}
 Los resultados se muestran en tres formatos según la consulta: mapa interactivo (Plotly) para análisis espaciales, gráfico temporal para series de datos y métricas numéricas para estadísticos. Las consultas de dominio completo emplean caché para evitar recalcular cuando los parámetros no cambian. La selección de coordenadas admite dos modalidades: clic sobre el mapa o introducción manual en UTM.
 
+\begin{figure}[ht]
+\centering
+\fbox{\begin{minipage}{\textwidth}\centering\vspace{3.2cm}
+\textit{[CAPTURA: resultado de Q5 (evolución de extensión inundada) mostrando el gráfico temporal con el área por hora]}
+\vspace{3.2cm}\end{minipage}}
+\caption{Resultado de Q5 (evolución de extensión inundada): gráfico temporal con el área inundada en km² a lo largo de los 20 pasos de simulación.}
+\label{fig:app-q5-temporal}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\fbox{\begin{minipage}{\textwidth}\centering\vspace{3.2cm}
+\textit{[CAPTURA: mapa de Q17 (semáforo de peligrosidad Russo) o Q4 (zonas inundadas) con escala de colores visible]}
+\vspace{3.2cm}\end{minipage}}
+\caption{Resultado espacial de una consulta de peligrosidad: mapa interactivo con escala de colores por nivel de riesgo según el criterio Russo.}
+\label{fig:app-mapa-peligrosidad}
+\end{figure}
+
 \medskip\noindent\textbf{Modo de comparación entre datasets.}
 La barra lateral incluye un activador de modo comparativo que permite seleccionar un segundo \textit{dataset} sobre el que ejecutar la misma consulta en paralelo. Al activarlo, la vista principal se divide en dos columnas: el mapa o gráfico del \textit{dataset} primario a la izquierda y el del secundario a la derecha, ambos generados con los mismos parámetros (hora, umbral, zona geográfica). Sobre cada columna se muestra la métrica clave de ese escenario (por ejemplo, área inundada o calado máximo), y la columna derecha añade el delta respecto al valor del \textit{dataset} primario, facilitando la comparación cuantitativa directa. El modo comparativo es compatible con todas las consultas del catálogo, incluyendo los mapas de peligrosidad (Russo, Xia), la zona de graves daños (RD 9/2008) y los indicadores de evacuación. Cuando el resultado es una serie temporal (Q2, Q5, Q12, Q13), ambas curvas se superponen en un único gráfico de líneas con colores diferenciados en lugar de dividir la vista en columnas.
+
+\begin{figure}[ht]
+\centering
+\fbox{\begin{minipage}{\textwidth}\centering\vspace{3.2cm}
+\textit{[CAPTURA: modo comparativo con dos datasets en paralelo — dos mapas o dos curvas superpuestas con el delta visible]}
+\vspace{3.2cm}\end{minipage}}
+\caption{Modo de comparación entre escenarios: la vista se divide en dos columnas con el resultado de la misma consulta sobre dos \textit{datasets} distintos y el delta entre sus métricas clave.}
+\label{fig:app-comparacion}
+\end{figure}
 
 \medskip\noindent\textbf{Accesibilidad y despliegue.}
 La aplicación soporta interfaz bilingüe (español e inglés) seleccionable desde la barra lateral. Incorpora autenticación por usuario y contraseña para el despliegue en servidor remoto. La exportación de resultados a GeoTIFF está disponible en las consultas espaciales.
