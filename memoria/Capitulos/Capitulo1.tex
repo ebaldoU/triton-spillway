@@ -207,7 +207,7 @@ NetCDF-4 & Sí & Capa sobre HDF5 & No & No & Descartada \\
 
 \section{Lenguaje y bibliotecas}\label{lenguaje-y-librerias}
 
-El desarrollo se realizó en Python, lenguaje de referencia en el ámbito científico y geoespacial, con las siguientes bibliotecas principales:
+El desarrollo se realizó íntegramente en Python. La elección responde a tres razones prácticas: es el lenguaje para el que TileDB ofrece una API oficial completa y mantenida; concentra el ecosistema de referencia para análisis geoespacial y numérico (rasterio, NumPy, GDAL); y permite construir la aplicación web con el mismo código que el motor analítico, sin necesidad de una capa intermedia en otro lenguaje. Las bibliotecas empleadas son:
 
 \begin{itemize}
 \item \textbf{Rasterio} \cite{rasterio}: Lectura de ficheros GeoTIFF con soporte para lectura por ventanas (windowed read), permitiendo procesar rásteres de varios GB por franjas sin cargar el fichero completo en memoria.
@@ -216,5 +216,7 @@ El desarrollo se realizó en Python, lenguaje de referencia en el ámbito cient�
 \item \textbf{Matplotlib:} Visualización de rásteres, escala logarítmica (LogNorm), flechas de flujo (quiver) y panel de cursor interactivo. Se utiliza en el visualizador de escritorio (visualize\_tiledb.py).
 \item \textbf{Streamlit} \cite{streamlit}: Framework web para la aplicación interactiva. Folium y Plotly Express se emplean para mapas interactivos y gráficos temporales dentro de la aplicación.
 \end{itemize}
+
+Esta combinación cubre el \textit{pipeline} completo de extremo a extremo: rasterio gestiona la lectura de los GeoTIFF durante la ingesta, TileDB Python y NumPy ejecutan el almacenamiento y las consultas analíticas, y Streamlit junto con Folium y Plotly Express se encargan de la visualización interactiva. Al no requerir ningún lenguaje adicional, el despliegue se reduce a un único entorno virtual Python.
 
 
