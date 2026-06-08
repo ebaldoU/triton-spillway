@@ -27,13 +27,17 @@ spillway/
 
 \section{Requisitos del sistema}\label{e.2-requisitos}
 
+Los requisitos que se indican a continuación se han determinado a partir de las mediciones realizadas durante el desarrollo del proyecto y recogidas en el Capítulo~\ref{validacion-del-sistema}. La mayor exigencia de recursos corresponde al proceso de ingesta ETL, no a la aplicación web: una vez los arrays TileDB están generados, el servidor puede operar con recursos más modestos.
+
 \begin{itemize}
 \item \textbf{Sistema operativo:} Linux (Ubuntu 22.04+ recomendado) o Windows con WSL2.
 \item \textbf{Python:} 3.10 o superior.
 \item \textbf{RAM:} 16 GB mínimo recomendados para el ETL de un \textit{dataset} completo. El pico durante la ingesta ($\sim$4 GB) proviene de los acumuladores de coordenadas y los buffers de lectura por franjas; para la aplicación web en uso normal, 8 GB son suficientes.
-\item \textbf{Disco:} 17--21 GB por \textit{dataset} procesado en TileDB. Los GeoTIFF fuente ($\sim$235 GB por escenario) solo son necesarios durante la ingesta; después pueden eliminarse del servidor.
-\item \textbf{CPU:} Sin requisitos especiales; el ETL paraleliza la lectura de los 4 GeoTIFF con \texttt{ThreadPoolExecutor}.
+\item \textbf{Disco:} 17--21 GB por \textit{dataset} procesado en TileDB. Los GeoTIFF fuente ($\sim$235 GB por escenario) solo son necesarios durante la ingesta; después pueden eliminarse del servidor para liberar espacio.
+\item \textbf{CPU:} Sin requisitos especiales; el ETL paraleliza la lectura de los 4 GeoTIFF con \texttt{ThreadPoolExecutor} y no requiere GPU ni instrucciones vectoriales específicas.
 \end{itemize}
+
+Con una máquina que cumpla estos requisitos mínimos es posible tanto procesar nuevos escenarios como servir la aplicación web con tiempos de respuesta interactivos para las consultas instantáneas y multi-paso (véase la Tabla~\ref{tab:rendimiento-consultas} para los tiempos medidos en producción).
 
 \section{Instalación del entorno Python}\label{e.3-instalacion}
 
