@@ -1,6 +1,6 @@
 \chapter{Validación del Sistema}\label{validacion-del-sistema}
 
-Este capítulo verifica que el sistema desarrollado produce resultados correctos y cuantifica su rendimiento en términos de latencia y consumo de recursos. La validación se estructura en dos partes: comprobación de la integridad y exactitud de las consultas (11 consultas y el proceso ETL, con más de 4\,500 comparaciones en total), y evaluación del rendimiento de las principales funciones del motor analítico.
+Este capítulo verifica que el sistema desarrollado produce resultados correctos y cuantifica su rendimiento en términos de latencia y consumo de recursos. La validación se estructura en dos partes: comprobación de la integridad y correctitud de las consultas, y evaluación del rendimiento de las principales funciones del motor analítico.
 
 \section{Validación de la integridad del ETL}\label{validacion-etl}
 
@@ -36,27 +36,13 @@ Además de la integridad del almacenamiento, es necesario verificar que las func
 
 \textbf{Q4 (mapa de zonas inundadas).} El número de celdas devueltas por \texttt{q\_umbral\_h(meta, t, H\_WET)} para cuatro pasos temporales y cuatro \textit{datasets} se contrasta contra el recuento de píxeles con $H \geq 0{,}01$ m en el GeoTIFF de H. Las áreas calculadas difieren en menos de $10^{-3}$ km² (error de redondeo por conversión de celdas a superficie). Discrepancias significativas: 0.
 
-\textbf{Q2 (calado máximo en punto).} Para 50 puntos aleatorios en datos1, el calado máximo devuelto por el motor se contrasta con el máximo de las 20 lecturas directas del GeoTIFF de H en la celda correspondiente. Discrepancias: 0 de 50 comparaciones.
-
 \textbf{Q3 (velocidad en zona).} La velocidad máxima $V_{\max} = Q_{mod}/H$ calculada por el motor sobre una zona de $50\times50$ km coincide con la calculada directamente sobre los GeoTIFF de H, QX y QY para la misma ventana espacial, con una diferencia máxima de $10^{-5}$ m/s atribuible al orden de operaciones en punto flotante.
 
 \subsection{Consultas multi-paso}\label{validacion-multipaso}
 
-\textbf{Q5 y Q12 (evolución de extensión e inundación por hora).} Ambas funciones calculan, para cada uno de los 20 pasos temporales, el número de celdas con $H \geq 0{,}01$ m. El recuento devuelto por el motor sobre los 20 pasos de datos1 y datos3 se contrasta contra el recuento directo de píxeles en los GeoTIFF de H. Diferencias: inferiores a 1 celda en todos los pasos (truncamiento entero). Discrepancias significativas: 0 de 40 comparaciones.
-
 \textbf{Q13 (volumen por hora).} El volumen total $V = \sum H_i \times 100\,\text{m}^2$ calculado por el motor sobre los 20 pasos de datos1 se contrasta paso a paso contra la suma directa sobre los GeoTIFF. Las diferencias son inferiores a 0,01 Mm³ (menos del 0,001\,\% del volumen total de $\sim$4\,462 Mm³), coherentes con el redondeo de float32.
 
 \textbf{Q7 (hora de llegada del frente).} Para 20 puntos seleccionados manualmente en zonas de llegada temprana, tardía y nunca inundadas, la hora de llegada devuelta por el motor coincide con la obtenida inspeccionando la secuencia temporal en los GeoTIFF. Discrepancias: 0.
-
-\subsection{Indicadores de umbral}\label{validacion-indicadores}
-
-Para las consultas que aplican criterios de clasificación derivados de normativa o bibliografía (Q10a/b, Q15, Q16), la estrategia de oráculo cambia: en lugar de comparar contra GeoTIFF, se construye una cuadrícula sintética con valores de H y $Q_{mod}$ conocidos que cubren explícitamente todos los casos de la tabla de decisión. El resultado del motor se contrasta contra la clasificación manual.
-
-\textbf{Q10a y Q10b (peligrosidad Russo).} Se construye una cuadrícula de $4\times4$ celdas con combinaciones de ($H$, $Q_{mod}$) que cruzan los dos umbrales de Q10a ($H > 0{,}50$ m o $Q_{mod} > 0{,}50$ m²/s) y los dos de Q10b ($H > 0{,}25$ m o $Q_{mod} > 0{,}15$ m²/s). Las 16 celdas de Q10a y las 16 de Q10b se clasifican correctamente según la máscara booleana implementada. Discrepancias: 0 de 32 comparaciones.
-
-\textbf{Q15 (semáforo de calado).} La función \texttt{russo\_traffic\_light\_counts} se aplica a un array de 12 celdas con valores distribuidos uniformemente entre los tres rangos ($H_{WET} \leq H \leq 0{,}25$ m, $0{,}25 < H \leq 0{,}50$ m, $H > 0{,}50$ m). Los recuentos devueltos coinciden con el conteo manual. Discrepancias: 0.
-
-\textbf{Q16 (zona de graves daños, RD 9/2008).} El criterio normativo es $H > 1$ m \textbf{o} $V > 1$ m/s \textbf{o} $H \cdot V > 0{,}5$ m²/s. Se construye una cuadrícula de $3\times3$ celdas que activa cada criterio por separado y en combinación: (1) $H = 1{,}2$ m, $V = 0{,}3$ m/s; (2) $H = 0{,}3$ m, $V = 1{,}5$ m/s; (3) $H = 0{,}4$ m, $V = 1{,}4$ m/s ($H \cdot V = 0{,}56$); y seis casos bajo el umbral conjunto. La función \texttt{graves\_danos\_mask} clasifica correctamente las 9 celdas. Discrepancias: 0.
 
 \subsection{Coherencia multi-dataset}\label{validacion-coherencia}
 
@@ -66,23 +52,15 @@ La Tabla~\ref{tab:validacion-resumen} sintetiza los resultados de validación fu
 
 \begin{table}[ht]
 \centering
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.8cm}L>{\centering\arraybackslash}p{2.3cm}>{\centering\arraybackslash}p{2.3cm}}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.5cm}L>{\centering\arraybackslash}p{2.5cm}>{\centering\arraybackslash}p{2.5cm}}
 \toprule
 \textbf{Consulta} & \textbf{Oráculo} & \textbf{Comparaciones} & \textbf{Discrepancias} \\
 \midrule
-\multicolumn{4}{l}{\textit{GeoTIFF como referencia}} \\[2pt]
 Q1 — Calado en punto & Lectura directa GeoTIFF & 250 & 0 \\
-Q2 — Calado máximo en punto & Máximo por paso GeoTIFF & 50 & 0 \\
 Q3 — Velocidad en zona & Cálculo vectorial GeoTIFF & 4 & 0 \\
 Q4 — Mapa inundado & Recuento píxeles GeoTIFF & 16 & 0 \\
-Q5/Q12 — Extensión por hora & Recuento píxeles GeoTIFF & 40 & 0 \\
 Q7 — Hora de llegada & Inspección secuencia GeoTIFF & 20 & 0 \\
-Q13 — Volumen por hora & Suma directa GeoTIFF & 80 & 0 \\[4pt]
-\multicolumn{4}{l}{\textit{Cuadrícula sintética (verificación de umbrales normativos)}} \\[2pt]
-Q10a/b — Peligrosidad Russo & Clasificación manual & 32 & 0 \\
-Q15 — Semáforo de calado & Clasificación manual & 12 & 0 \\
-Q16 — Zona graves daños (RD 9/2008) & Clasificación manual & 9 & 0 \\[4pt]
-\multicolumn{4}{l}{\textit{Integridad del almacenamiento}} \\[2pt]
+Q13 — Volumen por hora & Suma directa GeoTIFF & 80 & 0 \\
 ETL — Integridad & Muestreo aleatorio & 4\,000 celdas & 0 \\
 \bottomrule
 \end{tabularx}
