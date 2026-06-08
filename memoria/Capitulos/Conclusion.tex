@@ -50,7 +50,7 @@ Durante el desarrollo y la evaluación se identificaron las siguientes limitacio
 
 \section{Disponibilidad del código y reproducibilidad}\label{reproducibilidad}
 
-El código fuente completo del proyecto —incluyendo el \textit{pipeline} ETL, el motor de consultas, la aplicación web y los scripts de validación y \textit{benchmark}— está disponible públicamente en el repositorio \url{https://github.com/ebaldoU/triton-spillway}. El repositorio incluye también el código fuente de esta memoria en LaTeX y el fichero \texttt{requirements.txt} con las versiones exactas de las dependencias Python empleadas.
+La reproducibilidad es un requisito fundamental de la investigación científica \cite{reproducibilidad_ia}. El código fuente completo del proyecto —incluyendo el \textit{pipeline} ETL, el motor de consultas, la aplicación web y los scripts de validación y \textit{benchmark}— está disponible públicamente en el repositorio \cite{triton_spillway_repo}. El repositorio incluye también el código fuente de esta memoria en LaTeX y el fichero \texttt{requirements.txt} con las versiones exactas de las dependencias Python empleadas.
 
 Con acceso a los GeoTIFF de simulación, cualquier investigador puede reproducir el proceso completo: ejecutar el ETL para generar los arrays TileDB, lanzar la aplicación web y repetir los experimentos de \textit{benchmark} y validación descritos en este documento. La principal barrera a la reproducibilidad directa es el volumen de los datos de entrada: cada simulación ocupa $\sim$235 GB en formato GeoTIFF y $\sim$17--21 GB una vez convertida a TileDB, lo que hace inviable su distribución abierta junto al código. Los datos provienen del simulador hidráulico Triton y no están disponibles públicamente de forma independiente.
 
