@@ -170,46 +170,46 @@ Para verificar que el rendimiento escala de forma predecible con el tamaño del 
 \centering
 \begin{tikzpicture}
 \begin{axis}[
-  width=\textwidth, height=7cm,
-  xlabel={Celdas húmedas (millones)},
-  ylabel={Tiempo (s)},
-  xmin=400, xmax=1400,
-  ymin=0, ymax=85,
-  xtick={498,1281,1287},
-  xticklabels={498\,(datos3), 1\,281\,(datos8), 1\,287\,(datos1)},
-  legend pos=north west,
-  legend style={font=\small},
-  ymajorgrids=true, grid style=dashed,
+  ybar,
+  width=0.92\textwidth,
+  height=9cm,
+  bar width=28pt,
+  enlarge x limits=0.28,
+  symbolic x coords={datos3,datos8,datos1},
+  xtick=data,
+  xticklabels={
+    {datos3\\[-1pt]{\footnotesize(498\,M celdas, seco)}},
+    {datos8\\[-1pt]{\footnotesize(1\,281\,M celdas)}},
+    {datos1\\[-1pt]{\footnotesize(1\,287\,M celdas)}}
+  },
+  xticklabel style={align=center, font=\small},
+  ylabel={Tiempo (s, caché caliente)},
+  ylabel style={font=\small},
+  ymin=0, ymax=82,
+  ytick={0,10,20,30,40,50,60,70,80},
+  ymajorgrids=true,
+  grid style={dashed, gray!35},
+  legend style={
+    at={(0.97,0.97)}, anchor=north east,
+    font=\small, draw=gray!50, fill=white,
+    rounded corners=2pt, row sep=2pt
+  },
   tick label style={font=\small},
-  label style={font=\small},
+  nodes near coords,
+  nodes near coords style={font=\small\bfseries, anchor=south, inner sep=3pt},
 ]
-% Q4
-\addplot[color=blue!70!black, mark=square*, thick] coordinates {
-  (498,  0.8)
-  (1281, 1.2)
-  (1287, 1.5)
-};
-\addlegendentry{Q4 — Mapa inundado (instantánea)}
 
-% Q5
-\addplot[color=orange!80!black, mark=triangle*, thick] coordinates {
-  (498,  15.4)
-  (1281, 27.0)
-  (1287, 28.1)
-};
-\addlegendentry{Q5 — Evolución extensión (multi-paso)}
+\addplot[fill=blue!40, draw=blue!75!black, line width=0.8pt]
+    coordinates {(datos3,15.4) (datos8,27.0) (datos1,28.1)};
+\addlegendentry{Q5 — Evolución de extensión (multi-paso, 20 fragmentos)}
 
-% Q7
-\addplot[color=red!70!black, mark=*, thick] coordinates {
-  (498,  25.9)
-  (1281, 59.3)
-  (1287, 70.3)
-};
-\addlegendentry{Q7 — Hora de llegada (acumulada por píxel)}
+\addplot[fill=red!40, draw=red!75!black, line width=0.8pt]
+    coordinates {(datos3,25.9) (datos8,59.3) (datos1,70.3)};
+\addlegendentry{Q7 — Hora de llegada del frente (acumulada por píxel)}
 
 \end{axis}
 \end{tikzpicture}
-\caption{Escalabilidad del tiempo de consulta con el número de celdas húmedas. Los tres tipos de consulta muestran comportamiento aproximadamente lineal. La consulta acumulada por píxel (Q7) es la más sensible al volumen: aumentar las celdas un 2,6$\times$ (de 498 M a 1\,287 M) multiplica el tiempo por 2,7$\times$. La variación entre datos8 y datos1 (1\,281 M vs 1\,287 M) refleja la diferencia de densidad de inundación entre ambos escenarios.}
+\caption{Tiempo de consulta (caché caliente, dominio completo) en tres escenarios de distinto volumen de inundación. El salto principal se produce entre el escenario seco (datos3, 498\,M celdas) y los escenarios húmedos (datos8 y datos1, $\sim$1\,280\,M): Q7 tarda 2,3$\times$ más y Q5 un 1,8$\times$ más. La diferencia entre datos8 y datos1 es pequeña porque tienen una extensión de inundación casi idéntica. Q4 (mapa inundado, instantánea) responde en menos de 1,5 s en los tres casos y se omite de la gráfica por su diferente escala.}
 \label{fig:escalabilidad}
 \end{figure}
 
