@@ -164,23 +164,24 @@ Q11 & Ventana para vehículos emergencia & 84{,}1     & 25{,}9 & 750 \\
 
 \section{Escalabilidad con el volumen de datos}\label{escalabilidad}
 
-Para verificar que el rendimiento escala de forma predecible con el tamaño del escenario, se midieron Q4, Q5 y Q7 sobre tres \textit{datasets} con distinto número de celdas húmedas: datos3 (498 M celdas, escenario seco), datos8 (1\,281 M) y datos1 (1\,287 M). Los tiempos corresponden a caché caliente, una repetición por consulta y dataset, sobre el dominio completo.
+Para verificar que el rendimiento escala de forma predecible con el tamaño del escenario, se midieron Q4, Q5 y Q7 sobre cuatro \textit{datasets} con distinto número de celdas húmedas: datos7 (334\,M, escenario seco), datos3 (498\,M), datos8 (1\,281\,M) y datos6 (1\,392\,M, escenario húmedo extremo). Los tiempos corresponden a caché caliente, una repetición por consulta y dataset, sobre el dominio completo.
 
 \begin{figure}[ht]
 \centering
 \begin{tikzpicture}
 \begin{axis}[
   ybar,
-  width=0.92\textwidth,
-  height=9cm,
-  bar width=28pt,
-  enlarge x limits=0.28,
-  symbolic x coords={datos3,datos8,datos1},
+  width=\textwidth,
+  height=9.5cm,
+  bar width=14pt,
+  enlarge x limits=0.15,
+  symbolic x coords={datos7,datos3,datos8,datos6},
   xtick=data,
   xticklabels={
-    {datos3\\[-1pt]{\footnotesize(498\,M celdas, seco)}},
-    {datos8\\[-1pt]{\footnotesize(1\,281\,M celdas)}},
-    {datos1\\[-1pt]{\footnotesize(1\,287\,M celdas)}}
+    {datos7\\[-2pt]{\footnotesize 334\,M celdas}},
+    {datos3\\[-2pt]{\footnotesize 498\,M celdas}},
+    {datos8\\[-2pt]{\footnotesize 1\,281\,M celdas}},
+    {datos6\\[-2pt]{\footnotesize 1\,392\,M celdas}}
   },
   xticklabel style={align=center, font=\small},
   ylabel={Tiempo (s, caché caliente)},
@@ -189,28 +190,33 @@ Para verificar que el rendimiento escala de forma predecible con el tamaño del 
   ytick={0,10,20,30,40,50,60,70,80},
   ymajorgrids=true,
   grid style={dashed, gray!35},
+  legend columns=3,
   legend style={
-    at={(0.97,0.97)}, anchor=north east,
+    at={(0.5,-0.22)}, anchor=north,
     font=\small, draw=gray!50, fill=white,
-    rounded corners=2pt, row sep=2pt
+    rounded corners=2pt, column sep=8pt
   },
   tick label style={font=\small},
   nodes near coords,
-  nodes near coords style={font=\small\bfseries, anchor=south, inner sep=3pt},
+  nodes near coords style={font=\scriptsize, anchor=south, inner sep=2pt, rotate=90, xshift=6pt},
 ]
 
-\addplot[fill=blue!40, draw=blue!75!black, line width=0.8pt]
-    coordinates {(datos3,15.4) (datos8,27.0) (datos1,28.1)};
-\addlegendentry{Q5 — Evolución de extensión (multi-paso, 20 fragmentos)}
+\addplot[fill=blue!35, draw=blue!70!black, line width=0.7pt]
+    coordinates {(datos7,0.4) (datos3,0.8) (datos8,1.2) (datos6,1.4)};
+\addlegendentry{Q4 — Mapa inundado (instantánea)}
 
-\addplot[fill=red!40, draw=red!75!black, line width=0.8pt]
-    coordinates {(datos3,25.9) (datos8,59.3) (datos1,70.3)};
-\addlegendentry{Q7 — Hora de llegada del frente (acumulada por píxel)}
+\addplot[fill=orange!55, draw=orange!80!black, line width=0.7pt]
+    coordinates {(datos7,6.2) (datos3,15.4) (datos8,27.0) (datos6,27.0)};
+\addlegendentry{Q5 — Evolución extensión (multi-paso)}
+
+\addplot[fill=red!40, draw=red!75!black, line width=0.7pt]
+    coordinates {(datos7,16.7) (datos3,25.9) (datos8,59.3) (datos6,69.5)};
+\addlegendentry{Q7 — Hora de llegada del frente (acumulada)}
 
 \end{axis}
 \end{tikzpicture}
-\caption{Tiempo de consulta (caché caliente, dominio completo) en tres escenarios de distinto volumen de inundación. El salto principal se produce entre el escenario seco (datos3, 498\,M celdas) y los escenarios húmedos (datos8 y datos1, $\sim$1\,280\,M): Q7 tarda 2,3$\times$ más y Q5 un 1,8$\times$ más. La diferencia entre datos8 y datos1 es pequeña porque tienen una extensión de inundación casi idéntica. Q4 (mapa inundado, instantánea) responde en menos de 1,5 s en los tres casos y se omite de la gráfica por su diferente escala.}
+\caption{Tiempo de consulta (caché caliente, dominio completo) en cuatro escenarios con distinto número de celdas húmedas. Q4 (instantánea, un único fragmento) escala de forma casi plana ($<$1,5 s en todos los casos). Q5 y Q7 crecen aproximadamente de forma lineal con el volumen: al pasar de 334\,M (datos7) a 1\,392\,M celdas (datos6), Q5 se multiplica por 4,4$\times$ y Q7 por 4,2$\times$.}
 \label{fig:escalabilidad}
 \end{figure}
 
-La relación es aproximadamente lineal en los tres tipos: Q4 escala de 0,8 a 1,5 s (factor 1,9$\times$), Q5 de 15,4 a 28,1 s (1,8$\times$) y Q7 de 25,9 a 70,3 s (2,7$\times$) al pasar de 498 M a 1\,287 M celdas (factor 2,6$\times$ en datos). La pendiente más pronunciada de Q7 se explica por la presión adicional de caché que ejerce el \textit{grid} acumulador sobre 20 fragmentos: cuando el dataset es mayor, cada fragmento tiene más celdas húmedas dispersas, lo que aumenta las colisiones de escritura en el \textit{grid} y degrada el \textit{throughput} efectivo.
+Al cuadruplicar aproximadamente el volumen (de 334\,M a 1\,392\,M celdas, factor 4,2$\times$), Q5 pasa de 6,2 a 27,0 s (4,4$\times$) y Q7 de 16,7 a 69,5 s (4,2$\times$), confirmando la escalabilidad aproximadamente lineal. Q4, al acceder a un único fragmento, apenas varía (0,4 a 1,4 s, factor 3,5$\times$, con mayor peso del coste fijo de apertura del array). La pendiente algo más pronunciada de Q7 respecto a Q5 se debe al \textit{grid} acumulador de tamaño fijo $n_r \times n_c$ que recibe escrituras dispersas en los 20 fragmentos: cuantas más celdas húmedas por fragmento, mayor presión de caché en las actualizaciones.
