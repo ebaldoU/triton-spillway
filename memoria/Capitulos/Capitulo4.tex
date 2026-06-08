@@ -48,6 +48,17 @@ Además de la integridad del almacenamiento, es necesario verificar que las func
 
 Una prueba adicional de coherencia es comparar \textit{datasets} que deberían producir resultados idénticos. Los escenarios datos1 y datos4 comparten el mismo patrón de inundación en la hora 60 según las métricas de la Tabla~\ref{tab:metricas-datasets}: extensión de 6\,196 km², peligrosidad para adultos según el criterio Russo de 2\,311 km² y volumen de 4\,462,8 Mm³. El motor analítico reproduce estas métricas con diferencia nula entre ambos \textit{datasets}, confirmando la reproducibilidad del \textit{pipeline} ETL.
 
+\subsection{Consistencia interna del motor analítico}\label{validacion-interna}
+
+Como comprobación adicional e independiente del ETL, se ejecutó sobre \texttt{datos7} (334\,M celdas húmedas, escenario de menor tamaño) un conjunto de pruebas de consistencia interna: los resultados de las funciones analíticas se comparan contra recálculos directos sobre el mismo array TileDB realizados con NumPy puro, sin pasar por las funciones del motor. Este enfoque verifica que la lógica de filtrado, conversión y agregación es correcta con independencia de si los datos almacenados coinciden con los GeoTIFF originales.
+
+\begin{itemize}
+  \item \textbf{Q4 (mapa inundado), 4 pasos.} El recuento de celdas con $H \geq 0{,}01$ m devuelto por el motor coincide exactamente con la suma directa sobre el array TileDB. Discrepancias: 0 de 4 comparaciones.
+  \item \textbf{Q5 (evolución de extensión), 20 pasos.} El recuento por paso del motor coincide con el recálculo NumPy en los 20 pasos temporales. Diferencia máxima: 0 celdas.
+  \item \textbf{Q13 (volumen por hora), 20 pasos.} El volumen calculado como $\sum H_i \times \Delta x^2$ difiere del recálculo en menos de $10^{-5}$ m³ (error relativo máximo: 0{,}00000\,\%), atribuible al orden de operaciones en punto flotante.
+  \item \textbf{Q1 (calado en punto), 50 puntos.} Cincuenta celdas húmedas aleatorias del paso temporal 11 son consultadas mediante \texttt{calado\_en\_punto(x,\,y,\,t)} y comparadas con la lectura directa de TileDB en las mismas coordenadas. Discrepancias ($>10^{-4}$ m): 0.
+\end{itemize}
+
 La Tabla~\ref{tab:validacion-resumen} sintetiza los resultados de validación funcional.
 
 \begin{table}[ht]
@@ -62,9 +73,15 @@ Q4 — Mapa inundado & Recuento píxeles GeoTIFF & 16 & 0 \\
 Q7 — Hora de llegada & Inspección secuencia GeoTIFF & 20 & 0 \\
 Q13 — Volumen por hora & Suma directa GeoTIFF & 80 & 0 \\
 ETL — Integridad & Muestreo aleatorio TileDB vs GeoTIFF & 4\,000 celdas & 0 \\
+\midrule
+\multicolumn{4}{l}{\textit{Consistencia interna (motor vs recálculo NumPy sobre TileDB, datos7)}} \\[2pt]
+Q1 — Calado en punto & Lectura directa TileDB & 50 puntos & 0 \\
+Q4 — Mapa inundado & Recuento NumPy sobre TileDB & 4 pasos & 0 \\
+Q5 — Evolución extensión & Recuento NumPy sobre TileDB & 20 pasos & 0 \\
+Q13 — Volumen por hora & Suma NumPy sobre TileDB & 20 pasos & 0 \\
 \bottomrule
 \end{tabularx}
-\caption{Resumen de validación funcional. Todas las discrepancias son nulas o de orden $10^{-5}$ atribuibles a aritmética de punto flotante.}
+\caption{Resumen de validación funcional. Las primeras seis filas comparan el motor analítico contra los GeoTIFF originales (oráculo externo). Las cuatro últimas corresponden a pruebas de consistencia interna ejecutadas sobre \texttt{datos7}: el motor se compara contra recálculos NumPy directos sobre TileDB. Todas las discrepancias son nulas o de orden $10^{-5}$.}
 \label{tab:validacion-resumen}
 \end{table}
 
