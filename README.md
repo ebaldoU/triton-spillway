@@ -148,13 +148,30 @@ Los ficheros se guardan en `TRITON_OUTPUT_DIR` (~257 MB por variable y paso).
 
 ---
 
-## Datos
+## Datos y reproducibilidad
 
-Los arrays TileDB y los GeoTIFF fuente no se distribuyen en este repositorio. Son generados por el simulador hidráulico Triton como parte del proyecto de investigación. Para reproducir el entorno completo:
+### Disponibilidad del código
 
-1. Obtener los GeoTIFF fuente del simulador Triton.
-2. Ejecutar el ETL para cada dataset: `python geotiff_to_tiledb_sparse.py --dataset datosN`.
+Todo el código fuente está disponible en este repositorio bajo licencia académica:
+
+- Pipeline ETL, motor de consultas y aplicación web (`spillway/`)
+- Scripts de validación y benchmark (`spillway/validacion_tiledb.py`, `spillway/benchmark_validacion.py`)
+- Código fuente de la memoria en LaTeX (`memoria/`)
+- Versiones exactas de dependencias (`requirements.txt`)
+
+### Datos de simulación
+
+Los arrays TileDB (~17–21 GB/dataset) y los GeoTIFF fuente (~235 GB/dataset) **no están incluidos** en el repositorio por su tamaño. Provienen del simulador hidráulico Triton y no están disponibles públicamente de forma independiente.
+
+Con acceso a los GeoTIFF, la reproducción completa sigue estos pasos:
+
+1. Obtener los GeoTIFF del simulador Triton (variables H, QX, QY, MH; 20 pasos temporales).
+2. Ejecutar el ETL: `python geotiff_to_tiledb_sparse.py --dataset datosN`
 3. Arrancar la aplicación con `TRITON_BASE_URI` apuntando al directorio `triton_results/`.
+
+### Transferibilidad de la metodología
+
+El pipeline ETL, el esquema del array TileDB y las funciones analíticas **no asumen ninguna cuenca hidrográfica ni simulador concreto**. Cualquier salida de un modelo hidráulico 2D en formato GeoTIFF con las variables H, QX, QY y MH puede ingestarse y analizarse con el mismo código. Solo es necesario ajustar los parámetros geoespaciales del dominio (sistema de referencia, resolución, extensión) en `spillway/config.py`.
 
 ---
 
