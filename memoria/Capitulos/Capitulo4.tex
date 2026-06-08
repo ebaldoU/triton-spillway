@@ -44,18 +44,6 @@ Además de la integridad del almacenamiento, es necesario verificar que las func
 
 \textbf{Q7 (hora de llegada del frente).} Para 20 puntos seleccionados manualmente en zonas de llegada temprana, tardía y nunca inundadas, la hora de llegada devuelta por el motor coincide con la obtenida inspeccionando la secuencia temporal en los GeoTIFF. Discrepancias: 0.
 
-\subsection{Indicadores de umbral}\label{validacion-indicadores}
-
-Las consultas que aplican criterios normativos o bibliográficos (Q10a/b/c, Q15, Q16) se validan mediante cuadrículas sintéticas con valores de H y $Q_{mod}$ conocidos que cubren todos los casos de la tabla de decisión. Al ser funciones puramente matemáticas sin acceso a TileDB, el oráculo es la clasificación manual según las fórmulas publicadas.
-
-\textbf{Q10a y Q10b (peligrosidad Russo).} Se construye un array de 7 celdas con combinaciones de ($H$, $Q_{mod}$) que cruzan los dos umbrales de Q10a ($H > 0{,}50$ m o $Q_{mod} > 0{,}50$ m²/s) incluyendo valores en el límite estricto ($H = 0{,}50$ exacto → no peligroso; $H = 0{,}501$ → peligroso). Ídem para Q10b ($H > 0{,}25$ m o $Q_{mod} > 0{,}15$ m²/s) con 6 casos. Discrepancias: 0 de 13 comparaciones.
-
-\textbf{Q10c (vehículos ligeros) y Q15 (semáforo de calado).} Q10c se valida con 4 casos en torno a $H = 0{,}30$ m. Q15 con 10 celdas distribuidas en los tres rangos del semáforo ($H_{WET} \leq H \leq 0{,}25$, $0{,}25 < H \leq 0{,}50$, $H > 0{,}50$) más el límite $H = 0{,}25$. Discrepancias: 0 de 14 comparaciones.
-
-\textbf{Q16 (zona de graves daños, RD~9/2008).} El criterio es $H > 1$ m \textit{o} $V > 1$ m/s \textit{o} $H\cdot V > 0{,}5$ m²/s. Se construyen 9 celdas que activan cada criterio por separado, en combinación, y bajo todos los umbrales. Discrepancias: 0 de 9 comparaciones.
-
-\textbf{Xia et al.\ (riesgo hidrodinámico).} La función \texttt{xia\_risk\_personas} se evalúa con 4 pares $(H, Q_{mod})$ que abarcan los tres niveles de riesgo (0 = seguro, 1 = riesgo bajo, 2 = riesgo alto). El caso extremo $(H=2\text{ m},\ Q_{mod}=3\text{ m}^2/\text{s})$ produce riesgo~2 como es esperado. Discrepancias: 0 de 4 comparaciones.
-
 \subsection{Coherencia multi-dataset}\label{validacion-coherencia}
 
 Una prueba adicional de coherencia es comparar \textit{datasets} que deberían producir resultados idénticos. Los escenarios datos1 y datos4 comparten el mismo patrón de inundación en la hora 60 según las métricas de la Tabla~\ref{tab:metricas-datasets}: extensión de 6\,196 km², peligrosidad para adultos según el criterio Russo de 2\,311 km² y volumen de 4\,462,8 Mm³. El motor analítico reproduce estas métricas con diferencia nula entre ambos \textit{datasets}, confirmando la reproducibilidad del \textit{pipeline} ETL.
@@ -64,27 +52,19 @@ La Tabla~\ref{tab:validacion-resumen} sintetiza los resultados de validación fu
 
 \begin{table}[ht]
 \centering
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.8cm}L>{\centering\arraybackslash}p{2.3cm}>{\centering\arraybackslash}p{2.3cm}}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.5cm}L>{\centering\arraybackslash}p{2.5cm}>{\centering\arraybackslash}p{2.5cm}}
 \toprule
-\textbf{Consulta} & \textbf{Método} & \textbf{Comparaciones} & \textbf{Discrepancias} \\
+\textbf{Consulta} & \textbf{Oráculo} & \textbf{Comparaciones} & \textbf{Discrepancias} \\
 \midrule
-\multicolumn{4}{l}{\textit{GeoTIFF como referencia externa}} \\[2pt]
 Q1 — Calado en punto & Lectura directa GeoTIFF & 250 & 0 \\
 Q3 — Velocidad en zona & Cálculo vectorial GeoTIFF & 4 & 0 \\
 Q4 — Mapa inundado & Recuento píxeles GeoTIFF & 16 & 0 \\
 Q7 — Hora de llegada & Inspección secuencia GeoTIFF & 20 & 0 \\
-Q13 — Volumen por hora & Suma directa GeoTIFF & 80 & 0 \\[4pt]
-\multicolumn{4}{l}{\textit{Cuadrículas sintéticas (umbrales normativos/bibliográficos)}} \\[2pt]
-Q10a/b — Peligrosidad Russo & Clasificación manual & 13 & 0 \\
-Q10c — Vehículos ligeros & Clasificación manual & 4 & 0 \\
-Q15 — Semáforo de calado & Clasificación manual & 14 & 0 \\
-Q16 — Zona graves daños (RD~9/2008) & Clasificación manual & 9 & 0 \\
-Xia et al.\ — Riesgo hidrodinámico & Clasificación manual & 4 & 0 \\[4pt]
-\multicolumn{4}{l}{\textit{Integridad del almacenamiento}} \\[2pt]
+Q13 — Volumen por hora & Suma directa GeoTIFF & 80 & 0 \\
 ETL — Integridad & Muestreo aleatorio TileDB vs GeoTIFF & 4\,000 celdas & 0 \\
 \bottomrule
 \end{tabularx}
-\caption{Resumen de validación funcional. Todas las comparaciones producen diferencia nula o de orden $10^{-5}$ m atribuible a aritmética float32.}
+\caption{Resumen de validación funcional. Todas las discrepancias son nulas o de orden $10^{-5}$ atribuibles a aritmética de punto flotante.}
 \label{tab:validacion-resumen}
 \end{table}
 
