@@ -301,10 +301,8 @@ Al arrancar, la aplicación descubre automáticamente los \textit{datasets} disp
 
 \begin{figure}[ht]
 \centering
-\fbox{\begin{minipage}{0.55\textwidth}\centering\vspace{2.8cm}
-\textit{[CAPTURA: barra lateral con selector de escenario, metadatos del dataset activo y controles de idioma]}
-\vspace{2.8cm}\end{minipage}}
-\caption{Barra lateral de la aplicación: selector de escenario, metadatos del \textit{dataset} activo y controles de configuración.}
+\includegraphics[width=0.55\textwidth]{Imagenes/Captura_Sidebar}
+\caption{Barra lateral de la aplicación: selector de escenario, bloque y consulta activos, parámetros de ejecución y botón de lanzamiento.}
 \label{fig:app-sidebar}
 \end{figure}
 
@@ -316,19 +314,15 @@ Los resultados se muestran en tres formatos según la consulta: mapa interactivo
 
 \begin{figure}[ht]
 \centering
-\fbox{\begin{minipage}{\textwidth}\centering\vspace{3.2cm}
-\textit{[CAPTURA: resultado de Q5 (evolución de extensión inundada) mostrando el gráfico temporal con el área por hora]}
-\vspace{3.2cm}\end{minipage}}
+\includegraphics[width=\textwidth]{Imagenes/Captura_Q5}
 \caption{Resultado de Q5 (evolución de extensión inundada): gráfico temporal con el área inundada en km² a lo largo de los 20 pasos de simulación.}
 \label{fig:app-q5-temporal}
 \end{figure}
 
 \begin{figure}[ht]
 \centering
-\fbox{\begin{minipage}{\textwidth}\centering\vspace{3.2cm}
-\textit{[CAPTURA: mapa de Q17 (semáforo de peligrosidad Russo) o Q4 (zonas inundadas) con escala de colores visible]}
-\vspace{3.2cm}\end{minipage}}
-\caption{Resultado espacial de una consulta de peligrosidad: mapa interactivo con escala de colores por nivel de riesgo según el criterio Russo.}
+\includegraphics[width=\textwidth]{Imagenes/Captura_Q17}
+\caption{Resultado espacial de Q17 (semáforo de peligrosidad Russo): mapa interactivo con las cinco categorías de riesgo y sus áreas en km².}
 \label{fig:app-mapa-peligrosidad}
 \end{figure}
 
@@ -337,10 +331,16 @@ La barra lateral incluye un activador de modo comparativo que permite selecciona
 
 \begin{figure}[ht]
 \centering
-\fbox{\begin{minipage}{\textwidth}\centering\vspace{3.2cm}
-\textit{[CAPTURA: modo comparativo con dos datasets en paralelo — dos mapas o dos curvas superpuestas con el delta visible]}
-\vspace{3.2cm}\end{minipage}}
-\caption{Modo de comparación entre escenarios: la vista se divide en dos columnas con el resultado de la misma consulta sobre dos \textit{datasets} distintos y el delta entre sus métricas clave.}
+\begin{subfigure}{\textwidth}
+  \includegraphics[width=\textwidth]{Imagenes/Captura_comparacion_Semaforo}
+  \caption{Comparación de mapas de peligrosidad (Q17) entre \textit{datos11 · Abr 1990} y \textit{datos1 · Jul 1980}: dos columnas con la misma escala de colores y el delta de área en cada nivel.}
+\end{subfigure}
+\vspace{4pt}
+\begin{subfigure}{\textwidth}
+  \includegraphics[width=\textwidth]{Imagenes/Captura_comparacion_Q5}
+  \caption{Comparación temporal de Q5 (evolución de extensión inundada): ambas curvas superpuestas en un único gráfico con colores diferenciados.}
+\end{subfigure}
+\caption{Modo de comparación entre escenarios: mapas de peligrosidad en vista de dos columnas (arriba) y series temporales superpuestas (abajo).}
 \label{fig:app-comparacion}
 \end{figure}
 
