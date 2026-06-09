@@ -1,4 +1,4 @@
-\chapter{Benchmark de Almacenamiento}\label{benchmark-de-almacenamiento}
+\chapter{Benchmark de almacenamiento}\label{benchmark-de-almacenamiento}
 
 Este capítulo determina la configuración óptima de almacenamiento del array TileDB a partir de un \textit{benchmark} sistemático ejecutado sobre los datos reales del dominio de simulación. Se evalúan cinco grupos de parámetros de forma independiente —filtros de compresión, tamaño de \textit{tile}, tipo de dato, organización temporal y estructura de atributos (G1--G5)— y se adopta la configuración definitiva que se aplica a los 56 conjuntos de datos procesados. La sección~\ref{entorno-y-metodologia-experimental} describe el entorno de prueba y el protocolo de medición; la sección~\ref{resultado-final-configuracion-definitiva} resume las decisiones adoptadas y la configuración final.
 
@@ -106,7 +106,7 @@ La configuración final ocupa 1 714 MB menos (-8,9 \%) con tiempos de lectura eq
 
 Las herramientas de análisis y visualización construidas sobre el sistema se presentan en la sección~\ref{herramientas-desarrolladas}. La evaluación del rendimiento de las consultas analíticas, junto con la validación funcional del sistema, se recoge en el capítulo~\ref{validacion-del-sistema}.
 
-\chapter{Herramientas Desarrolladas}\label{herramientas-desarrolladas}
+\chapter{Herramientas desarrolladas}\label{herramientas-desarrolladas}
 
 Este capítulo describe el motor de consultas analíticas, la aplicación web y las herramientas de apoyo utilizadas durante el desarrollo. Los componentes entregados como producto final son el módulo de ingesta, el motor de consultas y la aplicación web. Las demás herramientas se desarrollaron como apoyo al proceso de investigación y están disponibles en el repositorio del proyecto.
 
@@ -343,6 +343,11 @@ La barra lateral incluye un activador de modo comparativo que permite selecciona
 \caption{Modo de comparación entre escenarios: la vista se divide en dos columnas con el resultado de la misma consulta sobre dos \textit{datasets} distintos y el delta entre sus métricas clave.}
 \label{fig:app-comparacion}
 \end{figure}
+
+\medskip\noindent\textbf{Ejemplo de uso del modo comparativo.}
+Supóngase que se quiere evaluar si el episodio de crecida de julio de 1980 (\textit{datos1}) genera una zona de peligrosidad más extensa que el de junio de 2008 (\textit{datos29}). Basta con seleccionar \textit{datos1} como escenario primario, activar el modo comparativo desde la barra lateral y elegir \textit{datos29} como escenario secundario. Al ejecutar Q17 (semáforo global de peligrosidad), la vista se divide en dos mapas con la misma escala de colores: el de \textit{datos1} a la izquierda y el de \textit{datos29} a la derecha. La columna derecha muestra además el delta del área clasificada en cada nivel de peligro, permitiendo cuantificar de inmediato cuántas hectáreas adicionales caen en la categoría Crítica o Extrema en uno u otro escenario.
+
+Para comparaciones temporales, la superposición en un único gráfico resulta más informativa. Si se ejecuta Q5 (evolución de extensión inundada) en modo comparativo, las dos curvas de área inundada por hora se superponen en un solo eje con colores diferenciados: es posible detectar a simple vista si el pico de inundación se adelanta, se retrasa o si la superficie máxima anegada difiere significativamente entre ambos episodios. Esta misma lógica se aplica a Q12 (volumen de agua) y Q13 (área por nivel de calado), lo que convierte el modo comparativo en la herramienta principal para estudiar la variabilidad entre episodios del catálogo de 56 escenarios.
 
 \medskip\noindent\textbf{Accesibilidad y despliegue.}
 La aplicación soporta interfaz bilingüe (español e inglés) seleccionable desde la barra lateral. Incorpora autenticación por usuario y contraseña para el despliegue en servidor remoto. La exportación de resultados a GeoTIFF está disponible en las consultas espaciales.

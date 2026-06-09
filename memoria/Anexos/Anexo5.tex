@@ -1,4 +1,4 @@
-\chapter{Guía de Despliegue y Estructura del Proyecto}\label{anexo-e.-guia-de-despliegue}
+\chapter{Guía de despliegue y estructura del proyecto}\label{anexo-e.-guia-de-despliegue}
 
 Este anexo describe la estructura de ficheros del proyecto, los requisitos del sistema y los pasos necesarios para reproducir el entorno de desarrollo o desplegar la aplicación web en un servidor.
 
@@ -23,6 +23,8 @@ spillway/
   consultas_analiticas.py      % motor de consultas: 24 funciones
   app.py                       % aplicación web Streamlit
   verify_tiledb.py             % verificación de integridad
+  run_etl_all.sh               % script de ingesta en lote (todos los datasets)
+  DEPLOY.txt                   % instrucciones de despliegue resumidas
 \end{verbatim}
 
 \section{Requisitos del sistema}\label{e.2-requisitos}
