@@ -91,6 +91,8 @@ Estos metadatos permiten al motor de consultas reconstruir el georeferenciado si
 
 \section{Ejecución e instrucciones de uso}\label{d.6-ejecucion}
 
+El proceso de ingesta se compone de tres fases: verificación de requisitos, ejecución del script y comprobación de la salida generada.
+
 \subsection{Requisitos previos}\label{d.6.1-requisitos}
 
 \begin{itemize}
@@ -98,6 +100,8 @@ Estos metadatos permiten al motor de consultas reconstruir el georeferenciado si
 \item La variable de entorno \texttt{TRITON\_BASE\_URI} debe apuntar al directorio donde se crearán los arrays TileDB. Si no se define, se utiliza el valor por defecto configurado en \texttt{config.py}.
 \item El entorno Python debe incluir las dependencias: \texttt{tiledb>=0.30}, \texttt{rasterio>=1.3}, \texttt{numpy>=1.24}.
 \end{itemize}
+
+Una vez verificados estos tres requisitos, el script puede ejecutarse con el siguiente comando.
 
 \subsection{Comando de ejecución}\label{d.6.2-comando}
 

@@ -1,6 +1,8 @@
 \chapter{Benchmark de Almacenamiento}\label{benchmark-de-almacenamiento}
 
-La Tabla~\ref{tab:metricas-tdb} resume las métricas globales del array TileDB sparse con la configuración inicial (ZSTD-1) sobre datos1, previa al \textit{benchmark} de configuraciones de compresión.
+Este capítulo determina la configuración óptima de almacenamiento del array TileDB a partir de un \textit{benchmark} sistemático ejecutado sobre los datos reales del dominio de simulación. Se evalúan cinco grupos de parámetros de forma independiente —filtros de compresión, tamaño de \textit{tile}, tipo de dato, organización temporal y estructura de atributos (G1--G5)— y se adopta la configuración definitiva que se aplica a los 56 conjuntos de datos procesados. La sección~\ref{entorno-y-metodologia-experimental} describe el entorno de prueba y el protocolo de medición; la sección~\ref{resultado-final-configuracion-definitiva} resume las decisiones adoptadas y la configuración final.
+
+Como referencia de partida, la Tabla~\ref{tab:metricas-tdb} recoge las métricas del array con la configuración inicial (ZSTD-1, sin filtro de transformación previo), previa al \textit{benchmark} de configuraciones de compresión.
 
 \begin{table}[ht]
 \centering
@@ -40,7 +42,7 @@ Todos los experimentos se realizaron en la misma máquina para garantizar la com
 
 Hardware: procesador AMD Ryzen 9 7900X (12 núcleos / 24 hilos, 4,7--5,6 GHz), 32 GB de RAM DDR5 a 5200 MT/s, almacenamiento SSD (\textit{Solid-State Drive}) NVMe PCIe Gen4 de 2 TB.
 
-Software: Windows 11 Pro con subsistema WSL2 (Ubuntu 24.04 LTS, kernel 6.6), Python 3.12.3, TileDB 0.36.1, NumPy 2.4.4, rasterio 1.5.0, Streamlit 1.36.
+Software: Windows 11 Pro con subsistema WSL2 (Windows Subsystem for Linux~2, Ubuntu 24.04 LTS, kernel 6.6), Python 3.12.3, TileDB 0.36.1, NumPy 2.4.4, rasterio 1.5.0, Streamlit 1.36.
 
 \subsection{Protocolo de medición}\label{protocolo-de-medicion}
 
@@ -57,6 +59,8 @@ Cada caso de prueba se ejecuta siguiendo el mismo protocolo:
 
 \item \textbf{Reproducibilidad.} Todos los scripts de \textit{benchmark} están versionados en el directorio \texttt{spillway/} del proyecto y son reejecutables con un único argumento (\texttt{--dataset}). Los tiempos absolutos dependen del hardware; los factores relativos entre TileDB y GeoTIFF son los resultados directamente comparables.
 \end{itemize}
+
+Este protocolo garantiza la comparabilidad de los resultados entre configuraciones y entre las dos tecnologías evaluadas (TileDB y GeoTIFF), y permite aislar el efecto de cada parámetro de almacenamiento de la variabilidad inherente al estado de la caché del sistema operativo.
 
 \section{Resultado final: configuración definitiva}\label{resultado-final-configuracion-definitiva}
 
@@ -264,7 +268,7 @@ Los resultados son consistentes en ambos escenarios, confirmando que las ventaja
 
 \section{Comparativa multi-escenario}\label{comparativa-multiescenario}
 
-Para verificar la coherencia del sistema con varios escenarios, se calcularon las métricas principales sobre los cuatro \textit{datasets} de referencia (datos1--datos4). La Tabla~\ref{tab:metricas-datasets} recoge las métricas principales. Los resultados confirman que datos1, datos2 y datos4 representan escenarios de inundación de magnitud similar (extensión máxima 7 433--7 718 km\textsuperscript{2}, $\sim$1 300 M celdas húmedas), mientras que datos3 corresponde a un escenario significativamente más seco (extensión máxima 2 838 km\textsuperscript{2}, 498 M celdas). El pico de inundación de datos3 ocurre en la hora 6 frente a las horas 90--96 del resto de datasets. Posteriormente se procesaron los 52 escenarios adicionales (datos5--datos56) con el mismo \textit{pipeline} ETL. El conjunto completo de 56 datasets comprende 40 episodios históricos (julio 1980 -- mayo 2019) y 16 de proyección climática futura (2020--2035) bajo el escenario de altas emisiones SSP5-8.5, lo que abre la puerta a analizar tendencias de peligrosidad entre el pasado reciente y la proyección futura, aunque dicho análisis comparativo queda fuera del alcance de este documento.
+Para verificar la coherencia del sistema con varios escenarios, se calcularon las métricas principales sobre los cuatro \textit{datasets} de referencia (datos1--datos4). La Tabla~\ref{tab:metricas-datasets} recoge las métricas principales. Los resultados confirman que datos1, datos2 y datos4 representan escenarios de inundación de magnitud similar (extensión máxima 7 433--7 718 km\textsuperscript{2}, $\sim$1 300 M celdas húmedas), mientras que datos3 corresponde a un escenario significativamente más seco (extensión máxima 2 838 km\textsuperscript{2}, 498 M celdas). El pico de inundación de datos3 ocurre en la hora 6 frente a las horas 90--96 del resto de \textit{datasets}. Posteriormente se procesaron los 52 escenarios adicionales (datos5--datos56) con el mismo \textit{pipeline} ETL. El conjunto completo de 56 \textit{datasets} comprende 40 episodios históricos (julio 1980 -- mayo 2019) y 16 de proyección climática futura (2020--2035) bajo el escenario de altas emisiones SSP5-8.5 (\textit{Shared Socioeconomic Pathway}~5), lo que abre la puerta a analizar tendencias de peligrosidad entre el pasado reciente y la proyección futura, aunque dicho análisis comparativo queda fuera del alcance de este documento.
 
 \begin{table}[ht]
 \centering
@@ -328,7 +332,7 @@ Los resultados se muestran en tres formatos según la consulta: mapa interactivo
 \label{fig:app-mapa-peligrosidad}
 \end{figure}
 
-\medskip\noindent\textbf{Modo de comparación entre datasets.}
+\medskip\noindent\textbf{Modo de comparación entre \textit{datasets}.}
 La barra lateral incluye un activador de modo comparativo que permite seleccionar un segundo \textit{dataset} sobre el que ejecutar la misma consulta en paralelo. Al activarlo, la vista principal se divide en dos columnas: el mapa o gráfico del \textit{dataset} primario a la izquierda y el del secundario a la derecha, ambos generados con los mismos parámetros (hora, umbral, zona geográfica). Sobre cada columna se muestra la métrica clave de ese escenario (por ejemplo, área inundada o calado máximo), y la columna derecha añade el delta respecto al valor del \textit{dataset} primario, facilitando la comparación cuantitativa directa. El modo comparativo es compatible con todas las consultas del catálogo, incluyendo los mapas de peligrosidad (Russo, Xia), la zona de graves daños (RD 9/2008) y los indicadores de evacuación. Cuando el resultado es una serie temporal (Q2, Q5, Q12, Q13), ambas curvas se superponen en un único gráfico de líneas con colores diferenciados en lugar de dividir la vista en columnas.
 
 \begin{figure}[ht]

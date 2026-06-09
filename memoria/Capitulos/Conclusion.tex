@@ -8,7 +8,7 @@ Este capítulo recoge las conclusiones derivadas del desarrollo y las líneas de
 
 El sistema demuestra que TileDB sparse es una solución viable para el almacenamiento y análisis de simulaciones hidráulicas de alta resolución. La aportación principal es la reducción del volumen de datos de 235 GB por simulación (GeoTIFF, 20 pasos $\times$ 4 variables) a 17,5 GB en TileDB sparse con filtro ByteShuffle+ZSTD-9: una reducción del 92,7 \% y un ratio de 13,7$\times$. Esta compresión proviene mayoritariamente del modelo sparse (solo el $\sim$8,3 \% del dominio está inundado) y, en menor medida, del filtro (-8,9 \% adicional respecto a ZSTD-1).
 
-El motor de consultas analíticas implementa 24 funciones en ocho bloques que cubren desde consultas básicas hasta indicadores de inestabilidad hidrodinámica según los criterios de Russo et al.\ (2013) y Xia et al.\ (2014/2022), además de la zona de graves daños normativa (Real Decreto 9/2008). Las consultas acumuladas por píxel emplean un grid acumulador de tamaño fijo ($\sim$750 MB) que hace viable el análisis sobre más de 1 300 millones de celdas húmedas sin saturar memoria. La arquitectura multi-dataset permite incorporar nuevas simulaciones sin modificar el código: los 56 datasets procesados (40 episodios históricos de 1980--2019 y 16 de proyección climática futura bajo el escenario SSP5-8.5 hasta 2035) reutilizan el mismo \textit{pipeline} ETL y los mismos scripts analíticos.
+El motor de consultas analíticas implementa 24 funciones en ocho bloques que cubren desde consultas básicas hasta indicadores de inestabilidad hidrodinámica según los criterios de Russo et al.\ (2013) y Xia et al.\ (2014/2022), además de la zona de graves daños normativa (Real Decreto 9/2008). Las consultas acumuladas por píxel emplean un grid acumulador de tamaño fijo ($\sim$750 MB) que hace viable el análisis sobre más de 1 300 millones de celdas húmedas sin saturar memoria. La arquitectura multi-dataset permite incorporar nuevas simulaciones sin modificar el código: los 56 \textit{datasets} procesados (40 episodios históricos de 1980--2019 y 16 de proyección climática futura bajo el escenario SSP5-8.5 hasta 2035) reutilizan el mismo \textit{pipeline} ETL y los mismos scripts analíticos.
 
 \subsection{Conclusiones experimentales}\label{conclusiones-experimentales}
 
@@ -30,7 +30,11 @@ Durante el desarrollo y la evaluación se identificaron las siguientes limitacio
 \item \textbf{Dominio específico.} Los parámetros geoespaciales del motor de consultas (EPSG:32614, xllcorner, yllcorner, cellsize) están ajustados al dominio de simulación utilizado. Extender el sistema a otros dominios requiere actualizar estos parámetros.
 \end{itemize}
 
+Estas limitaciones son propias del entorno de evaluación y del dominio concreto analizado, y no comprometen la validez del enfoque general propuesto.
+
 \section{Trabajo Futuro}\label{trabajo-futuro}
+
+Las siguientes líneas de extensión ampliarían el alcance del sistema sin modificar la arquitectura central:
 
 \begin{itemize}
 \item \textbf{Automatización del \textit{pipeline}.} Detección automática de nuevos ficheros GeoTIFF y actualización incremental de TileDB sin intervención manual.
@@ -47,6 +51,8 @@ Durante el desarrollo y la evaluación se identificaron las siguientes limitacio
 
 \item \textbf{Exportación de informes.} Generar automáticamente un informe PDF por escenario con las métricas principales (extensión máxima, hora del pico, área de graves daños, tiempo mínimo de evacuación) y los mapas de las consultas más relevantes, como complemento a la exportación individual a GeoTIFF ya disponible.
 \end{itemize}
+
+Estas extensiones comparten la base técnica ya implementada y podrían desarrollarse de forma incremental, sin modificar la arquitectura central del sistema.
 
 \section{Disponibilidad del código y reproducibilidad}\label{reproducibilidad}
 

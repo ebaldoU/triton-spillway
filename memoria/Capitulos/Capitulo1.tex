@@ -210,7 +210,7 @@ NetCDF-4 & Sí & Capa sobre HDF5 & No & No & Descartada \\
 El desarrollo se realizó íntegramente en Python. La elección responde a tres razones prácticas: es el lenguaje para el que TileDB ofrece una API oficial completa y mantenida; concentra el ecosistema de referencia para análisis geoespacial y numérico (rasterio, NumPy, GDAL); y permite construir la aplicación web con el mismo código que el motor analítico, sin necesidad de una capa intermedia en otro lenguaje. Las bibliotecas empleadas son:
 
 \begin{itemize}
-\item \textbf{Rasterio} \cite{rasterio}: Lectura de ficheros GeoTIFF con soporte para lectura por ventanas (windowed read), permitiendo procesar rásteres de varios GB por franjas sin cargar el fichero completo en memoria.
+\item \textbf{rasterio} \cite{rasterio}: Lectura de ficheros GeoTIFF con soporte para lectura por ventanas (windowed read), permitiendo procesar rásteres de varios GB por franjas sin cargar el fichero completo en memoria.
 \item \textbf{NumPy} \cite{numpy}: Operaciones vectorizadas sobre los arrays de datos (máscaras, estadísticas, conversión de tipos).
 \item \textbf{TileDB Python:} API para crear, escribir y consultar arrays TileDB sparse desde Python.
 \item \textbf{Matplotlib:} Visualización de rásteres, escala logarítmica (LogNorm), flechas de flujo (quiver) y panel de cursor interactivo. Se utiliza en el visualizador de escritorio (visualize\_tiledb.py).
