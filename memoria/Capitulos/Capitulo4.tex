@@ -34,10 +34,12 @@ Además de la integridad del almacenamiento, es necesario verificar que las func
   \item \textbf{Errores de implementación.} Fórmulas incorrectas, umbrales mal aplicados o conversiones de índices erróneas en el código del motor. Son los errores más graves y producirían discrepancias no nulas respecto a cualquier referencia independiente.
   \item \textbf{Errores de representación en punto flotante.} Los datos se almacenan en float32 ($\sim$7 dígitos significativos). Al acumular sumas o multiplicaciones en un orden diferente al del oráculo pueden aparecer diferencias del orden de $10^{-5}$ que no constituyen un error de diseño sino una consecuencia esperada de la aritmética finita.
   \item \textbf{Pérdida por compresión.} TileDB almacena los datos con ZSTD, un algoritmo de compresión \emph{sin pérdida}. Los valores recuperados son bit a bit idénticos a los escritos durante el ETL, por lo que esta fuente de error queda descartada.
-  \item \textbf{Errores del ETL.} El proceso de conversión GeoTIFF$\to$TileDB podría introducir errores al mapear coordenadas, filtrar celdas o convertir tipos. Estos quedan cubiertos por la validación de la Sección~\ref{validacion-etl}.
+  \item \textbf{Errores del ETL.} El proceso de conversión GeoTIFF$\to$TileDB podría introducir errores al mapear coordenadas, filtrar celdas o convertir tipos. Estos quedan cubiertos por la validación de la sección~\ref{validacion-etl}.
 \end{itemize}
 
-Para detectar los errores de implementación se emplea una estrategia de oráculo: el resultado del motor analítico se compara contra un cálculo de referencia realizado directamente sobre los GeoTIFF originales con \texttt{rasterio} y NumPy, sin pasar por TileDB. Este enfoque permite aislar errores del motor analítico de posibles errores del ETL: si el ETL es correcto pero el motor no, el oráculo detectará la discrepancia; si ambos fallan de la misma forma, la validación de integridad de la Sección~\ref{validacion-etl} los habría detectado previamente.
+Para detectar los errores de implementación se emplea una estrategia de oráculo: el resultado del motor analítico se compara contra un cálculo de referencia realizado directamente sobre los GeoTIFF originales con \texttt{rasterio} y NumPy, sin pasar por TileDB. Este enfoque permite aislar errores del motor analítico de posibles errores del ETL: si el ETL es correcto pero el motor no, el oráculo detectará la discrepancia; si ambos fallan de la misma forma, la validación de integridad de la sección~\ref{validacion-etl} los habría detectado previamente.
+
+Se seleccionaron cinco funciones que cubren los tres patrones de acceso del motor y representan el mayor riesgo de error de implementación: Q1 (conversión de coordenadas UTM a índices de celda), Q3 (combinación de tres variables independientes para derivar velocidad), Q4 (filtrado por umbral sobre el dominio completo), Q7 (búsqueda del primer paso temporal positivo por celda) y Q13 (acumulación iterada sobre los 20 pasos). Las consultas de peligrosidad (Q10, Q17, Q18) son combinaciones de H y velocidad ya validadas implícitamente a través de Q1, Q3 y Q4, por lo que quedan cubiertas de forma indirecta.
 
 \subsection{Consultas puntuales y espaciales}\label{validacion-puntuales}
 
@@ -104,6 +106,8 @@ Las consultas se clasifican en tres categorías según su patrón de acceso al a
 \item \textbf{Acumuladas por píxel.} Recorren los 20 fragmentos actualizando un \textit{grid} fijo $n_r \times n_c$. Las más costosas por combinar E/S intensiva con escrituras dispersas en RAM.
 \end{itemize}
 
+Se midió un representante de cada categoría y nivel de complejidad: Q1 (instantánea puntual, coste mínimo), Q4, Q10a, Q14 y Q15 (instantáneas sobre dominio completo o subdominio con distintos tipos de operación), Q5 y Q12 (multi-paso con resultado escalar por paso) y Q7, Q8, Q9 y Q11 (acumuladas por píxel, que representan el coste máximo del sistema). Las demás consultas del catálogo comparten patrón de acceso con alguno de estos casos: Q2, Q3 y Q6 son análogas a Q1/Q4; Q13 es equivalente en coste a Q5; y Q10b, Q10c, Q16, Q17 y Q18 siguen el mismo patrón que Q10a o Q7.
+
 \begin{figure}[ht]
 \centering
 \begin{tikzpicture}[x=0.62cm, y=0.62cm, font=\small\sffamily]
@@ -154,7 +158,7 @@ Las consultas se clasifican en tres categorías según su patrón de acceso al a
 \label{fig:patrones-acceso}
 \end{figure}
 
-El rendimiento del motor de consultas se midió sobre \texttt{datos29}, el \textit{dataset} más voluminoso disponible (21 GB, 1\,500 M celdas húmedas), en condiciones de caché fría sobre la máquina descrita en la Sección~\ref{hardware-y-software}. Los tiempos se miden extremo a extremo: desde la llamada a la función hasta la obtención del resultado en Python, incluyendo lectura de TileDB, filtrado y cálculo.
+El rendimiento del motor de consultas se midió sobre \texttt{datos29}, el \textit{dataset} más voluminoso disponible (21 GB, 1\,500 M celdas húmedas), en condiciones de caché fría sobre la máquina descrita en la sección~\ref{hardware-y-software}. Los tiempos se miden extremo a extremo: desde la llamada a la función hasta la obtención del resultado en Python, incluyendo lectura de TileDB, filtrado y cálculo.
 
 \begin{table}[ht]
 \centering
@@ -182,9 +186,9 @@ Q11 & Ventana para vehículos emergencia & 84{,}1     & 25{,}9 & 750 \\
 \label{tab:rendimiento-consultas}
 \end{table}
 
-\textbf{Interpretación por categoría.} Las consultas instantáneas responden en menos de 4 s incluso sobre el dominio completo, siendo aptas para uso interactivo. Las multi-paso tardan en torno a 30 s, limitadas por las 20 lecturas sucesivas a TileDB ($\sim$1,5 s/paso). Las acumuladas por píxel oscilan entre 79,5 s (Q7) y 121,4 s (Q8) sobre el dominio completo: combinan la E/S de 20 fragmentos con escrituras dispersas sobre un grid de tamaño fijo en RAM, lo que genera mayor presión de caché. La restricción a un subdominio reduce los tiempos en un factor de 2--3$\times$.
+\textbf{Interpretación por categoría.} Las consultas instantáneas responden en menos de 4 s incluso sobre el dominio completo, siendo aptas para uso interactivo. Las multi-paso tardan en torno a 30 s, limitadas por las 20 lecturas sucesivas a TileDB ($\sim$1,5 s/paso). Las acumuladas por píxel oscilan entre 79,5 s (Q7) y 121,4 s (Q8) sobre el dominio completo: combinan la E/S de 20 fragmentos con escrituras dispersas sobre un \textit{grid} de tamaño fijo en RAM, lo que genera mayor presión de caché. La restricción a un subdominio reduce los tiempos en un factor de 2--3$\times$.
 
-\textbf{Consumo de memoria.} El grid acumulador de tipo \texttt{uint8}/\texttt{float32} de dimensiones fijas $n_r \times n_c$ limita el consumo a $\sim$750 MB para las consultas multi-paso, independientemente del volumen de celdas húmedas. Este valor es constante y no crece con el número de escenarios ni con la densidad de inundación.
+\textbf{Consumo de memoria.} El \textit{grid} acumulador de tipo \texttt{uint8}/\texttt{float32} de dimensiones fijas $n_r \times n_c$ limita el consumo a $\sim$750 MB para las consultas multi-paso, independientemente del volumen de celdas húmedas. Este valor es constante y no crece con el número de escenarios ni con la densidad de inundación.
 
 \textbf{Throughput.} Las lecturas de un instante completo (Q3, $\sim$1,95 s, 24 GB descomprimidos) dan un \textit{throughput} de $\sim$890 MB/s sobre SSD NVMe. Las consultas acotadas espacialmente alcanzan hasta 960 MB/s, beneficiándose del índice sparse de TileDB que evita descomprimir tiles fuera del \textit{bounding box}.
 

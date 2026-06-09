@@ -46,7 +46,7 @@ El cuerpo principal del ETL itera sobre los 20 pasos temporales en orden cronol�
 
 \item \textbf{Filtrado de celdas húmedas.} Sobre la franja leída se aplica la máscara \texttt{H >= 0,01 m}. Las coordenadas locales de las celdas que pasan el filtro se convierten a coordenadas globales (sumando el desplazamiento de fila \texttt{row\_off}) y se acumulan en listas junto con los valores de los cuatro atributos.
 
-\item \textbf{Escritura en TileDB.} Una vez procesadas todas las franjas del paso temporal, se realiza \textbf{una única escritura} con el total de celdas húmedas del paso. Esto crea exactamente un fragmento en el array TileDB, lo que preserva la separación temporal que hace eficiente el filtrado por tiempo (véase la Sección~\ref{fragmentos-y-consolidacion}).
+\item \textbf{Escritura en TileDB.} Una vez procesadas todas las franjas del paso temporal, se realiza \textbf{una única escritura} con el total de celdas húmedas del paso. Esto crea exactamente un fragmento en el array TileDB, lo que preserva la separación temporal que hace eficiente el filtrado por tiempo (véase la sección~\ref{fragmentos-y-consolidacion}).
 
 \item \textbf{Progreso.} El script imprime por pantalla el número de celdas húmedas almacenadas y el tiempo empleado en cada paso.
 \end{enumerate}
@@ -87,7 +87,7 @@ Tras completar la escritura de los 20 fragmentos, el script almacena en el propi
 \label{tab:etl-metadata}
 \end{table}
 
-Estos metadatos permiten al motor de consultas reconstruir el georeferenciado sin necesidad de conservar los GeoTIFF originales, lo que hace posible desplegar el sistema en un servidor donde solo se transfieren los arrays TileDB (17--21 GB por escenario) y no los datos brutos (~235 GB). La clave \texttt{zero\_rule} garantiza la interoperabilidad: cualquier celda ausente en el array equivale a valor cero, convención necesaria para que la exportación a GeoTIFF produzca rásters completos con nodata correctamente asignado.
+Estos metadatos permiten al motor de consultas reconstruir el georeferenciado sin necesidad de conservar los GeoTIFF originales, lo que hace posible desplegar el sistema en un servidor donde solo se transfieren los arrays TileDB (17--21 GB por escenario) y no los datos brutos (~235 GB). La clave \texttt{zero\_rule} garantiza la interoperabilidad: cualquier celda ausente en el array equivale a valor cero, convención necesaria para que la exportación a GeoTIFF produzca rásters completos con \textit{nodata} correctamente asignado.
 
 \section{Ejecución e instrucciones de uso}\label{d.6-ejecucion}
 
@@ -151,4 +151,4 @@ print(f"Fragmentos: {len(fi)}")  # debe ser 20
 EOF
 \end{verbatim}
 
-Un número de fragmentos distinto de 20 (en particular, 1) indica que se aplicó consolidación no deseada, lo que degrada el rendimiento de las consultas multi-paso (véase la Sección~\ref{fragmentos-y-consolidacion}).
+Un número de fragmentos distinto de 20 (en particular, 1) indica que se aplicó consolidación no deseada, lo que degrada el rendimiento de las consultas multi-paso (véase la sección~\ref{fragmentos-y-consolidacion}).

@@ -337,7 +337,7 @@ Se ha creado un script en Python para cargar todos los datos GeoTIFF a TileDB. L
 
 \begin{enumerate}
 \item Abre los 4 ficheros GeoTIFF (H, QX, QY, MH) correspondientes con rasterio.
-\item Lee el ráster en franjas de 5 000 filas (CHUNK\_ROWS) usando lectura por ventana (windowed read) para evitar cargar 3 GB/variable en RAM.
+\item Lee el ráster en franjas de 5 000 filas (CHUNK\_ROWS) usando lectura por ventana (\textit{windowed read}) para evitar cargar 3 GB/variable en RAM.
 \item Aplica la máscara de celdas mojadas: H $\geq$ 0,01 m.
 \item Acumula las coordenadas y valores de las celdas mojadas en listas.
 \item Realiza una única escritura en TileDB por paso temporal $\rightarrow$ 1 fragmento por paso.
