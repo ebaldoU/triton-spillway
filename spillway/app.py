@@ -2446,62 +2446,62 @@ def q15_temporal(meta, bbox, progress=None):
 # CACHÉ de queries pesadas (bbox debe ser tuple|None, no list, para ser hashable)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-@st.cache_data(show_spinner=False, ttl=7200, persist="disk")
+@st.cache_data(show_spinner=False, ttl=None, max_entries=24, persist="disk")
 def _c_q5(dataset: str, bbox):
     m = get_meta(dataset); setup_ca(m)
     return ca.evolucion_extension(bbox=bbox)
 
-@st.cache_data(show_spinner=False, ttl=7200, persist="disk")
+@st.cache_data(show_spinner=False, ttl=None, max_entries=24, persist="disk")
 def _c_q12(dataset: str, bbox):
     m = get_meta(dataset); setup_ca(m)
     return ca.area_inundada_por_hora(bbox=bbox)
 
-@st.cache_data(show_spinner=False, ttl=7200, persist="disk")
+@st.cache_data(show_spinner=False, ttl=None, max_entries=24, persist="disk")
 def _c_q13(dataset: str, bbox):
     m = get_meta(dataset); setup_ca(m)
     return ca.volumen_por_hora(bbox=bbox)
 
-@st.cache_data(show_spinner=False, ttl=7200, persist="disk")
+@st.cache_data(show_spinner=False, ttl=None, max_entries=24, persist="disk")
 def _c_q7(dataset: str, bbox):
     return q7_hora_llegada(get_meta(dataset), bbox)
 
-@st.cache_data(show_spinner=False, ttl=7200, persist="disk")
+@st.cache_data(show_spinner=False, ttl=None, max_entries=24, persist="disk")
 def _c_q8(dataset: str, umbral: float, bbox):
     return q8_duracion(get_meta(dataset), umbral, bbox)
 
-@st.cache_data(show_spinner=False, ttl=7200, persist="disk")
+@st.cache_data(show_spinner=False, ttl=None, max_entries=24, persist="disk")
 def _c_q9(dataset: str, bbox):
     return q9_hora_max(get_meta(dataset), bbox)
 
-@st.cache_data(show_spinner=False, ttl=7200, persist="disk")
+@st.cache_data(show_spinner=False, ttl=None, max_entries=24, persist="disk")
 def _c_q11(dataset: str, bbox):
     return q11_ventana_emergencia(get_meta(dataset), bbox)
 
-@st.cache_data(show_spinner=False, ttl=7200, persist="disk")
+@st.cache_data(show_spinner=False, ttl=None, max_entries=24, persist="disk")
 def _c_q16(dataset: str, uh: float, uq: float, bbox):
     return q16_evacuacion(get_meta(dataset), uh, uq, bbox)
 
-@st.cache_data(show_spinner=False, ttl=7200, persist="disk")
+@st.cache_data(show_spinner=False, ttl=None, max_entries=24, persist="disk")
 def _c_q10i(dataset: str, hora: int, tipo: str, bbox):
     return q10_intensity_grid(get_meta(dataset), hora, tipo, bbox)
 
-@st.cache_data(show_spinner=False, ttl=7200)
+@st.cache_data(show_spinner=False, ttl=None, max_entries=24)
 def _c_q3t(dataset: str, bbox):
     return q3_temporal(get_meta(dataset), bbox)
 
-@st.cache_data(show_spinner=False, ttl=7200)
+@st.cache_data(show_spinner=False, ttl=None, max_entries=24)
 def _c_q10t(dataset: str, tipo: str, bbox):
     return q10_peligrosidad_temporal(get_meta(dataset), tipo, bbox)
 
-@st.cache_data(show_spinner=False, ttl=7200)
+@st.cache_data(show_spinner=False, ttl=None, max_entries=24)
 def _c_q3(dataset: str, hora: int, bbox):
     return q3_velocidad(get_meta(dataset), hora, bbox)
 
-@st.cache_data(show_spinner=False, ttl=7200)
+@st.cache_data(show_spinner=False, ttl=None, max_entries=24)
 def _c_q10p(dataset: str, hora: int, tipo: str, bbox):
     return q10_peligrosidad(get_meta(dataset), hora, tipo, bbox)
 
-@st.cache_data(show_spinner=False, ttl=7200)
+@st.cache_data(show_spinner=False, ttl=None, max_entries=24)
 def _c_q11b(dataset: str, hora: int, bbox):
     return q11b_transitabilidad(get_meta(dataset), hora, bbox)
 
@@ -2510,7 +2510,7 @@ def _c_q11b(dataset: str, hora: int, bbox):
 # EXPORTAR A GEOTIFF
 # ═══════════════════════════════════════════════════════════════════════════════
 
-@st.cache_data(show_spinner=False, ttl=7200)
+@st.cache_data(show_spinner=False, ttl=None, max_entries=24)
 def grid_to_geotiff_bytes(grid: np.ndarray, x_ax: np.ndarray, y_ax: np.ndarray) -> bytes:
     import io, rasterio
     from rasterio.transform import from_bounds
@@ -2589,7 +2589,7 @@ def download_geotiff_button(grid, x_ax, y_ax, qid, dataset, hora=None, ds_label=
 # RESUMEN DEL DATASET (cacheado, sin ejecutar queries completas)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-@st.cache_data(show_spinner=False, ttl=7200)
+@st.cache_data(show_spinner=False, ttl=None, max_entries=24)
 def dataset_summary(dataset: str) -> dict:
     """Lectura rápida del paso 10 (hora 60) como referencia."""
     meta = get_meta(dataset)
