@@ -117,8 +117,13 @@ def bbox_a_indices(x_min, y_min, x_max, y_max) -> tuple[int, int, int, int]:
 
 
 def _query_paso(A, t: int, r_min=0, r_max=NROWS-1, c_min=0, c_max=NCOLS-1,
-                attrs=("H",)) -> dict:
-    return A.query(attrs=list(attrs))[t, r_min:r_max+1, c_min:c_max+1]
+                attrs=("H",), cond=None) -> dict:
+    return A.query(attrs=list(attrs), cond=cond)[t, r_min:r_max+1, c_min:c_max+1]
+
+
+def _cond_umbral(umbral_m: float):
+    """Filtro pushdown TileDB: solo si el umbral supera el del ETL (H_WET)."""
+    return f"H >= {umbral_m}" if umbral_m > H_WET else None
 
 
 def _bbox_args(bbox):
@@ -193,7 +198,8 @@ def zonas_inundadas(hora: int, umbral_m: float = H_WET, bbox=None) -> dict:
     t = hora_a_t(hora)
     r_min, r_max, c_min, c_max = _bbox_args(bbox)
     with tiledb.open(TILEDB_URI, mode="r") as A:
-        res = _query_paso(A, t, r_min, r_max, c_min, c_max, attrs=("H",))
+        res = _query_paso(A, t, r_min, r_max, c_min, c_max, attrs=("H",),
+                          cond=_cond_umbral(umbral_m))
     mask = res["H"] >= umbral_m
     n = int(mask.sum())
     return {
@@ -256,9 +262,10 @@ def duracion_inundacion(umbral_m: float = H_WET, bbox=None) -> dict:
     r_min, r_max, c_min, c_max = _bbox_args(bbox)
     nr, nc = r_max - r_min + 1, c_max - c_min + 1
     duration = np.zeros((nr, nc), dtype=np.uint8)
+    cond = _cond_umbral(umbral_m)
     with tiledb.open(TILEDB_URI, mode="r") as A:
         for t in range(N_STEPS):
-            res  = A.query(attrs=["H"])[t, r_min:r_max+1, c_min:c_max+1]
+            res  = A.query(attrs=["H"], cond=cond)[t, r_min:r_max+1, c_min:c_max+1]
             mask = res["H"] >= umbral_m
             if not mask.any():
                 continue

@@ -1960,17 +1960,17 @@ def _step_coords(rows, cols, r_min, c_min, scale, gr, gc):
     return r_s, c_s
 
 
-def run_single_step(meta, attrs, hora_idx, bbox=None):
+def run_single_step(meta, attrs, hora_idx, bbox=None, cond=None):
     """Carga 1 paso temporal y devuelve (res, window info)."""
     r_min, r_max, c_min, c_max, scale, gr, gc, x_ax, y_ax = _grid_for(meta, bbox)
     with tiledb.open(meta["uri"], mode="r") as A:
-        res = A.query(attrs=attrs)[hora_idx, r_min:r_max+1, c_min:c_max+1]
+        res = A.query(attrs=attrs, cond=cond)[hora_idx, r_min:r_max+1, c_min:c_max+1]
     return res, (r_min, c_min, scale, gr, gc, x_ax, y_ax)
 
 
-def stream_heatmap_single(meta, hora_idx, attrs, build_fn, bbox, progress=None):
+def stream_heatmap_single(meta, hora_idx, attrs, build_fn, bbox, progress=None, cond=None):
     """Consulta de 1 paso con filtro; devuelve grid downsampleado."""
-    res, (r_min, c_min, scale, gr, gc, x_ax, y_ax) = run_single_step(meta, attrs, hora_idx, bbox)
+    res, (r_min, c_min, scale, gr, gc, x_ax, y_ax) = run_single_step(meta, attrs, hora_idx, bbox, cond)
     n_orig = len(res["H"]) if "H" in res else len(next(iter(res.values())))
     if n_orig == 0:
         grid = np.full((gr, gc), np.nan, dtype=np.float32)
@@ -2000,7 +2000,7 @@ def stream_scalar_multi(meta, attrs, compute_fn, bbox, progress=None, label="Pro
     return results
 
 
-def stream_spatial_multi(meta, attrs, step_processor, bbox, progress=None, label="Procesando"):
+def stream_spatial_multi(meta, attrs, step_processor, bbox, progress=None, label="Procesando", cond=None):
     """
     Recorre los N pasos y llama step_processor(res, r_s, c_s, t_idx, grids) por cada paso.
     `grids` es un dict compartido que se va actualizando. Memoria constante.
@@ -2013,7 +2013,7 @@ def stream_spatial_multi(meta, attrs, step_processor, bbox, progress=None, label
         for t_idx in range(n_steps):
             if progress:
                 progress.progress((t_idx + 1) / n_steps, text=f"{label} {t_idx+1}/{n_steps}")
-            res  = A.query(attrs=attrs)[t_idx, r_min:r_max+1, c_min:c_max+1]
+            res  = A.query(attrs=attrs, cond=cond)[t_idx, r_min:r_max+1, c_min:c_max+1]
             if len(res[attrs[0]]) == 0:
                 del res
                 continue
@@ -2062,7 +2062,8 @@ def q_umbral_h(meta, hora, umbral, bbox, cmap=None):
             "area_km2": n * _cell_km2(meta),
         }
     hora_idx = ca.hora_a_t(hora)
-    return stream_heatmap_single(meta, hora_idx, ["H"], _build, bbox)
+    cond = f"H >= {umbral}" if umbral > H_WET else None
+    return stream_heatmap_single(meta, hora_idx, ["H"], _build, bbox, cond=cond)
 
 
 # ── Q7: hora de llegada del frente ───────────────────────────────────────────
@@ -2093,7 +2094,8 @@ def q8_duracion(meta, umbral, bbox, progress=None):
         mask = res["H"] >= umbral
         if mask.any():
             np.add.at(g, (r_s[mask], c_s[mask]), 1)
-    grids, x_ax, y_ax = stream_spatial_multi(meta, ["H"], _proc, bbox, progress, "Q8")
+    cond = f"H >= {umbral}" if umbral > H_WET else None
+    grids, x_ax, y_ax = stream_spatial_multi(meta, ["H"], _proc, bbox, progress, "Q8", cond=cond)
     g = grids.get("cnt", np.zeros((grids["gr"], grids["gc"]), np.int16))
     dur = np.where(g > 0, g.astype(np.float32) * STEP_H, np.nan)
     valid = g > 0
@@ -2295,7 +2297,8 @@ def q11b_transitabilidad(meta, hora, bbox):
             "area_km2": n * _cell_km2(meta),
         }
     hora_idx = ca.hora_a_t(hora)
-    return stream_heatmap_single(meta, hora_idx, ["H"], _build, bbox)
+    return stream_heatmap_single(meta, hora_idx, ["H"], _build, bbox,
+                                 cond=f"H < {H_EMERGENCIA}")
 
 
 # ── Q15: área por nivel de peligro (1 paso, conteo) ──────────────────────────
