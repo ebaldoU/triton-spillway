@@ -13,6 +13,7 @@ Uso:
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
 import os
 import sys
@@ -713,7 +714,8 @@ def _login_screen() -> bool:
             pwd  = st.text_input("Contraseña / Password", type="password")
             ok   = st.form_submit_button("Acceder", width="stretch")
         if ok:
-            if user == _APP_USER and hashlib.sha256(pwd.encode()).hexdigest() == _APP_PASS_HASH:
+            pwd_hash = hashlib.sha256(pwd.encode()).hexdigest()
+            if user == _APP_USER and hmac.compare_digest(pwd_hash, _APP_PASS_HASH):
                 st.session_state["authenticated"] = True
                 st.rerun()
             else:
@@ -3823,4 +3825,5 @@ try:
 except Exception as e:
     progress.empty()
     st.error(f"{_t('error_query')}: {e}")
-    st.exception(e)
+    if os.environ.get("SPILLWAY_DEBUG"):
+        st.exception(e)

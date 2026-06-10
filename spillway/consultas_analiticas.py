@@ -82,6 +82,8 @@ GD_HV = 0.5    # umbral de producto H·V = Q_mod (m²/s)
 
 def hora_a_t(hora: int) -> int:
     """Hora de simulación (6-120) → índice de paso (0-19)."""
+    if hora % STEP_H != 0:
+        raise ValueError(f"Hora {hora} no es múltiplo de {STEP_H} h.")
     t = hora // STEP_H - 1
     if not (0 <= t < N_STEPS):
         raise ValueError(f"Hora {hora} fuera de rango [6, 120] en múltiplos de 6.")
@@ -116,7 +118,7 @@ def bbox_a_indices(x_min, y_min, x_max, y_max) -> tuple[int, int, int, int]:
 
 def _query_paso(A, t: int, r_min=0, r_max=NROWS-1, c_min=0, c_max=NCOLS-1,
                 attrs=("H",)) -> dict:
-    return A.query(attrs=list(attrs))[t, r_min:r_max, c_min:c_max]
+    return A.query(attrs=list(attrs))[t, r_min:r_max+1, c_min:c_max+1]
 
 
 def _bbox_args(bbox):
@@ -208,7 +210,7 @@ def evolucion_extension(umbral_m: float = H_WET, bbox=None) -> dict:
     horas, n_celdas, areas_km2 = [], [], []
     with tiledb.open(TILEDB_URI, mode="r") as A:
         for t in range(N_STEPS):
-            res = A.query(attrs=["H"])[t, r_min:r_max, c_min:c_max]
+            res = A.query(attrs=["H"])[t, r_min:r_max+1, c_min:c_max+1]
             n = int((res["H"] >= umbral_m).sum())
             horas.append(t_a_hora(t))
             n_celdas.append(n)
@@ -230,7 +232,7 @@ def hora_llegada_frente(bbox=None) -> dict:
     arrival = np.full((nr, nc), N_STEPS, dtype=np.uint8)
     with tiledb.open(TILEDB_URI, mode="r") as A:
         for t in range(N_STEPS):
-            res  = A.query(attrs=["H"])[t, r_min:r_max, c_min:c_max]
+            res  = A.query(attrs=["H"])[t, r_min:r_max+1, c_min:c_max+1]
             mask = res["H"] >= H_WET
             if not mask.any():
                 continue
@@ -256,7 +258,7 @@ def duracion_inundacion(umbral_m: float = H_WET, bbox=None) -> dict:
     duration = np.zeros((nr, nc), dtype=np.uint8)
     with tiledb.open(TILEDB_URI, mode="r") as A:
         for t in range(N_STEPS):
-            res  = A.query(attrs=["H"])[t, r_min:r_max, c_min:c_max]
+            res  = A.query(attrs=["H"])[t, r_min:r_max+1, c_min:c_max+1]
             mask = res["H"] >= umbral_m
             if not mask.any():
                 continue
@@ -283,7 +285,7 @@ def hora_calado_maximo(bbox=None) -> dict:
     t_peak = np.zeros((nr, nc), dtype=np.uint8)
     with tiledb.open(TILEDB_URI, mode="r") as A:
         for t in range(N_STEPS):
-            res = A.query(attrs=["H"])[t, r_min:r_max, c_min:c_max]
+            res = A.query(attrs=["H"])[t, r_min:r_max+1, c_min:c_max+1]
             h   = res["H"]
             if not len(h):
                 continue
@@ -317,7 +319,7 @@ def ventana_vehiculos_emergencia(bbox=None) -> dict:
     seen  = np.zeros((nr, nc), dtype=bool)
     with tiledb.open(TILEDB_URI, mode="r") as A:
         for t in range(N_STEPS):
-            res  = A.query(attrs=["H"])[t, r_min:r_max, c_min:c_max]
+            res  = A.query(attrs=["H"])[t, r_min:r_max+1, c_min:c_max+1]
             mask = (res["H"] >= H_WET) & (res["H"] < H_EMERGENCIA)
             if not mask.any():
                 continue
@@ -347,7 +349,7 @@ def _peligrosidad_base(hora: int, bbox=None, attrs=("H", "QX", "QY")) -> tuple[n
     t = hora_a_t(hora)
     r_min, r_max, c_min, c_max = _bbox_args(bbox)
     with tiledb.open(TILEDB_URI, mode="r") as A:
-        res = A.query(attrs=list(attrs))[t, r_min:r_max, c_min:c_max]
+        res = A.query(attrs=list(attrs))[t, r_min:r_max+1, c_min:c_max+1]
     Q_mod = np.sqrt(res["QX"]**2 + res["QY"]**2) if "QX" in res else None
     return res["row"], res["col"], res["H"], Q_mod
 
@@ -400,7 +402,7 @@ def volumen_por_hora(bbox=None) -> dict:
     horas, volumenes = [], []
     with tiledb.open(TILEDB_URI, mode="r") as A:
         for t in range(N_STEPS):
-            res = A.query(attrs=["H"])[t, r_min:r_max, c_min:c_max]
+            res = A.query(attrs=["H"])[t, r_min:r_max+1, c_min:c_max+1]
             horas.append(t_a_hora(t))
             volumenes.append(float(res["H"][res["H"] >= H_WET].sum()) * CELL_AREA)
     return {"horas": horas, "volumen_m3": volumenes}
@@ -411,7 +413,7 @@ def stats_zona(x_min, y_min, x_max, y_max, hora: int) -> dict:
     t = hora_a_t(hora)
     r_min, r_max, c_min, c_max = bbox_a_indices(x_min, y_min, x_max, y_max)
     with tiledb.open(TILEDB_URI, mode="r") as A:
-        res = A.query(attrs=["H"])[t, r_min:r_max, c_min:c_max]
+        res = A.query(attrs=["H"])[t, r_min:r_max+1, c_min:c_max+1]
     wet = res["H"][res["H"] >= H_WET]
     if len(wet) == 0:
         return {"hora": hora, "n_celdas": 0, "nota": "zona seca en este instante"}
@@ -449,7 +451,7 @@ def tiempo_evacuacion(umbral_critico_m: float = H_ADULTO,
 
     with tiledb.open(TILEDB_URI, mode="r") as A:
         for t in range(N_STEPS):
-            res   = A.query(attrs=["H", "QX", "QY"])[t, r_min:r_max, c_min:c_max]
+            res   = A.query(attrs=["H", "QX", "QY"])[t, r_min:r_max+1, c_min:c_max+1]
             H     = res["H"]
             Q_mod = np.sqrt(res["QX"]**2 + res["QY"]**2)
             r     = (res["row"] - r_min).astype(np.intp)
@@ -574,7 +576,7 @@ def area_por_nivel_peligro(hora: int, bbox=None) -> dict:
     t = hora_a_t(hora)
     r_min, r_max, c_min, c_max = _bbox_args(bbox)
     with tiledb.open(TILEDB_URI, mode="r") as A:
-        res = A.query(attrs=["H"])[t, r_min:r_max, c_min:c_max]
+        res = A.query(attrs=["H"])[t, r_min:r_max+1, c_min:c_max+1]
     verde, amarillo, rojo = russo_traffic_light_counts(res["H"])
     km2 = CELL_AREA / 1e6
     return {
