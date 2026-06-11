@@ -31,13 +31,13 @@ El objetivo principal de este TFG es diseñar e implementar un sistema de almace
 \foreach \r in {0,1,2,3} {
     \foreach \c in {0,1,2,3,4} {
         \node[rectangle, draw=gray!50, fill=white, minimum width=7mm, minimum height=5mm]
-            at ([xshift=(\c-2)*9mm, yshift=(1.5-\r)*7.5mm] geo.center) {};
+            at ([xshift=(\c-2)*8.5mm+3mm, yshift=(1.5-\r)*7.5mm] geo.center) {};
     }
 }
-\node[font=\tiny, left=12mm] at ([yshift= 11mm] geo.center) {H};
-\node[font=\tiny, left=12mm] at ([yshift=  3.5mm] geo.center) {QX};
-\node[font=\tiny, left=12mm] at ([yshift= -3.5mm] geo.center) {QY};
-\node[font=\tiny, left=12mm] at ([yshift=-11mm] geo.center) {MH};
+% Etiquetas de variable: misma fórmula vertical que las filas de la rejilla
+\foreach \r/\vn in {0/H, 1/QX, 2/QY, 3/MH} {
+    \node[font=\tiny, anchor=east] at ([xshift=-19mm, yshift=(1.5-\r)*7.5mm] geo.center) {\vn};
+}
 \node[font=\tiny, below=3mm] at (geo.south) {4 variables $\times$ 20 pasos $=$ 80 ficheros $\approx$ 235 GB};
 
 %% —— Contenido bloque TileDB ——
