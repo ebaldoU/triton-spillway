@@ -127,7 +127,7 @@ La Figura~\ref{fig:app-streamlit} muestra la interfaz de la aplicación con un r
 
 \section{Exportación a GeoTIFF}\label{exportacion-a-geotiff}
 
-El sistema incluye funcionalidad de exportación para interoperabilidad con herramientas SIG externas como QGIS, que no leen directamente el formato TileDB. La exportación reconstruye el ráster denso a partir del array sparse: las celdas húmedas se posicionan según (row, col) y las secas reciben \textit{nodata} (-9999). El GeoTIFF resultante conserva EPSG:32614 y resolución de 10 m, y puede restringirse a una subregión espacial. Los metadatos geoespaciales necesarios (CRS, transformación afín, extensión, pasos temporales) se almacenan dentro del propio array TileDB durante la ingesta, por lo que la exportación no requiere conservar los GeoTIFF originales (~235 GB por escenario) en el servidor de producción.
+El sistema incluye funcionalidad de exportación para interoperabilidad con herramientas SIG externas como QGIS, que no leen directamente el formato TileDB. La exportación reconstruye el ráster denso a partir del array sparse: las celdas húmedas se posicionan según (row, col) y las secas reciben \textit{nodata} (-9999). El GeoTIFF resultante conserva EPSG:32614 y resolución de 10 m, y puede restringirse a una subregión espacial. Los metadatos geoespaciales necesarios (CRS, transformación afín, extensión, pasos temporales) se almacenan dentro del propio array TileDB durante la ingesta, por lo que la exportación no requiere conservar los GeoTIFF originales ($\sim$235 GB por escenario) en el servidor de producción.
 
 Cada variable exportada ocupa $\sim$257 MB. Exportar los 20 pasos con las 4 variables produciría $\sim$20 GB, anulando la ventaja de compresión, por lo que la exportación está concebida como herramienta puntual de interoperabilidad SIG, no como formato de almacenamiento alternativo. Esta funcionalidad está disponible tanto desde la aplicación web (botón de descarga por consulta) como de forma autónoma.
 
@@ -185,12 +185,12 @@ Los resultados se recogen en la Tabla~\ref{tab:bench-datos1}.
   & $t_{\text{frío}}$ & $t_{\rm cal}$
   & & TDB & TIF \\
 \midrule
-C1. Instante completo   & 3.196 & \textbf{1.831}  & 16.598 & 22.757  & \textbf{12.4}$\times$ TDB & \textbf{2\,328} & 6\,012 \\
-C2. Ventana 50$\times$50 km & 0.143 & \textbf{0.080} & 0.832  & 0.251  & \textbf{3.1}$\times$ TDB  & \textbf{158}    & 191 \\
-C3. Serie temporal, 1 px & 0.086 & 0.067          & 0.056  & \textbf{0.013} & \textbf{5.3}$\times$ TIF & 90 & \textbf{$<$1} \\
-C4. Peligrosidad (Russo)       & 43.797 & \textbf{41.421} & 270.690 & 293.211 & \textbf{7.1}$\times$ TDB & 3\,980 & \textbf{1\,055} \\
-C5. Estadísticos zona   & 0.079 & \textbf{0.047}  & 0.630  & 0.114  & \textbf{2.4}$\times$ TDB  & \textbf{90}     & 191 \\
-C6. Exportar ventana    & 0.393 & \textbf{0.296}  & 0.931  & 0.719  & \textbf{2.4}$\times$ TDB  & 230    & \textbf{191} \\
+C1. Instante completo   & 3,196 & \textbf{1,831}  & 16,598 & 22,757  & \textbf{12,4}$\times$ TDB & \textbf{2\,328} & 6\,012 \\
+C2. Ventana 50$\times$50 km & 0,143 & \textbf{0,080} & 0,832  & 0,251  & \textbf{3,1}$\times$ TDB  & \textbf{158}    & 191 \\
+C3. Serie temporal, 1 px & 0,086 & 0,067          & 0,056  & \textbf{0,013} & \textbf{5,3}$\times$ TIF & 90 & \textbf{$<$1} \\
+C4. Peligrosidad (Russo)       & 43,797 & \textbf{41,421} & 270,690 & 293,211 & \textbf{7,1}$\times$ TDB & 3\,980 & \textbf{1\,055} \\
+C5. Estadísticos zona   & 0,079 & \textbf{0,047}  & 0,630  & 0,114  & \textbf{2,4}$\times$ TDB  & \textbf{90}     & 191 \\
+C6. Exportar ventana    & 0,393 & \textbf{0,296}  & 0,931  & 0,719  & \textbf{2,4}$\times$ TDB  & 230    & \textbf{191} \\
 \bottomrule
 \end{tabularx}
 \captionsetup{hypcap=false}\captionof{table}{Benchmark TileDB vs GeoTIFF sobre datos1 (6 casos, 3 repeticiones en caché caliente). En negrita: mejor valor por fila.}
@@ -228,12 +228,12 @@ Los resultados se recogen en la Tabla~\ref{tab:bench-datos2}.
 \cmidrule(lr){5-6}
   & & & & TDB & TIF \\
 \midrule
-C1. Instante completo   & \textbf{1.783}  & 17.365         & \textbf{9.7}$\times$ TDB  & \textbf{2\,328} & 6\,012 \\
-C2. Ventana 50$\times$50 km & \textbf{0.080} & 0.294       & \textbf{3.7}$\times$ TDB  & \textbf{158}    & 191 \\
-C3. Serie temporal, 1 px & 0.061          & \textbf{0.011} & \textbf{5.4}$\times$ TIF  & 90              & \textbf{$<$1} \\
-C4. Peligrosidad (Russo)       & \textbf{47.562} & $\sim$471      & \textbf{9.9}$\times$ TDB  & 3\,980          & \textbf{1\,055} \\
-C5. Estadísticos zona   & \textbf{0.058}  & 0.214          & \textbf{3.7}$\times$ TDB  & \textbf{90}     & 191 \\
-C6. Exportar ventana    & \textbf{0.380}  & 0.799          & \textbf{2.1}$\times$ TDB  & 230             & \textbf{191} \\
+C1. Instante completo   & \textbf{1,783}  & 17,365         & \textbf{9,7}$\times$ TDB  & \textbf{2\,328} & 6\,012 \\
+C2. Ventana 50$\times$50 km & \textbf{0,080} & 0,294       & \textbf{3,7}$\times$ TDB  & \textbf{158}    & 191 \\
+C3. Serie temporal, 1 px & 0,061          & \textbf{0,011} & \textbf{5,4}$\times$ TIF  & 90              & \textbf{$<$1} \\
+C4. Peligrosidad (Russo)       & \textbf{47,562} & $\sim$471      & \textbf{9,9}$\times$ TDB  & 3\,980          & \textbf{1\,055} \\
+C5. Estadísticos zona   & \textbf{0,058}  & 0,214          & \textbf{3,7}$\times$ TDB  & \textbf{90}     & 191 \\
+C6. Exportar ventana    & \textbf{0,380}  & 0,799          & \textbf{2,1}$\times$ TDB  & 230             & \textbf{191} \\
 \bottomrule
 \end{tabularx}
 \captionsetup{hypcap=false}\captionof{table}{Benchmark TileDB vs GeoTIFF sobre datos2: validación (3 repeticiones en caché caliente). En negrita: mejor valor por fila.}
@@ -253,12 +253,12 @@ La Tabla~\ref{tab:comparativa-datos1-datos2} contrasta los factores de aceleraci
 \toprule
 \textbf{Caso} & \textbf{Factor datos1} & \textbf{Factor datos2} & \textbf{Consistencia} \\
 \midrule
-C1. Instante completo & 12.4$\times$ TDB & 9.7$\times$ TDB & $\checkmark$ TDB gana \\
-C2. Ventana 50$\times$50 km & 3.2$\times$ TDB & 3.7$\times$ TDB & $\checkmark$ TDB gana \\
-C3. Serie 1 píxel & 5.6$\times$ TIF & 5.4$\times$ TIF & $\checkmark$ TIF gana \\
-C4. Peligrosidad (Russo) & 7.1$\times$ TDB & 9.9$\times$ TDB & $\checkmark$ TDB gana \\
-C5. Estadísticos & 2.4$\times$ TDB & 3.7$\times$ TDB & $\checkmark$ TDB gana \\
-C6. Exportar GeoTIFF & 2.4$\times$ TDB & 2.1$\times$ TDB & $\checkmark$ TDB gana \\
+C1. Instante completo & 12,4$\times$ TDB & 9,7$\times$ TDB & $\checkmark$ TDB gana \\
+C2. Ventana 50$\times$50 km & 3,2$\times$ TDB & 3,7$\times$ TDB & $\checkmark$ TDB gana \\
+C3. Serie 1 píxel & 5,6$\times$ TIF & 5,4$\times$ TIF & $\checkmark$ TIF gana \\
+C4. Peligrosidad (Russo) & 7,1$\times$ TDB & 9,9$\times$ TDB & $\checkmark$ TDB gana \\
+C5. Estadísticos & 2,4$\times$ TDB & 3,7$\times$ TDB & $\checkmark$ TDB gana \\
+C6. Exportar GeoTIFF & 2,4$\times$ TDB & 2,1$\times$ TDB & $\checkmark$ TDB gana \\
 \bottomrule
 \end{tabularx}
 \caption{Comparativa del factor de aceleración TileDB vs GeoTIFF entre los \textit{datasets} datos1 y datos2.}
@@ -279,12 +279,12 @@ Para verificar la coherencia del sistema con varios escenarios, se calcularon la
 \textbf{Métrica} & \textbf{datos1} & \textbf{datos2} & \textbf{datos3} & \textbf{datos4} \\
 \midrule
 Pasos temporales & 20 & 20 & 20 & 20 \\
-Celdas húmedas totales (M) & 1 311.7 & 1 303.5 & 498.4 & 1 323.5 \\
+Celdas húmedas totales (M) & 1 311,7 & 1 303,5 & 498,4 & 1 323,5 \\
 Extensión máxima (km\textsuperscript{2}) & 7 433 & 7 718 & 2 838 & 7 569 \\
 Hora del pico (h) & 90 & 96 & 6 & 96 \\
 Extensión en hora 60 (km\textsuperscript{2}) & 6 196 & 6 059 & 2 358 & 6 196 \\
 Peligrosidad adultos (Russo) h60 (km\textsuperscript{2}) & 2 311 & 2 294 & 717 & 2 311 \\
-Volumen máximo (Mm\textsuperscript{3}) & 4 462.8 & 4 325.3 & 1 327.9 & 4 462.8 \\
+Volumen máximo (Mm\textsuperscript{3}) & 4 462,8 & 4 325,3 & 1 327,9 & 4 462,8 \\
 \bottomrule
 \end{tabularx}
 \caption{Métricas globales por \textit{dataset} (datos1--datos4).}

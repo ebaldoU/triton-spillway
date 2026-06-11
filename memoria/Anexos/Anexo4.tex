@@ -87,7 +87,7 @@ Tras completar la escritura de los 20 fragmentos, el script almacena en el propi
 \label{tab:etl-metadata}
 \end{table}
 
-Estos metadatos permiten al motor de consultas reconstruir el georeferenciado sin necesidad de conservar los GeoTIFF originales, lo que hace posible desplegar el sistema en un servidor donde solo se transfieren los arrays TileDB (17--21 GB por escenario) y no los datos brutos (~235 GB). La clave \texttt{zero\_rule} garantiza la interoperabilidad: cualquier celda ausente en el array equivale a valor cero, convención necesaria para que la exportación a GeoTIFF produzca rásters completos con \textit{nodata} correctamente asignado.
+Estos metadatos permiten al motor de consultas reconstruir la georreferenciación sin necesidad de conservar los GeoTIFF originales, lo que hace posible desplegar el sistema en un servidor donde solo se transfieren los arrays TileDB (17--21 GB por escenario) y no los datos brutos ($\sim$235 GB). La clave \texttt{zero\_rule} garantiza la interoperabilidad: cualquier celda ausente en el array equivale a valor cero, convención necesaria para que la exportación a GeoTIFF produzca rásteres completos con \textit{nodata} correctamente asignado.
 
 \section{Ejecución e instrucciones de uso}\label{d.6-ejecucion}
 

@@ -80,7 +80,7 @@ El sistema está compuesto por cuatro capas articuladas en torno al array TileDB
 \begin{enumerate}
 \item \textbf{Ingesta (ETL):} El módulo de ingesta lee los ficheros GeoTIFF generados por Triton, aplica el filtro de celdas húmedas (H $\geq$ 0,01 m) y escribe los datos en TileDB con filtro ByteShuffle+ZSTD-9. La lectura se realiza por franjas de 5 000 filas para limitar el uso de memoria.
 \item \textbf{Almacenamiento:} Array TileDB sparse con dimensiones (time, row, col) y atributos (H, QX, QY, MH). Un fragmento por paso temporal facilita el filtrado temporal eficiente.
-\item \textbf{Análisis:} El motor de consultas proporciona 20 funciones que operan directamente sobre el array TileDB sin exportación previa.
+\item \textbf{Análisis:} El motor de consultas proporciona 24 funciones que operan directamente sobre el array TileDB sin exportación previa.
 \item \textbf{Visualización y exportación:} Un visualizador interactivo, un exportador a GeoTIFF para interoperabilidad SIG y la aplicación web Streamlit con mapas interactivos, comparativa multi-escenario y panel de ayuda.
 \end{enumerate}
 
@@ -100,7 +100,7 @@ El sistema está compuesto por cuatro capas articuladas en torno al array TileDB
     \node[process, right=14mm of geo] (etl) {ETL\\\scriptsize filtrado y compresión};
     \node[storage, right=14mm of etl] (tdb) {TileDB sparse\\\scriptsize solo celdas húmedas};
 
-    \node[consumer, below=14mm of tdb, xshift=-32mm] (queries) {Motor de consultas\\\scriptsize 20 funciones analíticas};
+    \node[consumer, below=14mm of tdb, xshift=-32mm] (queries) {Motor de consultas\\\scriptsize 24 funciones analíticas};
     \node[consumer, below=14mm of tdb, xshift=4mm] (viz) {Visualizador};
     \node[consumer, below=14mm of tdb, xshift=40mm] (exp) {Exportador GeoTIFF};
 
