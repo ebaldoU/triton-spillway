@@ -84,6 +84,39 @@ El sistema está compuesto por cuatro capas articuladas en torno al array TileDB
 \item \textbf{Visualización y exportación:} Un visualizador interactivo, un exportador a GeoTIFF para interoperabilidad SIG y la aplicación web Streamlit con mapas interactivos, comparativa multi-escenario y panel de ayuda.
 \end{enumerate}
 
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+    font=\small\sffamily,
+    node distance=10mm,
+    source/.style={rectangle, draw=black!70, fill=black!5, minimum height=11mm, minimum width=22mm, align=center, rounded corners=2pt},
+    process/.style={rectangle, draw=blue!70!black, fill=blue!10, minimum height=11mm, minimum width=22mm, align=center, rounded corners=2pt, thick},
+    storage/.style={cylinder, draw=orange!80!black, fill=orange!15, shape border rotate=90, aspect=0.25, minimum height=14mm, minimum width=26mm, align=center, thick},
+    consumer/.style={rectangle, draw=green!50!black, fill=green!10, minimum height=10mm, minimum width=24mm, align=center, rounded corners=2pt},
+    ui/.style={rectangle, draw=red!70!black, fill=red!8, minimum height=10mm, minimum width=28mm, align=center, rounded corners=2pt, thick},
+    arrow/.style={-Latex, thick, draw=black!60},
+]
+    \node[source] (geo) {GeoTIFF Triton\\\scriptsize 1 escenario de simulación};
+    \node[process, right=14mm of geo] (etl) {ETL\\\scriptsize filtrado y compresión};
+    \node[storage, right=14mm of etl] (tdb) {TileDB sparse\\\scriptsize solo celdas húmedas};
+
+    \node[consumer, below=14mm of tdb, xshift=-32mm] (queries) {Motor de consultas\\\scriptsize 20 funciones analíticas};
+    \node[consumer, below=14mm of tdb, xshift=4mm] (viz) {Visualizador};
+    \node[consumer, below=14mm of tdb, xshift=40mm] (exp) {Exportador GeoTIFF};
+
+    \node[ui, below=12mm of viz] (app) {Aplicación web Streamlit};
+
+    \draw[arrow] (geo) -- (etl);
+    \draw[arrow] (etl) -- (tdb);
+    \draw[arrow] (tdb.south) -- ++(0,-3mm) -| (queries.north);
+    \draw[arrow] (tdb.south) -- ++(0,-3mm) -| (viz.north);
+    \draw[arrow] (tdb.south) -- ++(0,-3mm) -| (exp.north);
+    \draw[arrow] (queries.south) -- (app.north);
+\end{tikzpicture}
+\caption{Arquitectura del sistema. Los GeoTIFF generados por Triton se procesan mediante el ETL (filtrado con rasterio) y se almacenan en TileDB sparse. El motor de consultas analíticas expone los datos a la aplicación Streamlit y permite exportarlos de nuevo a GeoTIFF.}
+\label{fig:arquitectura}
+\end{figure}
+
 \section{Arquitectura del array TileDB}\label{arquitectura-del-array-tiledb}
 
 El array disperso se define con tres dimensiones y cuatro atributos, tal y como se muestra en la Tabla~\ref{tab:array-schema}:
@@ -108,7 +141,7 @@ Atributo MH & float32 & Profundidad máxima histórica \\
 \label{tab:array-schema}
 \end{table}
 
-La Figura~\ref{fig:tiledb-estructura} ilustra cómo TileDB organiza físicamente estos datos: 20 fragmentos independientes (uno por paso temporal) almacenan únicamente las coordenadas y valores de las celdas húmedas, con los cuatro atributos codificados juntos mediante ByteShuffle+ZSTD-9.
+La Figura~\ref{fig:tiledb-estructura} ilustra cómo TileDB organiza físicamente estos datos \cite{tiledb_indexing, tiledb_datalayout}: 20 fragmentos independientes (uno por paso temporal) almacenan únicamente las coordenadas y valores de las celdas húmedas, con los cuatro atributos codificados juntos mediante ByteShuffle+ZSTD-9.
 
 \begin{figure}[ht]
 \centering
@@ -260,39 +293,6 @@ La Figura~\ref{fig:tiledb-estructura} ilustra cómo TileDB organiza físicamente
 \end{tikzpicture}
 \caption{Estructura interna del array TileDB sparse. \textbf{Izquierda:} los 20 pasos temporales se almacenan como 20 fragmentos independientes apilados en la dimensión temporal. La cara frontal del fragmento $t_0$ muestra el dominio espacial: las celdas húmedas (azul, $\sim$8\,\% del total) se almacenan junto con sus coordenadas; las secas (gris) no se guardan. \textbf{Derecha:} cada celda húmeda almacena tres coordenadas enteras y cuatro atributos float32, comprimidos con ByteShuffle+ZSTD-9, dando $\sim$17,5 GB frente a los $\sim$235 GB de los GeoTIFF originales.}
 \label{fig:tiledb-estructura}
-\end{figure}
-
-\begin{figure}[ht]
-\centering
-\begin{tikzpicture}[
-    font=\small\sffamily,
-    node distance=10mm,
-    source/.style={rectangle, draw=black!70, fill=black!5, minimum height=11mm, minimum width=22mm, align=center, rounded corners=2pt},
-    process/.style={rectangle, draw=blue!70!black, fill=blue!10, minimum height=11mm, minimum width=22mm, align=center, rounded corners=2pt, thick},
-    storage/.style={cylinder, draw=orange!80!black, fill=orange!15, shape border rotate=90, aspect=0.25, minimum height=14mm, minimum width=26mm, align=center, thick},
-    consumer/.style={rectangle, draw=green!50!black, fill=green!10, minimum height=10mm, minimum width=24mm, align=center, rounded corners=2pt},
-    ui/.style={rectangle, draw=red!70!black, fill=red!8, minimum height=10mm, minimum width=28mm, align=center, rounded corners=2pt, thick},
-    arrow/.style={-Latex, thick, draw=black!60},
-]
-    \node[source] (geo) {GeoTIFF Triton\\\scriptsize 1 escenario de simulación};
-    \node[process, right=14mm of geo] (etl) {ETL\\\scriptsize filtrado y compresión};
-    \node[storage, right=14mm of etl] (tdb) {TileDB sparse\\\scriptsize solo celdas húmedas};
-
-    \node[consumer, below=14mm of tdb, xshift=-32mm] (queries) {Motor de consultas\\\scriptsize 20 funciones analíticas};
-    \node[consumer, below=14mm of tdb, xshift=4mm] (viz) {Visualizador};
-    \node[consumer, below=14mm of tdb, xshift=40mm] (exp) {Exportador GeoTIFF};
-
-    \node[ui, below=12mm of viz] (app) {Aplicación web Streamlit};
-
-    \draw[arrow] (geo) -- (etl);
-    \draw[arrow] (etl) -- (tdb);
-    \draw[arrow] (tdb.south) -- ++(0,-3mm) -| (queries.north);
-    \draw[arrow] (tdb.south) -- ++(0,-3mm) -| (viz.north);
-    \draw[arrow] (tdb.south) -- ++(0,-3mm) -| (exp.north);
-    \draw[arrow] (queries.south) -- (app.north);
-\end{tikzpicture}
-\caption{Arquitectura del sistema. Los GeoTIFF generados por Triton se procesan mediante el ETL (filtrado con rasterio) y se almacenan en TileDB sparse. El motor de consultas analíticas expone los datos a la aplicación Streamlit y permite exportarlos de nuevo a GeoTIFF.}
-\label{fig:arquitectura}
 \end{figure}
 
 \FloatBarrier

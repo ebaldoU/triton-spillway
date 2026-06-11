@@ -4,7 +4,7 @@ El proceso ETL (\textit{geotiff\_to\_tiledb\_sparse.py}) transforma los ficheros
 
 \section{Parámetros de configuración}\label{d.1-parametros-de-configuracion}
 
-Los tres parámetros que controlan el comportamiento del ETL se definen como constantes al inicio del script:
+Los tres parámetros que controlan el comportamiento del ETL se definen como constantes al inicio del script y se describen en la Tabla~\ref{tab:etl-params}:
 
 \begin{table}[ht]
 \centering
@@ -64,7 +64,7 @@ El consumo pico total se sitúa alrededor de los 3--4 GB de RAM, lo que hace rec
 
 \section{Metadatos almacenados}\label{d.5-metadatos}
 
-Tras completar la escritura de los 20 fragmentos, el script almacena en el propio array TileDB los metadatos geoespaciales necesarios para interpretar los datos y para la interoperabilidad con herramientas SIG:
+Tras completar la escritura de los 20 fragmentos, el script almacena en el propio array TileDB los metadatos geoespaciales necesarios para interpretar los datos y para la interoperabilidad con herramientas SIG, recogidos en la Tabla~\ref{tab:etl-metadata}:
 
 \begin{table}[ht]
 \centering
