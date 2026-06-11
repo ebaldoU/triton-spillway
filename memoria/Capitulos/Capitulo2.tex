@@ -235,7 +235,7 @@ La Figura~\ref{fig:tiledb-estructura} ilustra cómo TileDB organiza físicamente
   \node[right, font=\tiny] at (4.6,\LY+0.22) {celda seca (no almacenada)};
 
   %% ── Cuadro «Estructura por celda» ────────────────────────────────
-  \pgfmathsetmacro{\BX}{7.0}
+  \pgfmathsetmacro{\BX}{8.6}
   \pgfmathsetmacro{\BY}{-0.5}
   \pgfmathsetmacro{\BW}{4.8}
 
@@ -317,7 +317,7 @@ Se ha creado un script en Python para cargar todos los datos GeoTIFF a TileDB. L
     \node[process, below=of read] (filter) {Filtro de celdas húmedas\\\scriptsize H $\geq$ 0,01 m};
     \node[process, below=of filter] (accum) {Acumulación de coordenadas (row, col) y valores};
     \node[process, below=of accum] (write) {Escritura en TileDB sparse\\\scriptsize 1 fragmento por paso, filtro ByteShuffle + ZSTD-9};
-    \node[decision, below=of write] (more) {¿quedan pasos?};
+    \node[decision, below=of write] (more) {¿Quedan pasos?};
     \node[process, below=8mm of more] (verify) {Verificación de integridad\\\scriptsize muestreo aleatorio TileDB vs GeoTIFF};
     \node[startstop, below=of verify] (end) {Fin};
 
@@ -327,7 +327,7 @@ Se ha creado un script en Python para cargar todos los datos GeoTIFF a TileDB. L
     \draw[arrow] (filter) -- (accum);
     \draw[arrow] (accum) -- (write);
     \draw[arrow] (write) -- (more);
-    \draw[arrow] (more.east) -- ++(20mm,0) |- node[pos=0.25, right, font=\scriptsize] {sí} (loop1.east);
+    \draw[arrow] (more.east) -- ++(30mm,0) |- node[pos=0.25, right, font=\scriptsize] {sí} (loop1.east);
     \draw[arrow] (more) -- node[right, font=\scriptsize] {no} (verify);
     \draw[arrow] (verify) -- (end);
 \end{tikzpicture}
