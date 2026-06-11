@@ -41,12 +41,12 @@ En este proyecto se utiliza el modo disperso porque solo el $\sim$8,3 \% del dom
   \node[gray!55, font=\tiny, below=3pt] at (3, 0) {columnas};
 
   %% --- Flecha de filtrado ---
-  \draw[-Latex, thick, draw=blue!65!black] (6.4,2.5) -- (7.6,2.5)
+  \draw[-Latex, thick, draw=blue!65!black] (6.5,2.5) -- (9.5,2.5)
     node[midway, above, font=\scriptsize\bfseries, blue!65!black] {H $\geq$ 0{,}01 m}
     node[midway, below, font=\tiny, blue!45!black] {filtro húmedo};
 
   %% --- Cuadrícula derecha: almacenamiento disperso (solo celdas húmedas) ---
-  \def\dx{8}
+  \def\dx{10}
   \draw[gray!28, dashed, line width=0.5pt] (\dx,0) rectangle +(6,5);
   \foreach \r in {1,...,4} { \draw[gray!18, very thin] (\dx,\r) -- (\dx+6,\r); }
   \foreach \c in {1,...,5} { \draw[gray!18, very thin] (\dx+\c,0) -- (\dx+\c,5); }
