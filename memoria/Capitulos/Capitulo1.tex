@@ -54,12 +54,12 @@ La Figura~\ref{fig:hidraulica-datos} ilustra el ciclo completo de datos: cómo e
 
   %% ---- Flecha ETL ----
   \draw[-Latex, thick, draw=orange!70!black, line width=1.2pt]
-    (3.8,2.6) -- (5.0,2.6)
+    (3.8,2.6) -- (5.6,2.6)
     node[midway, above, font=\tiny\bfseries, orange!70!black] {80 GeoTIFF}
     node[midway, below, font=\tiny, orange!50!black] {$\sim$235 GB};
 
   %% ---- Grid de variables (centro) ----
-  \def\gx{5.2}
+  \def\gx{6.6}
   \def\gy{0.4}
   \def\cw{1.05}
   \def\ch{0.82}
@@ -86,7 +86,7 @@ La Figura~\ref{fig:hidraulica-datos} ilustra el ciclo completo de datos: cómo e
   \node[font=\tiny, gray!55, below=2pt] at (\gx+2*\cw, \gy-0.1) {80 ficheros GeoTIFF};
 
   %% ---- Serie temporal de calado (derecha) ----
-  \def\rx{10.6}
+  \def\rx{12.0}
   \def\rw{4.2}
   \def\rh{3.2}
   \draw[-Latex, gray!40] (\rx,0.4) -- (\rx+\rw+0.3,0.4) node[right, font=\tiny, gray!55] {h};
@@ -105,7 +105,7 @@ La Figura~\ref{fig:hidraulica-datos} ilustra el ciclo completo de datos: cómo e
   % Etiqueta
   \node[blue!65!black, font=\tiny, above right=2pt] at (\rx+2.5,3.0) {pico};
   \node[font=\tiny, gray!55, below=10pt] at (\rx+\rw/2+0.1,0.4) {Q2: serie temporal en un punto};
-  \node[font=\small\bfseries, gray!70, above=4pt] at (\rx+\rw/2, 0.4+\rh+0.2) {Ejemplo de consulta};
+  \node[font=\small\bfseries, gray!70, above=4pt] at (\rx+\rw/2, 0.4+\rh+0.75) {Ejemplo de consulta};
 
   %% Flechas de conexión
   \draw[-Latex, thick, draw=gray!50] (\gx+4*\cw+0.1,\gy+2.5*\ch) -- (\rx-0.2,\gy+2.5*\ch);
