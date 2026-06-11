@@ -28,49 +28,9 @@ En todos los casos el valor leído de TileDB coincide exactamente con el valor d
 
 \section{Validación funcional de las consultas}\label{validacion-funcional}
 
-Además de la integridad del almacenamiento, es necesario verificar que las funciones analíticas calculan correctamente los indicadores que declaran. Antes de presentar las pruebas conviene identificar las fuentes de error que podrían afectar al sistema:
+Además de la integridad del almacenamiento, es necesario verificar que las funciones analíticas calculan correctamente los indicadores que declaran. Para ello se emplea una estrategia de oráculo: el resultado del motor se compara contra un cálculo de referencia realizado directamente sobre los GeoTIFF originales con \texttt{rasterio} y NumPy, sin pasar por TileDB, lo que permite aislar errores del motor de posibles errores del ETL (cubiertos por la sección~\ref{validacion-etl}). La compresión queda descartada como fuente de error porque ZSTD es un algoritmo \emph{sin pérdida}; las diferencias del orden de $10^{-5}$ observadas en algunas comparaciones se deben al orden de las operaciones en punto flotante (float32), no a errores de diseño.
 
-\begin{itemize}
-  \item \textbf{Errores de implementación.} Fórmulas incorrectas, umbrales mal aplicados o conversiones de índices erróneas en el código del motor. Son los errores más graves y producirían discrepancias no nulas respecto a cualquier referencia independiente.
-  \item \textbf{Errores de representación en punto flotante.} Los datos se almacenan en float32 ($\sim$7 dígitos significativos). Al acumular sumas o multiplicaciones en un orden diferente al del oráculo pueden aparecer diferencias del orden de $10^{-5}$ que no constituyen un error de diseño sino una consecuencia esperada de la aritmética finita.
-  \item \textbf{Pérdida por compresión.} TileDB almacena los datos con ZSTD, un algoritmo de compresión \emph{sin pérdida}. Los valores recuperados son bit a bit idénticos a los escritos durante el ETL, por lo que esta fuente de error queda descartada.
-  \item \textbf{Errores del ETL.} El proceso de conversión GeoTIFF$\to$TileDB podría introducir errores al mapear coordenadas, filtrar celdas o convertir tipos. Estos quedan cubiertos por la validación de la sección~\ref{validacion-etl}.
-\end{itemize}
-
-Para detectar los errores de implementación se emplea una estrategia de oráculo: el resultado del motor analítico se compara contra un cálculo de referencia realizado directamente sobre los GeoTIFF originales con \texttt{rasterio} y NumPy, sin pasar por TileDB. Este enfoque permite aislar errores del motor analítico de posibles errores del ETL: si el ETL es correcto pero el motor no, el oráculo detectará la discrepancia; si ambos fallan de la misma forma, la validación de integridad de la sección~\ref{validacion-etl} los habría detectado previamente.
-
-Se seleccionaron cinco funciones que cubren los tres patrones de acceso del motor y representan el mayor riesgo de error de implementación: Q1 (conversión de coordenadas UTM a índices de celda), Q3 (combinación de tres variables independientes para derivar velocidad), Q4 (filtrado por umbral sobre el dominio completo), Q7 (búsqueda del primer paso temporal positivo por celda) y Q13 (acumulación iterada sobre los 20 pasos). Las consultas de peligrosidad (Q10, Q17, Q18) son combinaciones de H y velocidad ya validadas implícitamente a través de Q1, Q3 y Q4, por lo que quedan cubiertas de forma indirecta.
-
-\subsection{Consultas puntuales y espaciales}\label{validacion-puntuales}
-
-\textbf{Q1 (calado en punto).} Para 50 puntos aleatorios en 5 pasos temporales distintos, el valor devuelto por \texttt{calado\_en\_punto(x, y, t)} coincide con la lectura directa del GeoTIFF de H en la celda (fila, columna) correspondiente. Discrepancias: 0 de 250 comparaciones.
-
-\textbf{Q4 (mapa de zonas inundadas).} El número de celdas devueltas por \texttt{q\_umbral\_h(meta, t, H\_WET)} para cuatro pasos temporales y cuatro \textit{datasets} se contrasta contra el recuento de píxeles con $H \geq 0{,}01$ m en el GeoTIFF de H. El recuento de celdas coincide exactamente; las áreas en km² difieren en menos de $10^{-3}$ km² por el redondeo de la conversión de celdas a superficie, no por un error de cálculo. Discrepancias: 0.
-
-\textbf{Q3 (velocidad en zona).} La velocidad máxima $V_{\max} = Q_{mod}/H$ calculada por el motor sobre una zona de $50\times50$ km coincide con la calculada directamente sobre los GeoTIFF de H, QX y QY para la misma ventana espacial, con una diferencia máxima de $10^{-5}$ m/s atribuible al orden de operaciones en punto flotante.
-
-\subsection{Consultas multi-paso}\label{validacion-multipaso}
-
-\textbf{Q13 (volumen por hora).} El volumen total $V = \sum H_i \times 100\,\text{m}^2$ calculado por el motor sobre los 20 pasos de datos1 se contrasta paso a paso contra la suma directa sobre los GeoTIFF. Las diferencias son inferiores a 0,01 Mm³ (menos del 0,001\,\% del volumen total de $\sim$4\,462 Mm³), coherentes con el redondeo de float32.
-
-\textbf{Q7 (hora de llegada del frente).} Para 20 puntos seleccionados manualmente en zonas de llegada temprana, tardía y nunca inundadas, la hora de llegada devuelta por el motor coincide con la obtenida inspeccionando la secuencia temporal en los GeoTIFF. Discrepancias: 0.
-
-\subsection{Coherencia multi-dataset}\label{validacion-coherencia}
-
-Una prueba adicional de coherencia es comparar \textit{datasets} que deberían producir resultados idénticos. Los escenarios datos1 y datos4 comparten el mismo patrón de inundación en la hora 60 según las métricas de la Tabla~\ref{tab:metricas-datasets}: extensión de 6\,196 km², peligrosidad para adultos según el criterio Russo de 2\,311 km² y volumen de 4\,462,8 Mm³. El motor analítico reproduce estas métricas con diferencia nula entre ambos \textit{datasets}, confirmando la reproducibilidad del \textit{pipeline} ETL.
-
-\subsection{Consistencia interna del motor analítico}\label{validacion-interna}
-
-Como comprobación adicional e independiente del ETL, se ejecutó sobre \texttt{datos7} (334\,M celdas húmedas, escenario de menor tamaño) un conjunto de pruebas de consistencia interna: los resultados de las funciones analíticas se comparan contra recálculos directos sobre el mismo array TileDB realizados con NumPy puro, sin pasar por las funciones del motor. Este enfoque verifica que la lógica de filtrado, conversión y agregación es correcta con independencia de si los datos almacenados coinciden con los GeoTIFF originales.
-
-\begin{itemize}
-  \item \textbf{Q4 (mapa inundado), 4 pasos.} El recuento de celdas con $H \geq 0{,}01$ m devuelto por el motor coincide exactamente con la suma directa sobre el array TileDB. Discrepancias: 0 de 4 comparaciones.
-  \item \textbf{Q5 (evolución de extensión), 20 pasos.} El recuento por paso del motor coincide con el recálculo NumPy en los 20 pasos temporales. Diferencia máxima: 0 celdas.
-  \item \textbf{Q13 (volumen por hora), 20 pasos.} El volumen calculado como $\sum H_i \times \Delta x^2$ difiere del recálculo en menos de $10^{-5}$ m³ (error relativo máximo: 0{,}00000\,\%), atribuible al orden de operaciones en punto flotante.
-  \item \textbf{Q1 (calado en punto), 50 puntos.} Cincuenta celdas húmedas aleatorias del paso temporal 11 son consultadas mediante \texttt{calado\_en\_punto(x,\,y,\,t)} y comparadas con la lectura directa de TileDB en las mismas coordenadas. Discrepancias ($>10^{-4}$ m): 0.
-\end{itemize}
-
-La Tabla~\ref{tab:validacion-resumen} sintetiza los resultados de validación funcional.
+Se seleccionaron cinco funciones que cubren los tres patrones de acceso del motor y concentran el mayor riesgo de error de implementación: Q1 (conversión de coordenadas UTM a índices), Q3 (combinación de tres variables para derivar velocidad), Q4 (filtrado por umbral), Q7 (búsqueda del primer paso positivo por celda) y Q13 (acumulación sobre los 20 pasos). Las consultas de peligrosidad (Q10, Q17, Q18) son combinaciones de H y velocidad, por lo que quedan cubiertas de forma indirecta. Como comprobación adicional e independiente del ETL, sobre \texttt{datos7} se compararon los resultados del motor contra recálculos NumPy directos sobre el mismo array TileDB, y como prueba de coherencia multi-\textit{dataset} se verificó que datos1 y datos4 —que comparten patrón de inundación en la hora 60— producen métricas idénticas. La Tabla~\ref{tab:validacion-resumen} sintetiza todos los resultados: ninguna comparación arroja discrepancias.
 
 \begin{table}[ht]
 \centering
@@ -186,11 +146,7 @@ Q11 & Ventana para vehículos emergencia & 84{,}1     & 25{,}9 & 750 \\
 \label{tab:rendimiento-consultas}
 \end{table}
 
-\textbf{Interpretación por categoría.} Las consultas instantáneas responden en menos de 4 s incluso sobre el dominio completo, siendo aptas para uso interactivo. Las multi-paso tardan en torno a 30 s, limitadas por las 20 lecturas sucesivas a TileDB ($\sim$1,5 s/paso). Las acumuladas por píxel oscilan entre 79,5 s (Q7) y 121,4 s (Q8) sobre el dominio completo: combinan la E/S de 20 fragmentos con escrituras dispersas sobre un \textit{grid} de tamaño fijo en RAM, lo que genera mayor presión de caché. La restricción a un subdominio reduce los tiempos en un factor de 2--3$\times$.
-
-\textbf{Consumo de memoria.} El \textit{grid} acumulador de tipo \texttt{uint8}/\texttt{float32} de dimensiones fijas $n_r \times n_c$ limita el consumo a $\sim$750 MB para las consultas multi-paso, independientemente del volumen de celdas húmedas. Este valor es constante y no crece con el número de escenarios ni con la densidad de inundación.
-
-\textbf{Throughput.} Las lecturas de un instante completo (Q3, $\sim$1,95 s, 24 GB descomprimidos) dan un \textit{throughput} de $\sim$890 MB/s sobre SSD NVMe. Las consultas acotadas espacialmente alcanzan hasta 960 MB/s, beneficiándose del índice sparse de TileDB que evita descomprimir tiles fuera del \textit{bounding box}.
+Las consultas instantáneas responden en menos de 4 s incluso sobre el dominio completo, siendo aptas para uso interactivo. Las multi-paso tardan en torno a 30 s, limitadas por las 20 lecturas sucesivas a TileDB. Las acumuladas por píxel oscilan entre 79,5 s (Q7) y 121,4 s (Q8): combinan la E/S de 20 fragmentos con escrituras dispersas sobre el \textit{grid} acumulador de tamaño fijo, que además limita la RAM a $\sim$750 MB con independencia del volumen de celdas húmedas. La restricción a un subdominio reduce los tiempos en un factor de 2--3$\times$, y las lecturas alcanzan un \textit{throughput} de 890--960 MB/s sobre SSD NVMe gracias al índice sparse, que evita descomprimir tiles fuera de la zona consultada.
 
 \section{Escalabilidad con el volumen de datos}\label{escalabilidad}
 

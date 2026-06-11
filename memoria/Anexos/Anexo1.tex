@@ -80,3 +80,41 @@ Este bloque implementa el criterio legal de zona de graves daños establecido en
 
 Q18. Zona de graves daños (RD 9/2008): para un paso temporal dado, identifica las celdas que cumplen al menos uno de los tres criterios anteriores y calcula el área total afectada en km². El mapa de salida muestra el calado en las celdas de graves daños, lo que permite identificar visualmente las zonas más severamente afectadas.
 
+\section{La aplicación web: capturas y ejemplo del modo comparativo}\label{anexo-a-modo-comparativo}
+
+La Figura~\ref{fig:app-sidebar} muestra la barra lateral de la aplicación, desde la que se selecciona el escenario, el bloque y la consulta activos; la Figura~\ref{fig:app-q5-temporal} muestra un resultado en formato de gráfico temporal (Q5).
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.55\textwidth]{Imagenes/Captura_Sidebar}
+\caption{Barra lateral de la aplicación: selector de escenario, bloque y consulta activos, parámetros de ejecución y botón de lanzamiento.}
+\label{fig:app-sidebar}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{Imagenes/Captura_Q5}
+\caption{Resultado de Q5 (evolución de extensión inundada): gráfico temporal con el área inundada en km² a lo largo de los 20 pasos de simulación.}
+\label{fig:app-q5-temporal}
+\end{figure}
+
+\medskip\noindent\textbf{Ejemplo de uso del modo comparativo.}
+Supóngase que se quiere evaluar si el episodio de crecida de julio de 1980 (\textit{datos1}) genera una zona de peligrosidad más extensa que el de junio de 2008 (\textit{datos29}). Basta con seleccionar \textit{datos1} como escenario primario, activar el modo comparativo desde la barra lateral y elegir \textit{datos29} como escenario secundario. Al ejecutar Q17 (semáforo global de peligrosidad), la vista se divide en dos mapas con la misma escala de colores: el de \textit{datos1} a la izquierda y el de \textit{datos29} a la derecha. La columna derecha muestra además el delta del área clasificada en cada nivel de peligro, permitiendo cuantificar de inmediato cuántas hectáreas adicionales caen en la categoría Crítica o Extrema en uno u otro escenario.
+
+Para comparaciones temporales, la superposición en un único gráfico resulta más informativa. Si se ejecuta Q5 en modo comparativo, las dos curvas de área inundada por hora se superponen en un solo eje con colores diferenciados: es posible detectar a simple vista si el pico de inundación se adelanta, se retrasa o si la superficie máxima anegada difiere entre ambos episodios. Esta misma lógica se aplica a Q12 (volumen de agua) y Q13 (área por nivel de calado). La Figura~\ref{fig:app-comparacion} ilustra ambas variantes.
+
+\begin{figure}[ht]
+\centering
+\begin{subfigure}{\textwidth}
+  \includegraphics[width=\textwidth]{Imagenes/Captura_comparacion_Semaforo}
+  \caption{Comparación de mapas de peligrosidad (Q17) entre \textit{datos11 · Abr 1990} y \textit{datos1 · Jul 1980}: dos columnas con la misma escala de colores y el delta de área en cada nivel.}
+\end{subfigure}
+\vspace{4pt}
+\begin{subfigure}{\textwidth}
+  \includegraphics[width=\textwidth]{Imagenes/Captura_comparacion_Q5}
+  \caption{Comparación temporal de Q5 (evolución de extensión inundada): ambas curvas superpuestas en un único gráfico con colores diferenciados.}
+\end{subfigure}
+\caption{Modo de comparación entre escenarios: mapas de peligrosidad en vista de dos columnas (arriba) y series temporales superpuestas (abajo).}
+\label{fig:app-comparacion}
+\end{figure}
+

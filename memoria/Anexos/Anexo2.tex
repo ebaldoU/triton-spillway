@@ -178,3 +178,112 @@ La Tabla~\ref{tab:evolucion-horaria} recoge la evolución horaria de la extensi�
 \label{tab:evolucion-horaria}
 \end{table}
 
+\section{Métricas de la configuración inicial}\label{b-metricas-iniciales}
+
+La Tabla~\ref{tab:metricas-tdb} recoge las métricas del array TileDB de datos1 con la configuración inicial (ZSTD-1, sin filtro de transformación previo), punto de partida del \textit{benchmark} de compresión.
+
+\begin{table}[ht]
+\centering
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{9.5cm}L}
+\toprule
+\textbf{Métrica} & \textbf{Valor} \\
+\midrule
+Pasos temporales & 20 \\
+Resolución ráster & 34 200 $\times$ 23 040 px \\
+Variables & H, QX, QY, MH \\
+Celdas totales del dominio & 15 759 360 000 \\
+Celdas almacenadas en TileDB & 1 311 695 098 \\
+\% del dominio con agua & 8,3 \% \\
+\addlinespace[6pt]
+Ficheros GeoTIFF originales & 235 GB \\
+TileDB sparse (ZSTD-1) & 19 GB \\
+Espacio ahorrado & 216 GB (91,9 \%) \\
+Ratio de compresión & 12,4$\times$ \\
+\addlinespace[6pt]
+Bytes/celda sin comprimir (4 vars $\times$ float32) & 16 B \\
+Bytes/celda en TileDB & 15,6 B \\
+Tiempo de carga (20 pasos) & 454 s ($\sim$7,5 min) \\
+\bottomrule
+\end{tabularx}
+\caption{Métricas globales del array TileDB sparse con configuración inicial ZSTD-1 (datos1). La configuración definitiva tras el \textit{benchmark} se recoge en la Tabla~\ref{tab:configuracion-final}.}
+\label{tab:metricas-tdb}
+\end{table}
+
+\section{Detalles del protocolo de medición}\label{b-protocolo-detalles}
+
+\textbf{Medición de RAM.} El consumo de memoria se mide con la biblioteca estándar \texttt{tracemalloc} de Python, registrando el pico de asignación entre el inicio y el fin de cada operación. Esta herramienta captura las asignaciones realizadas a través del asignador de Python, lo que incluye los arrays de NumPy devueltos por TileDB y rasterio. Los buffers internos asignados directamente en C (por ejemplo, los tiles descomprimidos por TileDB o las bandas leídas por GDAL) no son visibles para \texttt{tracemalloc}, por lo que los valores reportados deben interpretarse como una cota inferior del consumo total del proceso.
+
+\textbf{Throughput.} Se calcula como $\text{bytes\_descomprimidos} / \text{tiempo\_caliente}$, donde \texttt{bytes\_descomprimidos} es el tamaño en memoria de los datos devueltos al cliente: $N_{\text{celdas}} \times N_{\text{variables}} \times 4$ bytes para float32. En TileDB sparse $N_{\text{celdas}}$ corresponde al número de celdas húmedas en la región consultada; en GeoTIFF es el tamaño completo de la ventana leída, incluyendo celdas secas.
+
+\textbf{Caché fría frente a caché caliente.} Antes de cada serie de repeticiones la caché de páginas del sistema operativo se libera con \texttt{sync \&\& echo 3 > /proc/sys/vm/drop\_caches}; la diferencia entre el tiempo en frío y en caliente cuantifica la sensibilidad de cada motor al estado de la caché del sistema operativo.
+
+\section{Validación del benchmark sobre un segundo escenario}\label{validacion-benchmark-datos2}
+
+Para verificar la robustez de los resultados obtenidos con datos1, el \textit{benchmark} TileDB (ByteShuffle+ZSTD-9) vs GeoTIFF se repitió íntegramente sobre un segundo conjunto de datos (datos2), cargado mediante el mismo \textit{pipeline} ETL. datos2 contiene 1 303 516 575 celdas húmedas (17 492 MB en TileDB), frente a 1 311 695 098 celdas de datos1 (17 611 MB). Los resultados se recogen en la Tabla~\ref{tab:bench-datos2}.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{p{4.5cm}XXXXX}
+\toprule
+\textbf{Caso}
+  & \textbf{$t_{\rm cal}$ TDB (s)}
+  & \textbf{$t_{\rm cal}$ TIF (s)}
+  & \textbf{Factor}
+  & \multicolumn{2}{c}{\textbf{RAM (MB)}} \\
+\cmidrule(lr){5-6}
+  & & & & TDB & TIF \\
+\midrule
+C1. Instante completo   & \textbf{1,783}  & 17,365         & \textbf{9,7}$\times$ TDB  & \textbf{2\,328} & 6\,012 \\
+C2. Ventana 50$\times$50 km & \textbf{0,080} & 0,294       & \textbf{3,7}$\times$ TDB  & \textbf{158}    & 191 \\
+C3. Serie temporal, 1 px & 0,061          & \textbf{0,011} & \textbf{5,4}$\times$ TIF  & 90              & \textbf{$<$1} \\
+C4. Peligrosidad (Russo)       & \textbf{47,562} & $\sim$471      & \textbf{9,9}$\times$ TDB  & 3\,980          & \textbf{1\,055} \\
+C5. Estadísticos zona   & \textbf{0,058}  & 0,214          & \textbf{3,7}$\times$ TDB  & \textbf{90}     & 191 \\
+C6. Exportar ventana    & \textbf{0,380}  & 0,799          & \textbf{2,1}$\times$ TDB  & 230             & \textbf{191} \\
+\bottomrule
+\end{tabularx}
+\captionsetup{hypcap=false}\captionof{table}{Benchmark TileDB vs GeoTIFF sobre datos2: validación (3 repeticiones en caché caliente). En negrita: mejor valor por fila.}
+\label{tab:bench-datos2}
+\end{center}
+
+La Tabla~\ref{tab:comparativa-datos1-datos2} contrasta los factores de aceleración obtenidos en ambos \textit{datasets}: el patrón de victorias es idéntico en los seis casos, lo que confirma que las ventajas de TileDB son inherentes al modelo sparse y no específicas de un conjunto de datos concreto.
+
+\begin{table}[ht]
+\centering
+\begin{tabularx}{\textwidth}{p{5cm}XXX}
+\toprule
+\textbf{Caso} & \textbf{Factor datos1} & \textbf{Factor datos2} & \textbf{Consistencia} \\
+\midrule
+C1. Instante completo & 12,4$\times$ TDB & 9,7$\times$ TDB & $\checkmark$ TDB gana \\
+C2. Ventana 50$\times$50 km & 3,2$\times$ TDB & 3,7$\times$ TDB & $\checkmark$ TDB gana \\
+C3. Serie 1 píxel & 5,6$\times$ TIF & 5,4$\times$ TIF & $\checkmark$ TIF gana \\
+C4. Peligrosidad (Russo) & 7,1$\times$ TDB & 9,9$\times$ TDB & $\checkmark$ TDB gana \\
+C5. Estadísticos & 2,4$\times$ TDB & 3,7$\times$ TDB & $\checkmark$ TDB gana \\
+C6. Exportar GeoTIFF & 2,4$\times$ TDB & 2,1$\times$ TDB & $\checkmark$ TDB gana \\
+\bottomrule
+\end{tabularx}
+\caption{Comparativa del factor de aceleración TileDB vs GeoTIFF entre los \textit{datasets} datos1 y datos2.}
+\label{tab:comparativa-datos1-datos2}
+\end{table}
+
+\section{Comparativa multi-escenario}\label{comparativa-multiescenario}
+
+La Tabla~\ref{tab:metricas-datasets} recoge las métricas principales de los cuatro \textit{datasets} de referencia. datos1, datos2 y datos4 representan escenarios de inundación de magnitud similar (extensión máxima 7 433--7 718 km\textsuperscript{2}, $\sim$1 300 M celdas húmedas), mientras que datos3 corresponde a un escenario significativamente más seco (extensión máxima 2 838 km\textsuperscript{2}, 498 M celdas), con el pico de inundación en la hora 6 frente a las horas 90--96 del resto.
+
+\begin{table}[ht]
+\centering
+\begin{tabularx}{\textwidth}{p{6cm}XXXX}
+\toprule
+\textbf{Métrica} & \textbf{datos1} & \textbf{datos2} & \textbf{datos3} & \textbf{datos4} \\
+\midrule
+Pasos temporales & 20 & 20 & 20 & 20 \\
+Celdas húmedas totales (M) & 1 311,7 & 1 303,5 & 498,4 & 1 323,5 \\
+Extensión máxima (km\textsuperscript{2}) & 7 433 & 7 718 & 2 838 & 7 569 \\
+Hora del pico (h) & 90 & 96 & 6 & 96 \\
+Extensión en hora 60 (km\textsuperscript{2}) & 6 196 & 6 059 & 2 358 & 6 196 \\
+Peligrosidad adultos (Russo) h60 (km\textsuperscript{2}) & 2 311 & 2 294 & 717 & 2 311 \\
+Volumen máximo (Mm\textsuperscript{3}) & 4 462,8 & 4 325,3 & 1 327,9 & 4 462,8 \\
+\bottomrule
+\end{tabularx}
+\caption{Métricas globales por \textit{dataset} (datos1--datos4).}
+\label{tab:metricas-datasets}
+\end{table}
+

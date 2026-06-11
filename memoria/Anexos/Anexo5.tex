@@ -164,3 +164,13 @@ ssh -L 8501:localhost:8501 usuario@servidor
 \end{verbatim}
 
 Mientras el túnel esté activo, la aplicación es accesible en \texttt{http://localhost:8501}.
+
+\section{Herramientas auxiliares de desarrollo}\label{e.8-herramientas-auxiliares}
+
+Además de los componentes del producto final, el repositorio incluye varias herramientas de apoyo desarrolladas durante el proyecto para inspeccionar el array TileDB sin pasar por la aplicación web:
+
+\begin{itemize}
+\item \textbf{Visualizador de escritorio} (\texttt{visualize\_tiledb.py}): lee el array sparse y proyecta las celdas húmedas sobre pantalla (máximo 4\,096 px) con cuatro modos de visualización (H, V, Q\_mod, MH) y un panel de cursor en tiempo real, evitando materializar el dominio denso ($\sim$3 GB por variable). Construido con Matplotlib, fue esencial para detectar anomalías geoespaciales en el ETL antes de integrar las consultas en la aplicación web.
+\item \textbf{Utilidades de consola} (\texttt{query\_tiledb.py}, \texttt{query\_max\_depth\_tiledb.py}): estadísticos descriptivos por paso temporal y localización de las N celdas de mayor calado con sus coordenadas UTM, útiles para el \textit{profiling} de casos extremos al calibrar los criterios de peligrosidad.
+\item \textbf{Scripts de \textit{benchmark}} (\texttt{benchmark\_vs\_geotiff.py}, \texttt{benchmark\_queries.py}): reproducen los experimentos de los capítulos de \textit{benchmark} y validación con un único argumento (\texttt{-\/-dataset}).
+\end{itemize}

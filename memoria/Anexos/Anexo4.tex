@@ -1,6 +1,41 @@
 \chapter{Proceso de ingesta ETL detallado}\label{anexo-d.-proceso-de-ingesta-etl-detallado}
 
-El proceso ETL (\textit{geotiff\_to\_tiledb\_sparse.py}) transforma los ficheros GeoTIFF generados por Triton en un array TileDB sparse listo para consulta. Este anexo describe el proceso con el nivel de detalle necesario para reproducirlo o adaptarlo a otro simulador.
+El proceso ETL (\textit{geotiff\_to\_tiledb\_sparse.py}) transforma los ficheros GeoTIFF generados por Triton en un array TileDB sparse listo para consulta. Este anexo describe el proceso con el nivel de detalle necesario para reproducirlo o adaptarlo a otro simulador. La Figura~\ref{fig:etl-flow} muestra el diagrama de flujo completo.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[
+    font=\small\sffamily,
+    node distance=7mm,
+    startstop/.style={rectangle, draw=black!70, fill=black!8, minimum height=8mm, minimum width=44mm, align=center, rounded corners=4pt},
+    process/.style={rectangle, draw=blue!70!black, fill=blue!8, minimum height=9mm, minimum width=58mm, align=center, rounded corners=2pt, thick},
+    decision/.style={diamond, draw=orange!80!black, fill=orange!10, aspect=2.4, minimum height=9mm, align=center, thick, inner sep=1pt},
+    loop/.style={rectangle, draw=violet!70!black, fill=violet!8, minimum height=8mm, minimum width=58mm, align=center, dashed, thick},
+    arrow/.style={-Latex, thick, draw=black!60},
+]
+    \node[startstop] (start) {Inicio (\ttfamily --dataset)};
+    \node[loop, below=of start] (loop1) {\textbf{Bucle:} para cada paso temporal $t \in \{0, \ldots, 19\}$};
+    \node[process, below=of loop1] (read) {Lectura paralela de 4 GeoTIFF (H, QX, QY, MH)\\\scriptsize ThreadPoolExecutor, ventanas de 5 000 filas};
+    \node[process, below=of read] (filter) {Filtro de celdas húmedas\\\scriptsize H $\geq$ 0,01 m};
+    \node[process, below=of filter] (accum) {Acumulación de coordenadas (row, col) y valores};
+    \node[process, below=of accum] (write) {Escritura en TileDB sparse\\\scriptsize 1 fragmento por paso, filtro ByteShuffle + ZSTD-9};
+    \node[decision, below=of write] (more) {¿Quedan pasos?};
+    \node[process, below=8mm of more] (verify) {Verificación de integridad\\\scriptsize muestreo aleatorio TileDB vs GeoTIFF};
+    \node[startstop, below=of verify] (end) {Fin};
+
+    \draw[arrow] (start) -- (loop1);
+    \draw[arrow] (loop1) -- (read);
+    \draw[arrow] (read) -- (filter);
+    \draw[arrow] (filter) -- (accum);
+    \draw[arrow] (accum) -- (write);
+    \draw[arrow] (write) -- (more);
+    \draw[arrow] (more.east) -- ++(30mm,0) |- node[pos=0.25, right, font=\scriptsize] {sí} (loop1.east);
+    \draw[arrow] (more) -- node[right, font=\scriptsize] {no} (verify);
+    \draw[arrow] (verify) -- (end);
+\end{tikzpicture}
+\caption{Diagrama de flujo del proceso ETL. Por cada escenario se iteran los 20 pasos temporales: se leen los cuatro ficheros GeoTIFF, se filtra por H $\geq$ 0,01 m y se escriben sólo las celdas húmedas en el array TileDB sparse con compresión ByteShuffle+ZSTD-9. Al finalizar se verifica la integridad mediante muestreo aleatorio.}
+\label{fig:etl-flow}
+\end{figure}
 
 \section{Parámetros de configuración}\label{d.1-parametros-de-configuracion}
 

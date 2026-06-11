@@ -2,37 +2,7 @@
 
 Este capítulo determina la configuración óptima de almacenamiento del array TileDB a partir de un \textit{benchmark} sistemático ejecutado sobre los datos reales del dominio de simulación. Se evalúan cinco grupos de parámetros de forma independiente —filtros de compresión, tamaño de \textit{tile}, tipo de dato, organización temporal y estructura de atributos (G1--G5)— y se adopta la configuración definitiva que se aplica a los 56 conjuntos de datos procesados. La sección~\ref{entorno-y-metodologia-experimental} describe el entorno de prueba y el protocolo de medición; la sección~\ref{resultado-final-configuracion-definitiva} resume las decisiones adoptadas y la configuración final.
 
-Como referencia de partida, la Tabla~\ref{tab:metricas-tdb} recoge las métricas del array con la configuración inicial (ZSTD-1, sin filtro de transformación previo), previa al \textit{benchmark} de configuraciones de compresión.
-
-\begin{table}[ht]
-\centering
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{9.5cm}L}
-\toprule
-\textbf{Métrica} & \textbf{Valor} \\
-\midrule
-Pasos temporales & 20 \\
-Resolución ráster & 34 200 $\times$ 23 040 px \\
-Variables & H, QX, QY, MH \\
-Celdas totales del dominio & 15 759 360 000 \\
-Celdas almacenadas en TileDB & 1 311 695 098 \\
-\% del dominio con agua & 8,3 \% \\
-\addlinespace[6pt]
-Ficheros GeoTIFF originales & 235 GB \\
-TileDB sparse (ZSTD-1) & 19 GB \\
-Espacio ahorrado & 216 GB (91,9 \%) \\
-Ratio de compresión & 12,4$\times$ \\
-\addlinespace[6pt]
-Bytes/celda sin comprimir (4 vars $\times$ float32) & 16 B \\
-Bytes/celda en TileDB & 15,6 B \\
-Tiempo de carga (20 pasos) & 454 s ($\sim$7,5 min) \\
-\bottomrule
-\end{tabularx}
-\caption{Métricas globales del array TileDB sparse con configuración inicial ZSTD-1 (datos1). La configuración definitiva tras el \textit{benchmark} se recoge en la Tabla~\ref{tab:configuracion-final}.}
-\label{tab:metricas-tdb}
-\end{table}
-
-
-El ahorro de espacio proviene principalmente del almacenamiento disperso (solo el $\sim$8,3 \% del dominio está inundado), no de la compresión en sí. Para cuantificar el impacto de distintas configuraciones de compresión se diseñó un \textit{benchmark} exhaustivo con cinco dimensiones de experimento, ejecutado sobre los datos reales del paso temporal 16\_00 (64,3 millones de celdas húmedas). Las lecturas se midieron sobre una región fija de 5 000$\times$5 000 celdas con 200 repeticiones para obtener resultados estadísticamente robustos.
+El ahorro de espacio proviene principalmente del almacenamiento disperso (solo el $\sim$8,3 \% del dominio está inundado), no de la compresión en sí; las métricas del array con la configuración inicial (ZSTD-1) se recogen en la Tabla~\ref{tab:metricas-tdb} del \hyperref[anexo-b.-tablas-de-resultados-completas]{Anexo~B}. Para cuantificar el impacto de la compresión se diseñó un \textit{benchmark} con cinco dimensiones de experimento, ejecutado sobre los datos reales del paso temporal 16\_00 (64,3 millones de celdas húmedas).
 
 \section{Entorno y metodología experimental}\label{entorno-y-metodologia-experimental}
 
@@ -46,21 +16,7 @@ Software: Windows 11 Pro con subsistema WSL2 (Windows Subsystem for Linux~2, Ubu
 
 \subsection{Protocolo de medición}\label{protocolo-de-medicion}
 
-Cada caso de prueba se ejecuta siguiendo el mismo protocolo:
-
-\begin{itemize}
-\item \textbf{Repeticiones.} Los \textit{benchmarks} de patrones de acceso (5 patrones de consulta y 6 casos TileDB vs GeoTIFF) se ejecutan tres veces consecutivas y se reporta la mediana. Para el benchmark de filtros de compresión, en el que la dispersión es relevante para discriminar configuraciones similares, se ejecutaron 200 repeticiones sobre una región fija de 5 000$\times$5 000 celdas y se reporta mediana y desviación típica.
-
-\item \textbf{Caché fría frente a caché caliente.} Antes de cada serie de repeticiones la caché de páginas del sistema operativo se libera con \texttt{sync \&\& echo 3 > /proc/sys/vm/drop\_caches} para medir el tiempo en frío de la primera lectura. Las repeticiones segunda y tercera se ejecutan sin liberar caché y miden el tiempo en caché caliente, que es el valor reportado en las tablas comparativas. La diferencia entre ambos tiempos cuantifica la sensibilidad de cada motor (TileDB y GeoTIFF) al estado de la caché del sistema operativo.
-
-\item \textbf{Medición de RAM.} El consumo de memoria se mide con la biblioteca estándar \texttt{tracemalloc} de Python, registrando el pico de asignación entre el inicio y el fin de cada operación. Esta herramienta captura las asignaciones realizadas a través del asignador de Python, lo que incluye los arrays de NumPy devueltos por TileDB y rasterio. Los buffers internos asignados directamente en C (por ejemplo, los tiles descomprimidos por TileDB o las bandas leídas por GDAL antes de pasar a NumPy) no son visibles para \texttt{tracemalloc}, por lo que los valores reportados deben interpretarse como una cota inferior del consumo total del proceso, no como su valor exacto.
-
-\item \textbf{Throughput.} Se calcula como $\text{bytes\_descomprimidos} / \text{tiempo\_caliente}$, donde \texttt{bytes\_descomprimidos} es el tamaño en memoria de los datos devueltos al cliente: $N_{\text{celdas}} \times N_{\text{variables}} \times 4$ bytes para float32. En TileDB sparse $N_{\text{celdas}}$ corresponde al número de celdas húmedas en la región consultada; en GeoTIFF es el tamaño completo de la ventana leída, incluyendo celdas secas.
-
-\item \textbf{Reproducibilidad.} Todos los scripts de \textit{benchmark} están versionados en el directorio \texttt{spillway/} del proyecto y son reejecutables con un único argumento (\texttt{--dataset}). Los tiempos absolutos dependen del hardware; los factores relativos entre TileDB y GeoTIFF son los resultados directamente comparables.
-\end{itemize}
-
-Este protocolo garantiza la comparabilidad de los resultados entre configuraciones y entre las dos tecnologías evaluadas (TileDB y GeoTIFF), y permite aislar el efecto de cada parámetro de almacenamiento de la variabilidad inherente al estado de la caché del sistema operativo.
+Cada caso de prueba sigue el mismo protocolo. Los \textit{benchmarks} de patrones de acceso se ejecutan tres veces y se reporta la mediana; el de filtros de compresión usa 200 repeticiones sobre una región fija de 5 000$\times$5 000 celdas. Antes de cada serie se libera la caché de páginas del sistema operativo para medir el tiempo en frío; las repeticiones siguientes miden el tiempo en caché caliente, que es el valor reportado en las tablas. La RAM pico se mide con \texttt{tracemalloc} (los matices de esta medición y el cálculo del \textit{throughput} se detallan en el \hyperref[anexo-b.-tablas-de-resultados-completas]{Anexo~B}). Todos los scripts están versionados en el repositorio y son reejecutables con un único argumento; los tiempos absolutos dependen del hardware, pero los factores relativos entre TileDB y GeoTIFF son directamente comparables.
 
 \section{Resultado final: configuración definitiva}\label{resultado-final-configuracion-definitiva}
 
@@ -108,30 +64,11 @@ Las herramientas de análisis y visualización construidas sobre el sistema se p
 
 \chapter{Herramientas desarrolladas}\label{herramientas-desarrolladas}
 
-Este capítulo describe el motor de consultas analíticas, la aplicación web y las herramientas de apoyo utilizadas durante el desarrollo. Los componentes entregados como producto final son el módulo de ingesta, el motor de consultas y la aplicación web. Las demás herramientas se desarrollaron como apoyo al proceso de investigación y están disponibles en el repositorio del proyecto.
-
-\section{Herramientas de exploración y diagnóstico}\label{herramientas-exploracion}
-
-Durante el desarrollo se implementaron varias herramientas de apoyo para inspeccionar el array TileDB directamente sin pasar por la aplicación web. Un visualizador interactivo lee el array sparse y proyecta las celdas húmedas sobre pantalla (máximo 4 096 px) con cuatro modos de visualización (H, V, Q\_mod, MH) y un panel de cursor en tiempo real, evitando materializar el dominio denso ($\sim$3 GB por variable); esta herramienta fue esencial durante el desarrollo para detectar anomalías geoespaciales en el ETL antes de integrar las consultas en la aplicación web. Dos utilidades de consulta por consola permiten obtener estadísticos descriptivos por paso temporal y localizar las N celdas de mayor calado con sus coordenadas UTM, facilitando el \textit{profiling} de casos extremos para calibrar los criterios de peligrosidad.
-
-Para cuantificar el rendimiento se midieron cinco patrones de acceso representativos sobre datos1: escaneo total (44,0 s, 835 MB/s), instante completo (1,95 s, 892 MB/s), consulta acotada (0,13 s, 962 MB/s) y dos intermedios. El resultado de este análisis informa directamente el diseño de la aplicación web: las consultas de menos de 4 s se ejecutan sin caché; las de 30--120 s se gestionan con \texttt{@st.cache\_data}.
-
-La Figura~\ref{fig:app-streamlit} muestra la interfaz de la aplicación con un resultado real.
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=\textwidth]{Imagenes/Captura_Spillway}
-\caption{Interfaz de la aplicación Streamlit mostrando la consulta Q7 (hora de llegada del frente de inundación) sobre \texttt{datos29}.}
-\label{fig:app-streamlit}
-\end{figure}
+Este capítulo describe el motor de consultas analíticas, la comparativa frente a GeoTIFF y la aplicación web, que junto con el módulo de ingesta constituyen el producto final del trabajo. Las herramientas auxiliares de exploración y diagnóstico desarrolladas como apoyo (visualizador de escritorio y utilidades de consola) se describen en el \hyperref[anexo-e.-guia-de-despliegue]{Anexo~E}.
 
 \section{Exportación a GeoTIFF}\label{exportacion-a-geotiff}
 
-El sistema incluye funcionalidad de exportación para interoperabilidad con herramientas SIG externas como QGIS, que no leen directamente el formato TileDB. La exportación reconstruye el ráster denso a partir del array sparse: las celdas húmedas se posicionan según (row, col) y las secas reciben \textit{nodata} (-9999). El GeoTIFF resultante conserva EPSG:32614 y resolución de 10 m, y puede restringirse a una subregión espacial. Los metadatos geoespaciales necesarios (CRS, transformación afín, extensión, pasos temporales) se almacenan dentro del propio array TileDB durante la ingesta, por lo que la exportación no requiere conservar los GeoTIFF originales ($\sim$235 GB por escenario) en el servidor de producción.
-
-Cada variable exportada ocupa $\sim$257 MB. Exportar los 20 pasos con las 4 variables produciría $\sim$20 GB, anulando la ventaja de compresión, por lo que la exportación está concebida como herramienta puntual de interoperabilidad SIG, no como formato de almacenamiento alternativo. Esta funcionalidad está disponible tanto desde la aplicación web (botón de descarga por consulta) como de forma autónoma.
-
-El detalle de cada consulta, organizadas en ocho bloques (A--H), se recoge en la Tabla~\ref{tab:bloques-queries} de la sección~\ref{motor-de-consultas-analiticas} y en el \hyperref[anexo-a.-catalogo-completo-de-consultas-analiticas]{Anexo~A}. Todas admiten subconjunto espacial (bbox en km) y temporal (paso o rango de pasos).
+El sistema incluye exportación a GeoTIFF para interoperabilidad con herramientas SIG como QGIS, que no leen el formato TileDB: reconstruye el ráster denso a partir del array sparse (las celdas secas reciben \textit{nodata}), conservando EPSG:32614 y la resolución de 10 m, con posibilidad de restringirse a una subregión. Los metadatos geoespaciales se almacenan en el propio array durante la ingesta, por lo que no es necesario conservar los GeoTIFF originales en el servidor. Está disponible desde la aplicación web (botón de descarga por consulta) y de forma autónoma, concebida como herramienta puntual: exportar el escenario completo produciría $\sim$20 GB, anulando la ventaja de compresión.
 
 \section{Motor de consultas analíticas}\label{motor-de-consultas-analiticas}
 
@@ -159,18 +96,12 @@ H. Daños normativos & Q18 & Zona de graves daños según el Real Decreto 9/2008
 \label{tab:bloques-queries}
 \end{center}
 
-Los bloques D y E implementan criterios de peligrosidad complementarios. El bloque D emplea umbrales operativos simplificados de Russo et al.\ \cite{russo2013}: una celda es peligrosa para adultos si $H > 0{,}50$ m o $Q_{mod} > 0{,}50$ m²/s, y para niños si $H > 0{,}25$ m o $Q_{mod} > 0{,}15$ m²/s. La consulta Q17 combina estos cortes con umbrales superiores propios de la aplicación en un semáforo de cinco niveles: Somera ($H \leq 0{,}25$ m), Peligrosa para niños (0,25--0,50 m), Peligrosa para adultos (0,50--1,00 m), Crítica (1,00--2,00 m) y Extrema ($H > 2{,}00$ m).
-
-El bloque E incorpora el criterio experimental de Xia et al.\ \cite{xia2014} para personas y de Xia et al.\ \cite{xia2011vehicles} para vehículos. A diferencia de los umbrales fijos de Russo, este criterio calcula para cada celda la velocidad crítica de inestabilidad $U_{c,p}(H)$ a partir de la cual el flujo desestabiliza al individuo, en función del calado local y de los parámetros antropométricos del sujeto. Las consultas de adultos (Q10a-Xia) y niños (Q10b-Xia) utilizan los perfiles del adulto medio español ($h_p = 1{,}68$ m, $m_p = 73{,}76$ kg) y de un niño de 8 años ($h_p = 1{,}26$ m, $m_p = 25{,}64$ kg) respectivamente; la mayor vulnerabilidad del niño se refleja directamente en umbrales de velocidad crítica inferiores. Cada celda se clasifica en tres niveles: segura ($V < U_{c,p}^{\text{naranja}}$), riesgo moderado ($U_{c,p}^{\text{naranja}} \leq V < U_{c,p}^{\text{roja}}$) y riesgo alto ($V \geq U_{c,p}^{\text{roja}}$). Para vehículos, la velocidad crítica $U_{c,v}(H)$ bifurca según el grado de sumersión: régimen de inmersión parcial ($H < H_c = 1{,}417$ m) y régimen de sumersión total ($H \geq H_c$), cada uno con coeficientes propios.
+Los bloques D y E implementan criterios de peligrosidad complementarios: el bloque D aplica los umbrales fijos de calado y caudal unitario de Russo et al.\ \cite{russo2013}, mientras que el bloque E calcula para cada celda la velocidad crítica de inestabilidad de Xia et al.\ \cite{xia2014, xia2011vehicles} en función del calado local y de los parámetros antropométricos del sujeto (adulto, niño) o las dimensiones del vehículo. Los umbrales concretos y los parámetros de cada criterio se detallan en el \hyperref[anexo-a.-catalogo-completo-de-consultas-analiticas]{Anexo~A}.
 
 
 \section{Comparativa TileDB frente a GeoTIFF}\label{benchmark-vs-geotiff}
 
-Para cuantificar la ventaja práctica del array TileDB sparse frente al acceso directo a los GeoTIFF originales se ejecutó un \textit{benchmark} con seis casos de prueba que cubren los patrones de acceso más habituales en análisis hidráulico. Cada caso se midió con ambas tecnologías bajo las mismas condiciones: una primera lectura en frío (sin caché Python previa, aunque el SO puede tener páginas en caché) y tres repeticiones en caliente para medir el tiempo estable. La memoria RAM pico se midió con \texttt{tracemalloc}.
-
-Las pruebas se realizan sobre el array TileDB (ByteShuffle+ZSTD-9, 17\,611 MB) y los GeoTIFF originales de 20 pasos $\times$ 4 variables ($\sim$235 GB). La ventana espacial de referencia es (685 000, 4 335 000) $\rightarrow$ (735 000, 4 385 000) {[}50 $\times$ 50 km, zona húmeda SW del dominio{]} y el paso de referencia es 10\_00 (hora 60 h).
-
-Los resultados se recogen en la Tabla~\ref{tab:bench-datos1}.
+Para cuantificar la ventaja práctica del array TileDB sparse frente al acceso directo a los GeoTIFF originales ($\sim$235 GB) se ejecutó un \textit{benchmark} con seis casos de prueba que cubren los patrones de acceso más habituales en análisis hidráulico, siguiendo el protocolo de la sección~\ref{protocolo-de-medicion}. Los resultados sobre datos1 se recogen en la Tabla~\ref{tab:bench-datos1}.
 
 \begin{center}
 \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.0cm}RRRRRRR}
@@ -199,127 +130,24 @@ C6. Exportar ventana    & 0,393 & \textbf{0,296}  & 0,931  & 0,719  & \textbf{2,
 
 Factor = $t_{\rm cal}$(GeoTIFF) / $t_{\rm cal}$(TileDB) si gana TileDB, o $t_{\rm cal}$(TileDB) / $t_{\rm cal}$(GeoTIFF) si gana GeoTIFF.
 
-\textbf{Análisis de resultados}
+TileDB supera a GeoTIFF en cinco de los seis casos. La ventaja más pronunciada se da en C1 (12,4$\times$): TileDB evita leer los píxeles secos ($\sim$92 \% del dominio), mientras que GeoTIFF debe descodificar los rásteres completos ($\approx$ 24 GB por instante). En C4 (peligrosidad sobre toda la serie temporal), la lectura densa de GeoTIFF agota la memoria si no se procesa por franjas, y aun así tarda 293 s frente a los 41 s de TileDB. El único caso favorable a GeoTIFF es C3 (serie temporal de un píxel, 5,3$\times$): rasterio resuelve una ventana 1$\times$1 con una lectura directa que el índice sparse de TileDB no puede igualar. En RAM, TileDB es más eficiente en las lecturas masivas (C1: 2\,328 frente a 6\,012 MB). En almacenamiento, la reducción es de $\sim$235 GB a 17\,611 MB (92,7 \%, ratio 13,7$\times$), debida principalmente al modelo sparse y en menor medida al filtro de compresión.
 
-TileDB supera a GeoTIFF en cinco de los seis casos de prueba. La ventaja más pronunciada se da en C1 (12,4$\times$), donde TileDB evita leer los píxeles secos que representan el $\sim$92 \% del dominio, mientras que GeoTIFF debe descodificar los rásteres completos (34 200 $\times$ 23 040 px $\times$ 4 vars $\times$ 4 bytes $\approx$ 24 GB por instante).
-
-El caso C4 (cálculo del indicador de peligrosidad según Russo para toda la serie temporal) pone de manifiesto la limitación crítica de GeoTIFF: la lectura de H, QX y QY en modo denso requiere aproximadamente 9,5 GB por paso temporal, lo que provoca que el proceso sea terminado por el sistema operativo por falta de memoria (\textit{out-of-memory}, OOM) si se intenta cargar cada ráster completo en memoria. La versión por franjas (chunks de 2 000 filas, $\sim$550 MB pico) evita el OOM pero tarda 293 s frente a los 41 s de TileDB, que solo carga las celdas húmedas ($\sim$8,3 \% del dominio).
-
-El único caso en que GeoTIFF supera a TileDB es C3 (serie temporal de un único píxel, 5,3$\times$ más rápido). Esto se debe a que rasterio resuelve una ventana 1$\times$1 píxel mediante una lectura directa a disco sin descodificación de índice sparse, operación que TileDB no puede optimizar al mismo nivel dado su diseño orientado a consultas multidimensionales sobre conjuntos de celdas.
-
-Respecto al consumo de RAM, TileDB es sistemáticamente más eficiente en todos los casos de lectura masiva (C1: 2 328 MB vs 6 012 MB; C2: 158 MB vs 191 MB). En C4, TileDB usa más RAM (3 980 MB) porque acumula todas las celdas húmedas de los 20 pasos en memoria para el cálculo vectorizado, mientras que la versión por franjas de GeoTIFF procesa de forma secuencial con menor huella.
-
-En cuanto al almacenamiento, la reducción es de $\sim$235 GB (ficheros GeoTIFF) a 17 611 MB en TileDB con la configuración definitiva, un ahorro del 92,7 \% (ratio 13,7$\times$). Esta compresión se debe principalmente al almacenamiento sparse (solo celdas húmedas) y en menor medida al filtro ByteShuffle+ZSTD-9.
-
-\section{Validación sobre un segundo escenario}\label{validacion-benchmark-datos2}
-
-Para verificar la robustez de los resultados obtenidos con datos1, el benchmark TileDB (ByteShuffle+ZSTD-9) vs GeoTIFF se repitió íntegramente sobre un segundo conjunto de datos (datos2), cargado en el array triton\_results/datos2 mediante el mismo \textit{pipeline} ETL. datos2 contiene 1 303 516 575 celdas húmedas (17 492 MB en TileDB), frente a 1 311 695 098 celdas de datos1 (17 611 MB), lo que indica una simulación con una extensión de inundación ligeramente inferior.
-
-Los resultados se recogen en la Tabla~\ref{tab:bench-datos2}.
-
-\begin{center}
-\begin{tabularx}{\textwidth}{p{4.5cm}XXXXX}
-\toprule
-\textbf{Caso}
-  & \textbf{$t_{\rm cal}$ TDB (s)}
-  & \textbf{$t_{\rm cal}$ TIF (s)}
-  & \textbf{Factor}
-  & \multicolumn{2}{c}{\textbf{RAM (MB)}} \\
-\cmidrule(lr){5-6}
-  & & & & TDB & TIF \\
-\midrule
-C1. Instante completo   & \textbf{1,783}  & 17,365         & \textbf{9,7}$\times$ TDB  & \textbf{2\,328} & 6\,012 \\
-C2. Ventana 50$\times$50 km & \textbf{0,080} & 0,294       & \textbf{3,7}$\times$ TDB  & \textbf{158}    & 191 \\
-C3. Serie temporal, 1 px & 0,061          & \textbf{0,011} & \textbf{5,4}$\times$ TIF  & 90              & \textbf{$<$1} \\
-C4. Peligrosidad (Russo)       & \textbf{47,562} & $\sim$471      & \textbf{9,9}$\times$ TDB  & 3\,980          & \textbf{1\,055} \\
-C5. Estadísticos zona   & \textbf{0,058}  & 0,214          & \textbf{3,7}$\times$ TDB  & \textbf{90}     & 191 \\
-C6. Exportar ventana    & \textbf{0,380}  & 0,799          & \textbf{2,1}$\times$ TDB  & 230             & \textbf{191} \\
-\bottomrule
-\end{tabularx}
-\captionsetup{hypcap=false}\captionof{table}{Benchmark TileDB vs GeoTIFF sobre datos2: validación (3 repeticiones en caché caliente). En negrita: mejor valor por fila.}
-\label{tab:bench-datos2}
-\end{center}
-
-Factor = $t_{\rm cal}$(GeoTIFF) / $t_{\rm cal}$(TileDB) si gana TileDB, o $t_{\rm cal}$(TileDB) / $t_{\rm cal}$(GeoTIFF) si gana GeoTIFF.
-
-\textbf{Comparativa datos1 vs datos2}
-
-La Tabla~\ref{tab:comparativa-datos1-datos2} contrasta los factores de aceleración obtenidos en ambos \textit{datasets}: el patrón de victorias es idéntico en los seis casos, lo que confirma que los resultados no dependen del escenario concreto.
-
-
-\begin{table}[ht]
-\centering
-\begin{tabularx}{\textwidth}{p{5cm}XXX}
-\toprule
-\textbf{Caso} & \textbf{Factor datos1} & \textbf{Factor datos2} & \textbf{Consistencia} \\
-\midrule
-C1. Instante completo & 12,4$\times$ TDB & 9,7$\times$ TDB & $\checkmark$ TDB gana \\
-C2. Ventana 50$\times$50 km & 3,2$\times$ TDB & 3,7$\times$ TDB & $\checkmark$ TDB gana \\
-C3. Serie 1 píxel & 5,6$\times$ TIF & 5,4$\times$ TIF & $\checkmark$ TIF gana \\
-C4. Peligrosidad (Russo) & 7,1$\times$ TDB & 9,9$\times$ TDB & $\checkmark$ TDB gana \\
-C5. Estadísticos & 2,4$\times$ TDB & 3,7$\times$ TDB & $\checkmark$ TDB gana \\
-C6. Exportar GeoTIFF & 2,4$\times$ TDB & 2,1$\times$ TDB & $\checkmark$ TDB gana \\
-\bottomrule
-\end{tabularx}
-\caption{Comparativa del factor de aceleración TileDB vs GeoTIFF entre los \textit{datasets} datos1 y datos2.}
-\label{tab:comparativa-datos1-datos2}
-\end{table}
-
-
-Los resultados son consistentes en ambos escenarios, confirmando que las ventajas de TileDB son inherentes al modelo sparse y no específicas de un conjunto de datos concreto.
-
-\section{Comparativa multi-escenario}\label{comparativa-multiescenario}
-
-Para verificar la coherencia del sistema con varios escenarios, se calcularon las métricas principales sobre los cuatro \textit{datasets} de referencia (datos1--datos4). La Tabla~\ref{tab:metricas-datasets} recoge las métricas principales. Los resultados confirman que datos1, datos2 y datos4 representan escenarios de inundación de magnitud similar (extensión máxima 7 433--7 718 km\textsuperscript{2}, $\sim$1 300 M celdas húmedas), mientras que datos3 corresponde a un escenario significativamente más seco (extensión máxima 2 838 km\textsuperscript{2}, 498 M celdas). El pico de inundación de datos3 ocurre en la hora 6 frente a las horas 90--96 del resto de \textit{datasets}. Posteriormente se procesaron los 52 escenarios adicionales (datos5--datos56) con el mismo \textit{pipeline} ETL. El conjunto completo de 56 \textit{datasets} comprende 40 episodios históricos (julio 1980 -- mayo 2019) y 16 de proyección climática futura (2020--2035) bajo el escenario de altas emisiones SSP5-8.5 (\textit{Shared Socioeconomic Pathway}~5), lo que abre la puerta a analizar tendencias de peligrosidad entre el pasado reciente y la proyección futura, aunque dicho análisis comparativo queda fuera del alcance de este documento.
-
-\begin{table}[ht]
-\centering
-\begin{tabularx}{\textwidth}{p{6cm}XXXX}
-\toprule
-\textbf{Métrica} & \textbf{datos1} & \textbf{datos2} & \textbf{datos3} & \textbf{datos4} \\
-\midrule
-Pasos temporales & 20 & 20 & 20 & 20 \\
-Celdas húmedas totales (M) & 1 311,7 & 1 303,5 & 498,4 & 1 323,5 \\
-Extensión máxima (km\textsuperscript{2}) & 7 433 & 7 718 & 2 838 & 7 569 \\
-Hora del pico (h) & 90 & 96 & 6 & 96 \\
-Extensión en hora 60 (km\textsuperscript{2}) & 6 196 & 6 059 & 2 358 & 6 196 \\
-Peligrosidad adultos (Russo) h60 (km\textsuperscript{2}) & 2 311 & 2 294 & 717 & 2 311 \\
-Volumen máximo (Mm\textsuperscript{3}) & 4 462,8 & 4 325,3 & 1 327,9 & 4 462,8 \\
-\bottomrule
-\end{tabularx}
-\caption{Métricas globales por \textit{dataset} (datos1--datos4).}
-\label{tab:metricas-datasets}
-\end{table}
-
+Para verificar la robustez, el \textit{benchmark} se repitió íntegramente sobre un segundo escenario (datos2) con el mismo patrón de victorias en los seis casos, y se calcularon las métricas principales de los cuatro \textit{datasets} de referencia (datos1--datos4), que confirman la coherencia del sistema entre escenarios de magnitud distinta. Las tablas completas de ambas validaciones se recogen en el \hyperref[anexo-b.-tablas-de-resultados-completas]{Anexo~B} (Tablas~\ref{tab:bench-datos2}, \ref{tab:comparativa-datos1-datos2} y~\ref{tab:metricas-datasets}). Posteriormente se procesaron los 52 escenarios restantes con el mismo \textit{pipeline} ETL: el conjunto completo de 56 \textit{datasets} comprende 40 episodios históricos (julio 1980 -- mayo 2019) y 16 de proyección climática futura (2020--2035) bajo el escenario de altas emisiones SSP5-8.5 (\textit{Shared Socioeconomic Pathway}~5).
 
 La evolución horaria detallada (extensión e indicador de peligro para adultos en cada hora de simulación) se recoge en la Tabla~\ref{tab:evolucion-horaria} del \hyperref[anexo-b.-tablas-de-resultados-completas]{Anexo~B}.
 
 \section{Aplicación web interactiva}\label{aplicacion-web-interactiva}
 
-La aplicación web constituye la capa de presentación del sistema y el principal punto de acceso para el usuario final. Desarrollada con Streamlit \cite{streamlit}, expone las 24 consultas del motor analítico mediante una interfaz accesible desde el navegador sin instalación adicional de software ni escritura de código.
-
-\medskip\noindent\textbf{Selección de escenario.}
-Al arrancar, la aplicación descubre automáticamente los \textit{datasets} disponibles en el directorio \texttt{triton\_results/} y permite seleccionar el escenario activo desde la barra lateral. El selector muestra el alias del \textit{dataset} junto con su fecha de inicio (por ejemplo, \textit{datos1 · Jul 1980}), extraída del nombre del directorio. Un panel colapsable opcional muestra los metadatos del escenario: pasos temporales, extensión del dominio y resolución espacial. La Figura~\ref{fig:app-sidebar} muestra la barra lateral con estos controles.
+La aplicación web constituye la capa de presentación del sistema y el principal punto de acceso para el usuario final. Desarrollada con Streamlit \cite{streamlit}, expone las 24 consultas del motor analítico mediante una interfaz accesible desde el navegador sin instalación adicional de software ni escritura de código. La Figura~\ref{fig:app-streamlit} muestra la interfaz con un resultado real.
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.55\textwidth]{Imagenes/Captura_Sidebar}
-\caption{Barra lateral de la aplicación: selector de escenario, bloque y consulta activos, parámetros de ejecución y botón de lanzamiento.}
-\label{fig:app-sidebar}
+\includegraphics[width=\textwidth]{Imagenes/Captura_Spillway}
+\caption{Interfaz de la aplicación Streamlit mostrando la consulta Q7 (hora de llegada del frente de inundación) sobre \texttt{datos29}.}
+\label{fig:app-streamlit}
 \end{figure}
 
-\medskip\noindent\textbf{Organización de las consultas.}
-Las 24 consultas se presentan en los ocho bloques del motor analítico (A--H) como secciones desplegables. Cada consulta indica su modo de ejecución: automático (resultado inmediato al cambiar los parámetros) o manual (requiere confirmación explícita), distinguiendo las consultas aptas para uso interactivo de las que implican tiempos de cómputo elevados.
-
-\medskip\noindent\textbf{Presentación de resultados.}
-Los resultados se muestran en tres formatos según la consulta: mapa interactivo (Plotly) para análisis espaciales, gráfico temporal para series de datos y métricas numéricas para estadísticos. Las consultas de dominio completo emplean caché para evitar recalcular cuando los parámetros no cambian. La selección de coordenadas admite dos modalidades: clic sobre el mapa o introducción manual en UTM. Las Figuras~\ref{fig:app-q5-temporal} y~\ref{fig:app-mapa-peligrosidad} muestran, respectivamente, un resultado en formato de gráfico temporal (Q5) y otro en formato de mapa interactivo (Q17).
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=\textwidth]{Imagenes/Captura_Q5}
-\caption{Resultado de Q5 (evolución de extensión inundada): gráfico temporal con el área inundada en km² a lo largo de los 20 pasos de simulación.}
-\label{fig:app-q5-temporal}
-\end{figure}
+Al arrancar, la aplicación descubre los \textit{datasets} disponibles y permite seleccionar el escenario activo desde la barra lateral, donde cada uno aparece con su alias y fecha de inicio (\textit{datos1 · Jul 1980}). Las 24 consultas se presentan en los ocho bloques del motor (A--H) como secciones desplegables, distinguiendo las consultas de respuesta inmediata de las que implican tiempos de cómputo elevados (ejecución manual y caché). Los resultados se muestran en tres formatos según la consulta: mapa interactivo, gráfico temporal o métricas numéricas; la Figura~\ref{fig:app-mapa-peligrosidad} muestra un resultado espacial. La selección de coordenadas admite clic sobre el mapa o introducción manual en UTM.
 
 \begin{figure}[ht]
 \centering
@@ -329,31 +157,11 @@ Los resultados se muestran en tres formatos según la consulta: mapa interactivo
 \end{figure}
 
 \medskip\noindent\textbf{Modo de comparación entre \textit{datasets}.}
-La barra lateral incluye un activador de modo comparativo que permite seleccionar un segundo \textit{dataset} sobre el que ejecutar la misma consulta en paralelo. Al activarlo, la vista principal se divide en dos columnas: el mapa o gráfico del \textit{dataset} primario a la izquierda y el del secundario a la derecha, ambos generados con los mismos parámetros (hora, umbral, zona geográfica). Sobre cada columna se muestra la métrica clave de ese escenario (por ejemplo, área inundada o calado máximo), y la columna derecha añade el delta respecto al valor del \textit{dataset} primario, facilitando la comparación cuantitativa directa. El modo comparativo es compatible con todas las consultas del catálogo, incluyendo los mapas de peligrosidad (Russo, Xia), la zona de graves daños (RD 9/2008) y los indicadores de evacuación. Cuando el resultado es una serie temporal (Q2, Q5, Q12, Q13), ambas curvas se superponen en un único gráfico de líneas con colores diferenciados en lugar de dividir la vista en columnas. La Figura~\ref{fig:app-comparacion} ilustra ambas variantes del modo comparativo.
-
-\begin{figure}[ht]
-\centering
-\begin{subfigure}{\textwidth}
-  \includegraphics[width=\textwidth]{Imagenes/Captura_comparacion_Semaforo}
-  \caption{Comparación de mapas de peligrosidad (Q17) entre \textit{datos11 · Abr 1990} y \textit{datos1 · Jul 1980}: dos columnas con la misma escala de colores y el delta de área en cada nivel.}
-\end{subfigure}
-\vspace{4pt}
-\begin{subfigure}{\textwidth}
-  \includegraphics[width=\textwidth]{Imagenes/Captura_comparacion_Q5}
-  \caption{Comparación temporal de Q5 (evolución de extensión inundada): ambas curvas superpuestas en un único gráfico con colores diferenciados.}
-\end{subfigure}
-\caption{Modo de comparación entre escenarios: mapas de peligrosidad en vista de dos columnas (arriba) y series temporales superpuestas (abajo).}
-\label{fig:app-comparacion}
-\end{figure}
-
-\medskip\noindent\textbf{Ejemplo de uso del modo comparativo.}
-Supóngase que se quiere evaluar si el episodio de crecida de julio de 1980 (\textit{datos1}) genera una zona de peligrosidad más extensa que el de junio de 2008 (\textit{datos29}). Basta con seleccionar \textit{datos1} como escenario primario, activar el modo comparativo desde la barra lateral y elegir \textit{datos29} como escenario secundario. Al ejecutar Q17 (semáforo global de peligrosidad), la vista se divide en dos mapas con la misma escala de colores: el de \textit{datos1} a la izquierda y el de \textit{datos29} a la derecha. La columna derecha muestra además el delta del área clasificada en cada nivel de peligro, permitiendo cuantificar de inmediato cuántas hectáreas adicionales caen en la categoría Crítica o Extrema en uno u otro escenario.
-
-Para comparaciones temporales, la superposición en un único gráfico resulta más informativa. Si se ejecuta Q5 (evolución de extensión inundada) en modo comparativo, las dos curvas de área inundada por hora se superponen en un solo eje con colores diferenciados: es posible detectar a simple vista si el pico de inundación se adelanta, se retrasa o si la superficie máxima anegada difiere significativamente entre ambos episodios. Esta misma lógica se aplica a Q12 (volumen de agua) y Q13 (área por nivel de calado), lo que convierte el modo comparativo en la herramienta principal para estudiar la variabilidad entre episodios del catálogo de 56 escenarios.
+La barra lateral permite activar un modo comparativo que ejecuta la misma consulta sobre un segundo \textit{dataset} con los mismos parámetros. La vista se divide en dos columnas (primario y secundario) con la métrica clave de cada escenario y el delta entre ambos; cuando el resultado es una serie temporal, las dos curvas se superponen en un único gráfico. El modo es compatible con todas las consultas del catálogo y constituye la herramienta principal para estudiar la variabilidad entre los 56 escenarios. El \hyperref[anexo-a.-catalogo-completo-de-consultas-analiticas]{Anexo~A} incluye un ejemplo de uso completo con capturas de ambas variantes (Figura~\ref{fig:app-comparacion}).
 
 \medskip\noindent\textbf{Accesibilidad y despliegue.}
-La aplicación soporta interfaz bilingüe (español e inglés) seleccionable desde la barra lateral. Incorpora autenticación por usuario y contraseña para el despliegue en servidor remoto. La exportación de resultados a GeoTIFF está disponible en las consultas espaciales.
+La aplicación soporta interfaz bilingüe (español e inglés), incorpora autenticación por usuario y contraseña para el despliegue en servidor remoto y permite exportar los resultados espaciales a GeoTIFF.
 
 \medskip\noindent\textbf{Rendimiento y memoria.}
-Las consultas multi-paso (Q7, Q8, Q9, Q11 y Q16) emplean un \textit{grid} acumulador de tamaño fijo que se actualiza incrementalmente, manteniendo el consumo de memoria constante ($\sim$750 MB) independientemente del volumen de celdas húmedas. Las consultas de dominio completo (Q5, Q12, Q13) requieren 30--44 s en la primera ejecución; en despliegues con múltiples usuarios se aconseja al menos 16 GB de RAM en el servidor.
+Las consultas de dominio completo requieren 30--44 s en la primera ejecución y se sirven desde caché en las siguientes; en despliegues con múltiples usuarios se aconseja al menos 16 GB de RAM en el servidor.
 
