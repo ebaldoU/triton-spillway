@@ -30,7 +30,7 @@ En todos los casos el valor leído de TileDB coincide exactamente con el valor d
 
 Además de la integridad del almacenamiento, es necesario verificar que las funciones analíticas calculan correctamente los indicadores que declaran. Para ello se emplea una estrategia de oráculo: el resultado del motor se compara contra un cálculo de referencia realizado directamente sobre los GeoTIFF originales con \texttt{rasterio} y NumPy, sin pasar por TileDB, lo que permite aislar errores del motor de posibles errores del ETL (cubiertos por la sección~\ref{validacion-etl}). La compresión queda descartada como fuente de error porque ZSTD es un algoritmo \emph{sin pérdida}; las diferencias del orden de $10^{-5}$ observadas en algunas comparaciones se deben al orden de las operaciones en punto flotante (float32), no a errores de diseño.
 
-Se seleccionaron cinco funciones que cubren los tres patrones de acceso del motor y concentran el mayor riesgo de error de implementación: Q1 (conversión de coordenadas UTM a índices), Q3 (combinación de tres variables para derivar velocidad), Q4 (filtrado por umbral), Q7 (búsqueda del primer paso positivo por celda) y Q13 (acumulación sobre los 20 pasos). Las consultas de peligrosidad (Q10, Q17, Q18) son combinaciones de H y velocidad, por lo que quedan cubiertas de forma indirecta. Como comprobación adicional e independiente del ETL, sobre \texttt{datos7} se compararon los resultados del motor contra recálculos NumPy directos sobre el mismo array TileDB, y como prueba de coherencia multi-\textit{dataset} se verificó que datos1 y datos4 —que comparten patrón de inundación en la hora 60— producen métricas idénticas. La Tabla~\ref{tab:validacion-resumen} sintetiza todos los resultados: ninguna comparación arroja discrepancias.
+Se seleccionaron cinco funciones que cubren los tres patrones de acceso del motor y concentran el mayor riesgo de error de implementación: Q1 (conversión de coordenadas UTM a índices), Q3 (combinación de tres variables para derivar velocidad), Q4 (filtrado por umbral), Q7 (búsqueda del primer paso positivo por celda) y Q13 (acumulación sobre los 20 pasos). Las consultas de peligrosidad (Q10, Q17, Q18) son combinaciones de H y velocidad, por lo que quedan cubiertas de forma indirecta. Como comprobación adicional e independiente del ETL, sobre \texttt{datos7} se compararon los resultados del motor contra recálculos NumPy directos sobre el mismo array TileDB, y como prueba de coherencia multi-\textit{dataset} se verificó que datos1 y datos4 (que comparten patrón de inundación en la hora 60) producen métricas idénticas. La Tabla~\ref{tab:validacion-resumen} sintetiza todos los resultados: ninguna comparación arroja discrepancias.
 
 \begin{table}[ht]
 \centering
@@ -38,18 +38,18 @@ Se seleccionaron cinco funciones que cubren los tres patrones de acceso del moto
 \toprule
 \textbf{Consulta} & \textbf{Oráculo} & \textbf{Comparaciones} & \textbf{Discrepancias} \\
 \midrule
-Q1 — Calado en punto & Lectura directa GeoTIFF & 250 & 0 \\
-Q3 — Velocidad en zona & Cálculo vectorial GeoTIFF & 4 & 0 \\
-Q4 — Mapa inundado & Recuento píxeles GeoTIFF & 16 & 0 \\
-Q7 — Hora de llegada & Inspección secuencia GeoTIFF & 20 & 0 \\
-Q13 — Volumen por hora & Suma directa GeoTIFF & 80 & 0 \\
-ETL — Integridad & Muestreo aleatorio TileDB vs GeoTIFF & 4\,000 celdas & 0 \\
+Q1 -- Calado en punto & Lectura directa GeoTIFF & 250 & 0 \\
+Q3 -- Velocidad en zona & Cálculo vectorial GeoTIFF & 4 & 0 \\
+Q4 -- Mapa inundado & Recuento píxeles GeoTIFF & 16 & 0 \\
+Q7 -- Hora de llegada & Inspección secuencia GeoTIFF & 20 & 0 \\
+Q13 -- Volumen por hora & Suma directa GeoTIFF & 80 & 0 \\
+ETL -- Integridad & Muestreo aleatorio TileDB vs GeoTIFF & 4\,000 celdas & 0 \\
 \midrule
 \multicolumn{4}{l}{\textit{Consistencia interna (motor vs recálculo NumPy sobre TileDB, datos7)}} \\[2pt]
-Q1 — Calado en punto & Lectura directa TileDB & 50 puntos & 0 \\
-Q4 — Mapa inundado & Recuento NumPy sobre TileDB & 4 pasos & 0 \\
-Q5 — Evolución extensión & Recuento NumPy sobre TileDB & 20 pasos & 0 \\
-Q13 — Volumen por hora & Suma NumPy sobre TileDB & 20 pasos & 0 \\
+Q1 -- Calado en punto & Lectura directa TileDB & 50 puntos & 0 \\
+Q4 -- Mapa inundado & Recuento NumPy sobre TileDB & 4 pasos & 0 \\
+Q5 -- Evolución extensión & Recuento NumPy sobre TileDB & 20 pasos & 0 \\
+Q13 -- Volumen por hora & Suma NumPy sobre TileDB & 20 pasos & 0 \\
 \bottomrule
 \end{tabularx}
 \caption{Resumen de validación funcional. Las primeras seis filas comparan el motor analítico contra los GeoTIFF originales (oráculo externo). Las cuatro últimas corresponden a pruebas de consistencia interna ejecutadas sobre \texttt{datos7}: el motor se compara contra recálculos NumPy directos sobre TileDB. Todas las discrepancias son nulas o de orden $10^{-5}$.}
@@ -190,15 +190,15 @@ Al cuadruplicar el volumen (de 334\,M a 1\,392\,M celdas), Q5 pasa de 6,2 a 27,0
 
 \addplot[fill=blue!35, draw=blue!70!black, line width=0.7pt]
     coordinates {(datos7,0.4) (datos3,0.8) (datos8,1.2) (datos6,1.4)};
-\addlegendentry{Q4 — Instantánea}
+\addlegendentry{Q4 -- Instantánea}
 
 \addplot[fill=orange!55, draw=orange!80!black, line width=0.7pt]
     coordinates {(datos7,6.2) (datos3,15.4) (datos8,27.0) (datos6,27.0)};
-\addlegendentry{Q5 — Multi-paso}
+\addlegendentry{Q5 -- Multi-paso}
 
 \addplot[fill=red!40, draw=red!75!black, line width=0.7pt]
     coordinates {(datos7,16.7) (datos3,25.9) (datos8,59.3) (datos6,69.5)};
-\addlegendentry{Q7 — Acumulada por píxel}
+\addlegendentry{Q7 -- Acumulada por píxel}
 
 \end{axis}
 \end{tikzpicture}
