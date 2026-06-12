@@ -34,6 +34,18 @@ Durante el desarrollo y la evaluación se identificaron las siguientes limitacio
 
 Estas limitaciones son propias del entorno de evaluación y del dominio concreto analizado, y no comprometen la validez del enfoque general propuesto.
 
+\section{Dificultades y desafíos}\label{dificultades-y-desafios}
+
+La descripción ordenada de los capítulos anteriores puede transmitir una sensación de linealidad que no se corresponde con el desarrollo real del trabajo, que estuvo marcado por dificultades en varios frentes.
+
+La primera fue la comprensión del dominio de aplicación. Este TFG se sitúa en la frontera entre la ingeniería informática y la hidráulica, y fue necesario un esfuerzo considerable para entender qué representan físicamente las variables simuladas, qué preguntas se plantea realmente un analista de inundaciones y cómo interpretar correctamente los criterios de peligrosidad de la literatura (Russo et al., Xia et al.) y de la normativa española. Varias consultas se rediseñaron más de una vez al descubrir que la primera interpretación de un umbral o de un criterio no era la que la fuente original pretendía, y la terminología (calado, caudal unitario, inestabilidad de peatones y vehículos) exigió iteraciones con los directores hasta resultar precisa.
+
+La segunda fue la investigación de tecnologías. El ecosistema de bases de datos de arrays es disperso y está desigualmente mantenido: SciDB, referencia académica del área, resultó estar prácticamente abandonado; otras alternativas exigían infraestructura de servidor desproporcionada para el problema. Una vez elegido TileDB hubo que asimilar un modelo de datos poco convencional —fragmentos, \textit{tiles}, filtros de compresión encadenados— con documentación fragmentaria, y ninguna guía publicada indicaba la configuración adecuada para datos de inundación, lo que obligó a determinarla mediante experimentación sistemática (los cinco grupos de \textit{benchmark} G1--G5).
+
+La tercera fue la escala de los datos. Con 235 GB y casi 16\,000 millones de celdas por escenario, prácticamente ninguna solución funcionó a la primera: las versiones iniciales de las consultas multi-paso agotaban la memoria del equipo y hubo que rediseñarlas por completo en torno a \textit{grids} acumuladores de tamaño fijo; el ETL tuvo que reescribirse para leer por franjas y mantener el pico de RAM acotado. A esta escala, cada error costaba decenas de minutos de reejecución, lo que ralentizó cada ciclo de prueba. El rendimiento, además, dependía de detalles internos nada evidentes: una operación aparentemente inocua de mantenimiento (consolidar fragmentos) multiplicaba por 16 el tiempo de las consultas multi-paso por amplificación de \textit{tiles}, un problema cuyo diagnóstico exigió estudiar el formato físico de TileDB.
+
+Por último, la validación planteó un desafío metodológico: no existe un oráculo contra el que comprobar 24 consultas sobre más de mil millones de celdas, y hubo que diseñar una estrategia de verificación específica combinando muestreo aleatorio contra los GeoTIFF originales y comprobaciones de coherencia interna. Estas dificultades, lejos de ser anecdóticas, moldearon las decisiones de diseño más importantes del sistema final.
+
 \section{Trabajo futuro}\label{trabajo-futuro}
 
 Las siguientes líneas de extensión ampliarían el alcance del sistema sin modificar la arquitectura central:
