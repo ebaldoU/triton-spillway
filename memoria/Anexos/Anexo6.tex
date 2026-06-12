@@ -2,7 +2,7 @@
 
 Este anexo resume la planificación temporal del trabajo y el esfuerzo invertido en cada fase. Las cifras proceden de un registro de sesiones de trabajo mantenido durante el desarrollo, completado con la estimación de las actividades no registradas (lecturas, descargas desatendidas y parte de la redacción); las horas se presentan redondeadas por fase.
 
-El desarrollo se concentró entre abril y junio de 2026, en tres etapas diferenciadas. En abril se realizó la formación inicial e investigación de tecnologías, la obtención de los primeros datos, el desarrollo del proceso ETL y el \textit{benchmark} de almacenamiento. En mayo se construyeron el motor de consultas analíticas y la aplicación web, se desplegó el sistema en el servidor de producción y se incorporaron escenarios adicionales. En junio se completaron la validación del sistema, la ampliación a los 56 escenarios y la redacción final de la memoria. La Tabla~\ref{tab:esfuerzo} desglosa el esfuerzo por fases.
+El desarrollo se concentró entre abril y junio de 2026, en tres etapas diferenciadas. En abril se realizó la formación inicial e investigación de tecnologías, la obtención de los primeros datos, el desarrollo del proceso ETL y el \textit{benchmark} de almacenamiento. En mayo se construyeron el motor de consultas analíticas y la aplicación web, se desplegó el sistema en el servidor de producción y se incorporaron escenarios adicionales. En junio se completaron la validación del sistema, la ampliación a los 56 escenarios y la redacción final de la memoria. La Tabla~\ref{tab:esfuerzo} desglosa el esfuerzo por fases y la Figura~\ref{fig:esfuerzo} muestra su distribución relativa.
 
 \begin{table}[ht]
 \centering
@@ -10,12 +10,12 @@ El desarrollo se concentró entre abril y junio de 2026, en tres etapas diferenc
 \toprule
 \textbf{Fase} & \textbf{Periodo} & \textbf{Horas} \\
 \midrule
-Formación e investigación (TileDB, Triton, tecnologías de almacenamiento, compresión) & abril & 20 \\
-Descarga de escenarios a través de la VPN universitaria ($\sim$28 escenarios, $\sim$5 h por escenario, proceso supervisado) & abril--mayo & 140 \\
-Preparación y organización de los datos (transferencia en disco físico, verificación, espacio en disco) & abril--mayo & 15 \\
-Proceso ETL y \textit{benchmark} de almacenamiento (G1--G5) & abril & 30 \\
-Motor de consultas analíticas (24 funciones, optimización, exportación) & abril--mayo & 25 \\
-Aplicación web (interfaz, mapas, modo comparativo, versión bilingüe) & mayo & 30 \\
+Formación e investigación de tecnologías & abril & 20 \\
+Descarga de escenarios por VPN ($\sim$28 escenarios, $\sim$5 h cada uno) & abril--mayo & 140 \\
+Preparación y organización de los datos & abril--mayo & 15 \\
+Proceso ETL y \textit{benchmark} de almacenamiento & abril & 30 \\
+Motor de consultas analíticas (24 funciones) & abril--mayo & 25 \\
+Aplicación web (interfaz, mapas, modo comparativo) & mayo & 30 \\
 Despliegue y operación del servidor & mayo & 10 \\
 Validación, tests automatizados y \textit{benchmark} de consultas & mayo--junio & 10 \\
 Redacción de la memoria y documentación & mayo--junio & 25 \\
@@ -27,5 +27,49 @@ Reuniones y tutorías & todo el proyecto & 5 \\
 \caption{Esfuerzo invertido por fase del proyecto.}
 \label{tab:esfuerzo}
 \end{table}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}
+  % Sectores (inicio en 90 grados, sentido horario; 310 h = 360 grados)
+  \filldraw[fill=blue!70, draw=white, line width=0.8pt]    (0,0) -- (90:2.2)     arc (90:-72.6:2.2) -- cycle;
+  \filldraw[fill=orange!75, draw=white, line width=0.8pt]  (0,0) -- (-72.6:2.2)  arc (-72.6:-107.4:2.2) -- cycle;
+  \filldraw[fill=teal!60, draw=white, line width=0.8pt]    (0,0) -- (-107.4:2.2) arc (-107.4:-142.2:2.2) -- cycle;
+  \filldraw[fill=violet!55, draw=white, line width=0.8pt]  (0,0) -- (-142.2:2.2) arc (-142.2:-171.2:2.2) -- cycle;
+  \filldraw[fill=red!50, draw=white, line width=0.8pt]     (0,0) -- (-171.2:2.2) arc (-171.2:-200.2:2.2) -- cycle;
+  \filldraw[fill=olive!60, draw=white, line width=0.8pt]   (0,0) -- (-200.2:2.2) arc (-200.2:-223.4:2.2) -- cycle;
+  \filldraw[fill=cyan!55, draw=white, line width=0.8pt]    (0,0) -- (-223.4:2.2) arc (-223.4:-240.8:2.2) -- cycle;
+  \filldraw[fill=magenta!40, draw=white, line width=0.8pt] (0,0) -- (-240.8:2.2) arc (-240.8:-252.4:2.2) -- cycle;
+  \filldraw[fill=gray!55, draw=white, line width=0.8pt]    (0,0) -- (-252.4:2.2) arc (-252.4:-264:2.2) -- cycle;
+  \filldraw[fill=brown!55, draw=white, line width=0.8pt]   (0,0) -- (-264:2.2)   arc (-264:-270:2.2) -- cycle;
+  % Porcentajes dentro de los sectores grandes
+  \node[white, font=\small\bfseries]      at (8.7:1.35)    {45\,\%};
+  \node[white, font=\scriptsize\bfseries] at (-90:1.55)    {10\,\%};
+  \node[white, font=\scriptsize\bfseries] at (-124.8:1.55) {10\,\%};
+  \node[white, font=\scriptsize\bfseries] at (-156.7:1.6)  {8\,\%};
+  \node[white, font=\scriptsize\bfseries] at (-185.7:1.6)  {8\,\%};
+  \node[white, font=\scriptsize\bfseries] at (-211.8:1.65) {6\,\%};
+  \node[white, font=\scriptsize\bfseries] at (-232.1:1.7)  {5\,\%};
+  % Leyenda
+  \begin{scope}[shift={(3.6,2.3)}]
+    \foreach \i/\c/\t in {
+      0/blue!70/{Descarga de escenarios por VPN (140 h)},
+      1/orange!75/{ETL y \textit{benchmark} de almacenamiento (30 h)},
+      2/teal!60/{Aplicación web (30 h)},
+      3/violet!55/{Motor de consultas analíticas (25 h)},
+      4/red!50/{Redacción de la memoria (25 h)},
+      5/olive!60/{Formación e investigación (20 h)},
+      6/cyan!55/{Preparación de los datos (15 h)},
+      7/magenta!40/{Despliegue y operación del servidor (10 h)},
+      8/gray!55/{Validación y tests (10 h)},
+      9/brown!55/{Reuniones y tutorías (5 h)}} {
+      \fill[\c] (0,-\i*0.52) rectangle +(0.26,0.26);
+      \node[anchor=west, font=\footnotesize] at (0.38,-\i*0.52+0.13) {\t};
+    }
+  \end{scope}
+\end{tikzpicture}
+\caption{Distribución del esfuerzo invertido por fases (310 h en total).}
+\label{fig:esfuerzo}
+\end{figure}
 
 Destaca la partida de descarga de datos: cerca de la mitad del tiempo total corresponde a la transferencia de escenarios a través de la VPN universitaria, un proceso en gran parte desatendido pero que requería supervisión periódica y condicionó el ritmo del proyecto durante semanas, hasta que se sustituyó por el transporte físico en disco duro (véase la sección~\ref{dificultades-y-desafios}). Excluyendo la obtención de datos, el reparto refleja la naturaleza del trabajo: aproximadamente un tercio del esfuerzo corresponde al núcleo de datos (ETL, \textit{benchmark} y motor de consultas), otro tercio a la capa de presentación y operación (aplicación web y despliegue), y el resto a formación, validación y documentación. Las fases no fueron estrictamente secuenciales: el ETL y el motor de consultas se revisaron varias veces a medida que la validación y el uso real de la aplicación revelaban problemas de rendimiento o de memoria.
