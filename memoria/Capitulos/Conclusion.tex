@@ -20,7 +20,7 @@ En cuanto al rendimiento, las consultas acotadas espacialmente se resuelven en d
 
 \subsection{Limitaciones}\label{limitaciones}
 
-Durante el desarrollo y la evaluación se identificaron las siguientes limitaciones:
+El sistema cumple los objetivos planteados, pero durante el desarrollo y la evaluación se identificaron las siguientes limitaciones, que conviene tener presentes al interpretar los resultados:
 
 \begin{itemize}
 \item \textbf{Consultas de píxel único.} GeoTIFF supera a TileDB en 5,3$\times$ para la lectura de un único píxel a lo largo de toda la serie temporal, ya que \texttt{rasterio} realiza una lectura directa sin descomprimir índices dispersos.

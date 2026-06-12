@@ -14,7 +14,7 @@ Cada GeoTIFF es una matriz bidimensional en la que cada celda representa una por
 
 \section{Variables almacenadas}\label{variables-almacenadas}
 
-Cada paso temporal almacena cuatro variables por celda húmeda (toda celda con calado H $\geq$ 0,01 m), recogidas en la Tabla~\ref{tab:variables}:
+Cada paso temporal almacena cuatro variables por celda húmeda (toda celda con calado H $\geq$ 0,01 m), recogidas en la Tabla~\ref{tab:variables}.
 
 \begin{table}[ht]
 \centering
@@ -170,7 +170,7 @@ NetCDF-4 & Sí & Capa sobre HDF5 & No & No & Descartada \\
 
 \section{Justificación de TileDB}\label{justificacion-de-tiledb}
 
-Se eligió TileDB por cuatro motivos:
+A la vista de la comparativa anterior, se eligió TileDB como tecnología de almacenamiento del proyecto. La decisión se fundamenta en cuatro motivos:
 
 \begin{enumerate}
 \item \textbf{Código abierto (licencia MIT)}: Garantiza la reproducibilidad del proyecto y permite su uso y modificación sin restricciones.
@@ -179,7 +179,7 @@ Se eligió TileDB por cuatro motivos:
 \item \textbf{Integración Python/NumPy}: La API permite operar sobre los datos directamente desde Python sin capa intermedia, lo que facilita la integración con el resto del ecosistema científico.
 \end{enumerate}
 
-La sección~\ref{tecnologia-tiledb} describe su funcionamiento en detalle.
+Estos cuatro motivos, junto con la comparativa de la Tabla~\ref{tab:tecnologias}, sustentan la elección; la sección~\ref{tecnologia-tiledb} describe a continuación el funcionamiento interno de la tecnología elegida.
 
 \section{Funcionamiento de TileDB}\label{tecnologia-tiledb}
 
@@ -187,7 +187,7 @@ Una vez justificada la elección, esta sección describe los tres aspectos del f
 
 \subsection{Arrays sparse frente a densos}\label{arrays-sparse-vs.-densos}
 
-TileDB soporta dos modos de almacenamiento:
+La característica de TileDB más relevante para este proyecto es que soporta dos modos de almacenamiento:
 
 \begin{itemize}
 \item \textbf{Dense:} Almacena todos los valores del dominio, incluidos los nulos. Eficiente cuando el dominio está mayoritariamente relleno.

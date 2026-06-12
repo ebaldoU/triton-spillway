@@ -48,7 +48,7 @@ El sistema está compuesto por cuatro capas articuladas en torno al array TileDB
 
 \section{Arquitectura del array TileDB}\label{arquitectura-del-array-tiledb}
 
-El array disperso se define con tres dimensiones y cuatro atributos, tal y como se muestra en la Tabla~\ref{tab:array-schema}:
+El array disperso se define con tres dimensiones y cuatro atributos, tal y como se muestra en la Tabla~\ref{tab:array-schema}. Las dimensiones (\texttt{time}, \texttt{row}, \texttt{col}) indexan cada celda húmeda dentro del cubo espacio-temporal, y los cuatro atributos almacenan los valores físicos de esa celda, de modo que una sola consulta puede recuperar cualquier combinación de variables sobre cualquier rango de tiempo y espacio.
 
 \begin{table}[ht]
 \centering
