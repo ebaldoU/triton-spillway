@@ -153,9 +153,7 @@ Las consultas instantáneas responden en menos de 4 s incluso sobre el dominio c
 \FloatBarrier
 \section{Escalabilidad con el volumen de datos}\label{escalabilidad}
 
-Para verificar que el rendimiento escala de forma predecible con el tamaño del escenario, se midieron Q4, Q5 y Q7 sobre cuatro \textit{datasets} con distinto número de celdas húmedas: datos7 (334\,M, escenario seco), datos3 (498\,M), datos8 (1\,281\,M) y datos6 (1\,392\,M, escenario húmedo). Los tiempos corresponden a caché caliente, una repetición por consulta y \textit{dataset}, sobre el dominio completo. La Figura~\ref{fig:escalabilidad} resume los resultados: Q4 (instantánea) escala de forma casi plana, mientras que Q5 y Q7 crecen de forma aproximadamente lineal con el volumen; al pasar de los 334\,M de celdas de datos7 a los 1\,392\,M de datos6, Q5 multiplica su tiempo por 4,4 y Q7 por 4,2.
-
-Al cuadruplicar el volumen (de 334\,M a 1\,392\,M celdas), Q5 pasa de 6,2 a 27,0 s (factor 4,4$\times$) y Q7 de 16,7 a 69,5 s (factor 4,2$\times$), confirmando la escalabilidad aproximadamente lineal con el número de celdas húmedas. Q4, al acceder a un único fragmento TileDB, apenas varía (0,4 a 1,4 s) porque su coste está dominado por la apertura del array, no por el volumen de datos. La pendiente más pronunciada de Q7 respecto a Q5 se debe al \textit{grid} acumulador de tamaño fijo $n_r \times n_c$ que recibe escrituras dispersas en los 20 fragmentos: cuantas más celdas húmedas por fragmento, mayor presión de caché en las actualizaciones.
+Para verificar que el rendimiento escala de forma predecible con el tamaño del escenario, se midieron Q4, Q5 y Q7 sobre cuatro \textit{datasets} con distinto número de celdas húmedas: datos7 (334\,M, escenario seco), datos3 (498\,M), datos8 (1\,281\,M) y datos6 (1\,392\,M, escenario húmedo). Los tiempos corresponden a caché caliente, una repetición por consulta y \textit{dataset}, sobre el dominio completo. La Figura~\ref{fig:escalabilidad} resume los resultados: al cuadruplicar el volumen, Q5 pasa de 6,2 a 27,0 s (factor 4,4$\times$) y Q7 de 16,7 a 69,5 s (factor 4,2$\times$), confirmando la escalabilidad aproximadamente lineal con el número de celdas húmedas. Q4, al acceder a un único fragmento TileDB, apenas varía (0,4 a 1,4 s) porque su coste está dominado por la apertura del array, no por el volumen de datos. La pendiente más pronunciada de Q7 respecto a Q5 se debe al \textit{grid} acumulador de tamaño fijo $n_r \times n_c$ que recibe escrituras dispersas en los 20 fragmentos: cuantas más celdas húmedas por fragmento, mayor presión de caché en las actualizaciones.
 
 \begin{figure}[ht]
 \centering
@@ -163,7 +161,7 @@ Al cuadruplicar el volumen (de 334\,M a 1\,392\,M celdas), Q5 pasa de 6,2 a 27,0
 \begin{axis}[
   ybar,
   width=0.84\textwidth,
-  height=9cm,
+  height=7.5cm,
   bar width=13pt,
   enlarge x limits=0.18,
   symbolic x coords={datos7,datos3,datos8,datos6},
