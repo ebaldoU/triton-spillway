@@ -142,23 +142,11 @@ Antes de comenzar el desarrollo se realizó un análisis de las tecnologías dis
 
 \section{Bases de datos para arrays multidimensionales}\label{bases-de-datos-para-arrays-multidimensionales}
 
-La primera opción considerada fue TileDB \cite{tiledb_github, tiledb_web, tiledb_cmu, tiledb_youtube}, una base de datos de código abierto orientada a arrays N-dimensionales que soporta arrays densos y dispersos (sparse), compresión configurable, indexación espacial mediante R-trees y acceso sin servidor, almacenando los datos directamente en el sistema de ficheros.
+Una base de datos de arrays multidimensionales es un sistema de almacenamiento cuyo modelo de datos no son tablas de filas y columnas, sino arrays N-dimensionales: estructuras indexadas por varias dimensiones en las que cada celda almacena uno o varios valores. Este modelo encaja de forma natural con los resultados de la simulación, que forman precisamente un array espacio-temporal 3D (tiempo, fila, columna), y permite consultar subconjuntos por rangos de cualquier dimensión sin recorrer el resto de los datos, algo que en una base de datos relacional exigiría conversiones e índices adicionales.
 
-Como alternativas del modelo de base de datos de arrays se evaluaron SciDB \cite{scidb, scidb_docs} y Rasdaman \cite{rasdaman}: ambos requieren mantener un servidor en ejecución y sus ediciones completas son de licencia privativa o comercial, lo que añade complejidad operativa y limita la reproducibilidad. PostGIS Raster \cite{postgis_raster} es maduro y abierto, pero está diseñado para rásteres 2D estáticos: la dimensión temporal exige \textit{workarounds} y carece de soporte nativo para datos dispersos. Por último, los formatos científicos HDF5, NetCDF-4 y Zarr soportan compresión y \textit{chunks}, pero ninguno implementa indexación dispersa ni motor de consultas integrado (en Zarr el soporte sparse es experimental), por lo que cualquier consulta espacial exigiría reimplementar el filtrado en Python.
+Dentro de este modelo se evaluaron tres sistemas. TileDB \cite{tiledb_github, tiledb_web, tiledb_cmu, tiledb_youtube} es una base de datos de código abierto que soporta arrays densos y dispersos (sparse), compresión configurable, indexación espacial mediante R-trees y acceso sin servidor, almacenando los datos directamente en el sistema de ficheros. SciDB \cite{scidb, scidb_docs} y Rasdaman \cite{rasdaman}, en cambio, requieren mantener un servidor en ejecución y sus ediciones completas son de licencia privativa o comercial, lo que añade complejidad operativa y limita la reproducibilidad.
 
-\section{Justificación de TileDB}\label{justificacion-de-tiledb}
-
-Se eligió TileDB por cuatro motivos:
-
-\begin{enumerate}
-\item \textbf{Código abierto (licencia MIT)}: Garantiza la reproducibilidad del proyecto y permite su uso y modificación sin restricciones.
-\item \textbf{Modelo sparse nativo}: Encaja de forma natural con el problema, ya que solo el $\sim$8,3 \% del dominio contiene agua en cada paso temporal (media sobre los 20 pasos); almacenar únicamente las celdas húmedas evita procesar el $\sim$92 \% vacío.
-\item \textbf{Arquitectura sin servidor}: Los arrays se almacenan directamente en el sistema de ficheros, sin necesidad de mantener un servicio en ejecución, lo que simplifica el despliegue respecto a alternativas como SciDB.
-\item \textbf{Integración Python/NumPy}: La API permite operar sobre los datos directamente desde Python sin capa intermedia, lo que facilita la integración con el resto del ecosistema científico.
-\end{enumerate}
-
-La Tabla~\ref{tab:tecnologias} recoge la comparativa completa de tecnologías evaluadas; la sección~\ref{tecnologia-tiledb} describe TileDB en detalle.
-
+Se consideraron además dos familias adyacentes. PostGIS Raster \cite{postgis_raster} es maduro y abierto, pero está diseñado para rásteres 2D estáticos: la dimensión temporal exige \textit{workarounds} y carece de soporte nativo para datos dispersos. Los formatos científicos HDF5, NetCDF-4 y Zarr soportan compresión y \textit{chunks}, pero ninguno implementa indexación dispersa ni motor de consultas integrado (en Zarr el soporte sparse es experimental), por lo que cualquier consulta espacial exigiría reimplementar el filtrado en Python. La Tabla~\ref{tab:tecnologias} resume la comparativa.
 
 \begin{table}[ht]
 \centering
@@ -180,6 +168,18 @@ NetCDF-4 & Sí & Capa sobre HDF5 & No & No & Descartada \\
 \label{tab:tecnologias}
 \end{table}
 
+\section{Justificación de TileDB}\label{justificacion-de-tiledb}
+
+Se eligió TileDB por cuatro motivos:
+
+\begin{enumerate}
+\item \textbf{Código abierto (licencia MIT)}: Garantiza la reproducibilidad del proyecto y permite su uso y modificación sin restricciones.
+\item \textbf{Modelo sparse nativo}: Encaja de forma natural con el problema, ya que solo el $\sim$8,3 \% del dominio contiene agua en cada paso temporal (media sobre los 20 pasos); almacenar únicamente las celdas húmedas evita procesar el $\sim$92 \% vacío.
+\item \textbf{Arquitectura sin servidor}: Los arrays se almacenan directamente en el sistema de ficheros, sin necesidad de mantener un servicio en ejecución, lo que simplifica el despliegue respecto a alternativas como SciDB.
+\item \textbf{Integración Python/NumPy}: La API permite operar sobre los datos directamente desde Python sin capa intermedia, lo que facilita la integración con el resto del ecosistema científico.
+\end{enumerate}
+
+El capítulo~\ref{tecnologia-tiledb} describe TileDB en detalle.
 
 \section{Lenguaje y bibliotecas}\label{lenguaje-y-librerias}
 
