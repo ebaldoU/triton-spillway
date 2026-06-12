@@ -1,6 +1,6 @@
 \chapter{Descripción de los datos}\label{descripcion-de-los-datos}
 
-Este capítulo describe los datos de entrada del sistema: el simulador hidráulico que los genera, el formato de salida GeoTIFF, las variables físicas almacenadas en cada paso temporal y las características del dominio de simulación.
+Este capítulo describe los datos de entrada del sistema: el simulador hidráulico que los genera (sección~\ref{simulador-triton}), el formato de salida GeoTIFF (sección~\ref{formato-de-salida-geotiff}), las variables físicas almacenadas en cada paso temporal (sección~\ref{variables-almacenadas}) y las características del dominio de simulación (sección~\ref{caracteristicas-del-dominio}).
 
 \section{Simulador Triton}\label{simulador-triton}
 
@@ -138,7 +138,7 @@ Celdas con agua (H $\geq$ 0,01 m) & 1\,311\,695\,098 ($\sim$8,3 \%) \\
 
 \chapter{Análisis de tecnologías}\label{analisis-de-tecnologias}
 
-Antes de comenzar el desarrollo se realizó un análisis de las tecnologías disponibles para almacenar grandes volúmenes de datos ráster espacio-temporales, con el objetivo de seleccionar la más adecuada en términos de eficiencia de almacenamiento, velocidad de consulta y facilidad de integración.
+Antes de comenzar el desarrollo se realizó un análisis de las tecnologías disponibles para almacenar grandes volúmenes de datos ráster espacio-temporales, con el objetivo de seleccionar la más adecuada en términos de eficiencia de almacenamiento, velocidad de consulta y facilidad de integración. La sección~\ref{bases-de-datos-para-arrays-multidimensionales} repasa las alternativas evaluadas, la sección~\ref{justificacion-de-tiledb} justifica la elección de TileDB y la sección~\ref{lenguaje-y-librerias} el lenguaje y las bibliotecas empleadas.
 
 \section{Bases de datos para arrays multidimensionales}\label{bases-de-datos-para-arrays-multidimensionales}
 

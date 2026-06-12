@@ -1,6 +1,6 @@
 \chapter{Tecnología: TileDB}\label{tecnologia-tiledb}
 
-Este capítulo describe el funcionamiento interno de TileDB: el modelo de datos sparse, la gestión de fragmentos y el mecanismo de compresión, con el objetivo de justificar las decisiones de diseño adoptadas en el capítulo siguiente.
+Este capítulo describe el funcionamiento interno de TileDB con el objetivo de justificar las decisiones de diseño adoptadas en el capítulo siguiente: las secciones~\ref{que-es-tiledb} y~\ref{arrays-sparse-vs.-densos} presentan la tecnología y su modelo de datos sparse, la sección~\ref{fragmentos-y-consolidacion} la gestión de fragmentos y la sección~\ref{compresion} el mecanismo de compresión.
 
 \section{¿Qué es TileDB?}\label{que-es-tiledb}
 
@@ -72,6 +72,10 @@ La API de TileDB ofrece \texttt{tiledb.consolidate()} para fusionar todos los fr
 Se utilizó el filtro ByteShuffle+ZSTD nivel 9 \cite{tiledb_compression_tutorial, tiledb_compression, tiledb_docs_compression}, seleccionado mediante el \textit{benchmark} de 15 configuraciones del capítulo~\ref{benchmark-de-almacenamiento}: ByteShuffle reordena los bytes de los float32 agrupando exponentes y mantisas similares antes de comprimir, lo que reduce el almacenamiento un 8,9 \% adicional respecto a ZSTD-1 sin penalización apreciable en lectura.
 
 \chapter{Diseño del sistema}\label{diseno-del-sistema}
+
+Este capítulo presenta el diseño del sistema desarrollado: la sección~\ref{arquitectura-general} describe la arquitectura en capas, la sección~\ref{arquitectura-del-array-tiledb} el esquema del array TileDB, la sección~\ref{proceso-de-carga-etl-geotiff_to_tiledb_sparse.py} el proceso de ingesta y la sección~\ref{gestion-de-multiples-escenarios-argumento---dataset} la gestión de múltiples escenarios.
+
+\section{Arquitectura general}\label{arquitectura-general}
 
 El sistema está compuesto por cuatro capas articuladas en torno al array TileDB sparse como componente central de almacenamiento, tal y como muestra la Figura~\ref{fig:arquitectura}:
 
