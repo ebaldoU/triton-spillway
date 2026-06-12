@@ -2,32 +2,7 @@
 
 Este anexo resume la planificación temporal del trabajo y el esfuerzo invertido en cada fase. Las cifras proceden de un registro de sesiones de trabajo mantenido durante el desarrollo, completado con la estimación de las actividades no registradas (lecturas, descargas desatendidas y parte de la redacción); las horas se presentan redondeadas por fase.
 
-El desarrollo se concentró entre abril y junio de 2026, en tres etapas diferenciadas. En abril se realizó la formación inicial e investigación de tecnologías, la obtención de los primeros datos, el desarrollo del proceso ETL y el \textit{benchmark} de almacenamiento. En mayo se construyeron el motor de consultas analíticas y la aplicación web, se desplegó el sistema en el servidor de producción y se incorporaron escenarios adicionales. En junio se completaron la validación del sistema, la ampliación a los 56 escenarios y la redacción final de la memoria. La Tabla~\ref{tab:esfuerzo} desglosa el esfuerzo por fases y la Figura~\ref{fig:esfuerzo} muestra su distribución relativa.
-
-\begin{table}[ht]
-\centering
-\renewcommand{\arraystretch}{1.3}
-\begin{tabularx}{\textwidth}{L>{\raggedright\arraybackslash}p{2.9cm}>{\raggedleft\arraybackslash}p{1.4cm}}
-\toprule
-\textbf{Fase} & \textbf{Periodo} & \textbf{Horas} \\
-\midrule
-Formación e investigación de tecnologías & abril & 20 \\
-Descarga de escenarios por VPN ($\sim$28 escenarios $\times$ 5 h) & abril--mayo & 140 \\
-Preparación y organización de los datos & abril--mayo & 15 \\
-Proceso ETL y \textit{benchmark} de almacenamiento & abril & 30 \\
-Motor de consultas analíticas (24 funciones) & abril--mayo & 25 \\
-Aplicación web: interfaz, mapas y modo comparativo & mayo & 30 \\
-Despliegue y operación del servidor & mayo & 10 \\
-Validación, tests y \textit{benchmark} de consultas & mayo--junio & 10 \\
-Redacción de la memoria y documentación & mayo--junio & 25 \\
-Reuniones y tutorías & todo el proyecto & 5 \\
-\midrule
-\textbf{Total} & & \textbf{310} \\
-\bottomrule
-\end{tabularx}
-\caption{Esfuerzo invertido por fase del proyecto.}
-\label{tab:esfuerzo}
-\end{table}
+El desarrollo se concentró entre abril y junio de 2026, en tres etapas diferenciadas. En abril se realizó la formación inicial e investigación de tecnologías, la obtención de los primeros datos, el desarrollo del proceso ETL y el \textit{benchmark} de almacenamiento. En mayo se construyeron el motor de consultas analíticas y la aplicación web, se desplegó el sistema en el servidor de producción y se incorporaron escenarios adicionales. En junio se completaron la validación del sistema, la ampliación a los 56 escenarios y la redacción final de la memoria. La Figura~\ref{fig:esfuerzo} muestra la distribución relativa del esfuerzo y la Tabla~\ref{tab:esfuerzo} lo desglosa por fases.
 
 \begin{figure}[ht]
 \centering
@@ -74,3 +49,28 @@ Reuniones y tutorías & todo el proyecto & 5 \\
 \end{figure}
 
 Destaca la partida de descarga de datos: cerca de la mitad del tiempo total corresponde a la transferencia de escenarios a través de la VPN universitaria, un proceso en gran parte desatendido pero que requería supervisión periódica y condicionó el ritmo del proyecto durante semanas, hasta que se sustituyó por el transporte físico en disco duro (véase la sección~\ref{dificultades-y-desafios}). Excluyendo la obtención de datos, el reparto refleja la naturaleza del trabajo: aproximadamente un tercio del esfuerzo corresponde al núcleo de datos (ETL, \textit{benchmark} y motor de consultas), otro tercio a la capa de presentación y operación (aplicación web y despliegue), y el resto a formación, validación y documentación. Las fases no fueron estrictamente secuenciales: el ETL y el motor de consultas se revisaron varias veces a medida que la validación y el uso real de la aplicación revelaban problemas de rendimiento o de memoria.
+
+\begin{table}[ht]
+\centering
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{L>{\raggedright\arraybackslash}p{2.9cm}>{\raggedleft\arraybackslash}p{1.4cm}}
+\toprule
+\textbf{Fase} & \textbf{Periodo} & \textbf{Horas} \\
+\midrule
+Formación e investigación de tecnologías & abril & 20 \\
+Descarga de escenarios por VPN (28 $\times$ $\sim$5~h) & abril--mayo & 140 \\
+Preparación y organización de los datos & abril--mayo & 15 \\
+Proceso ETL y \textit{benchmark} de almacenamiento & abril & 30 \\
+Motor de consultas analíticas (24 funciones) & abril--mayo & 25 \\
+Aplicación web: interfaz, mapas y modo comparativo & mayo & 30 \\
+Despliegue y operación del servidor & mayo & 10 \\
+Validación, tests y \textit{benchmark} de consultas & mayo--junio & 10 \\
+Redacción de la memoria y documentación & mayo--junio & 25 \\
+Reuniones y tutorías & todo el proyecto & 5 \\
+\midrule
+\textbf{Total} & & \textbf{310} \\
+\bottomrule
+\end{tabularx}
+\caption{Esfuerzo invertido por fase del proyecto.}
+\label{tab:esfuerzo}
+\end{table}
