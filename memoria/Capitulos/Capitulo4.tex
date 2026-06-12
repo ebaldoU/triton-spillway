@@ -24,6 +24,7 @@ datos4 & 20 & 1\,000 aleatorias & H, QX, QY, MH & 0 \\
 
 En todos los casos el valor leído de TileDB coincide exactamente con el valor del GeoTIFF fuente (diferencia absoluta $= 0$ en float32), lo que confirma que el filtrado de celdas húmedas, la conversión de tipos y la escritura comprimida no introducen pérdida de información.
 
+\FloatBarrier
 \section{Validación funcional de las consultas}\label{validacion-funcional}
 
 Además de la integridad del almacenamiento, es necesario verificar que las funciones analíticas calculan correctamente los indicadores que declaran. Para ello se emplea una estrategia de oráculo: el resultado del motor se compara contra un cálculo de referencia realizado directamente sobre los GeoTIFF originales con \texttt{rasterio} y NumPy, sin pasar por TileDB, lo que permite aislar errores del motor de posibles errores del ETL (cubiertos por la sección~\ref{validacion-etl}). La compresión queda descartada como fuente de error porque ZSTD es un algoritmo \emph{sin pérdida}; las diferencias del orden de $10^{-5}$ observadas en algunas comparaciones se deben al orden de las operaciones en punto flotante (float32), no a errores de diseño.
@@ -55,6 +56,7 @@ Q13 -- Volumen por hora & Suma NumPy sobre TileDB & 20 pasos & 0 \\
 \label{tab:validacion-resumen}
 \end{table}
 
+\FloatBarrier
 \section{Rendimiento de las consultas analíticas}\label{rendimiento-consultas}
 
 Las consultas se clasifican en tres categorías según su patrón de acceso al array TileDB, ilustradas en la Figura~\ref{fig:patrones-acceso}:
@@ -148,6 +150,7 @@ Q11 & Ventana para vehículos emergencia & 84{,}1     & 25{,}9 & 750 \\
 
 Las consultas instantáneas responden en menos de 4 s incluso sobre el dominio completo, siendo aptas para uso interactivo. Las multi-paso tardan en torno a 30 s, limitadas por las 20 lecturas sucesivas a TileDB. Las acumuladas por píxel oscilan entre 79,5 s (Q7) y 121,4 s (Q8): combinan la E/S de 20 fragmentos con escrituras dispersas sobre el \textit{grid} acumulador de tamaño fijo, que además limita la RAM a $\sim$750 MB con independencia del volumen de celdas húmedas. La restricción a un subdominio reduce los tiempos en un factor de 2--3$\times$, y las lecturas alcanzan un \textit{throughput} de 890--960 MB/s sobre SSD NVMe gracias al índice sparse, que evita descomprimir tiles fuera de la zona consultada.
 
+\FloatBarrier
 \section{Escalabilidad con el volumen de datos}\label{escalabilidad}
 
 Para verificar que el rendimiento escala de forma predecible con el tamaño del escenario, se midieron Q4, Q5 y Q7 sobre cuatro \textit{datasets} con distinto número de celdas húmedas: datos7 (334\,M, escenario seco), datos3 (498\,M), datos8 (1\,281\,M) y datos6 (1\,392\,M, escenario húmedo). Los tiempos corresponden a caché caliente, una repetición por consulta y \textit{dataset}, sobre el dominio completo. La Figura~\ref{fig:escalabilidad} resume los resultados: Q4 (instantánea) escala de forma casi plana, mientras que Q5 y Q7 crecen de forma aproximadamente lineal con el volumen; al pasar de los 334\,M de celdas de datos7 a los 1\,392\,M de datos6, Q5 multiplica su tiempo por 4,4 y Q7 por 4,2.
