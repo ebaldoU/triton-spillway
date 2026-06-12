@@ -246,7 +246,24 @@ La API de TileDB ofrece \texttt{tiledb.consolidate()} para fusionar todos los fr
 
 \subsection{Compresión}\label{compresion}
 
-Se utilizó el filtro ByteShuffle+ZSTD nivel 9 \cite{tiledb_compression_tutorial, tiledb_compression, tiledb_docs_compression}, seleccionado mediante el \textit{benchmark} de 15 configuraciones de la sección~\ref{benchmark-de-almacenamiento}: ByteShuffle reordena los bytes de los float32 agrupando exponentes y mantisas similares antes de comprimir, lo que reduce el almacenamiento un 8,9 \% adicional respecto a ZSTD-1 sin penalización apreciable en lectura.
+Se utilizó el filtro ByteShuffle+ZSTD nivel 9 \cite{tiledb_compression_tutorial, tiledb_compression, tiledb_docs_compression}, seleccionado mediante el \textit{benchmark} de 15 configuraciones de la sección~\ref{benchmark-de-almacenamiento}: ByteShuffle reordena los bytes de los float32 agrupando exponentes y mantisas similares antes de comprimir, lo que reduce el almacenamiento un 8,9 \% adicional respecto a ZSTD-1 sin penalización apreciable en lectura. La Tabla~\ref{tab:compresion-resumen} muestra las configuraciones más representativas sobre la región de prueba; como las diferencias de velocidad de lectura entre las variantes \textit{shuffle} son del orden del ruido de caché del sistema operativo, el criterio determinante fue el tamaño en disco (los resultados completos se recogen en la Tabla~\ref{tab:g1-filtros} del \hyperref[anexo-b.-tablas-de-resultados-completas]{Anexo~B}).
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lrr}
+\toprule
+\textbf{Configuración} & \textbf{Tamaño (MB/paso)} & \textbf{Mediana lectura (s)} \\
+\midrule
+Sin compresión & 1\,029 & 0,161 \\
+ZSTD-1 & 946 & 0,158 \\
+ZSTD-9 & 944 & 0,200 \\
+\textbf{ByteShuffle + ZSTD-9} & \textbf{860} & \textbf{0,196} \\
+BitShuffle + ZSTD-9 & 868 & 0,173 \\
+\bottomrule
+\end{tabular}
+\caption{Configuraciones de compresión representativas. En negrita: la elegida.}
+\label{tab:compresion-resumen}
+\end{table}
 
 \section{Lenguaje y bibliotecas}\label{lenguaje-y-librerias}
 
