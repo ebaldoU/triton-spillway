@@ -219,6 +219,8 @@ Tiempo de carga (20 pasos) & 454 s ($\sim$7,5 min) \\
 
 \textbf{Caché fría frente a caché caliente.} Antes de cada serie de repeticiones la caché de páginas del sistema operativo se libera con \texttt{sync \&\& echo 3 > /proc/sys/vm/drop\_caches}; la diferencia entre el tiempo en frío y en caliente cuantifica la sensibilidad de cada motor al estado de la caché del sistema operativo.
 
+\textbf{Región de prueba.} Las mediciones sobre región fija utilizan una ventana de 50$\times$50 km situada en la zona húmeda suroeste del dominio, con esquinas (685\,000, 4\,335\,000) y (735\,000, 4\,385\,000) en EPSG:32614, equivalente a las filas 28\,700--33\,700 y columnas 500--5\,500 del ráster. Es la misma ventana empleada para generar los subconjuntos de demostración publicados junto al código, lo que permite reproducir estas mediciones sin acceso a los datos completos.
+
 \section{Validación del benchmark sobre un segundo escenario}\label{validacion-benchmark-datos2}
 
 Para verificar la robustez de los resultados obtenidos con datos1, el \textit{benchmark} TileDB (ByteShuffle+ZSTD-9) vs GeoTIFF se repitió íntegramente sobre un segundo conjunto de datos (datos2), cargado mediante el mismo \textit{pipeline} ETL. datos2 contiene 1 303 516 575 celdas húmedas (17 492 MB en TileDB), frente a 1 311 695 098 celdas de datos1 (17 611 MB). Los resultados se recogen en la Tabla~\ref{tab:bench-datos2}.

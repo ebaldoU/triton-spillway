@@ -1,0 +1,30 @@
+\chapter{Planificación y esfuerzo invertido}\label{anexo-f.-planificacion-y-esfuerzo}
+
+Este anexo resume la planificación temporal del trabajo y el esfuerzo invertido en cada fase. Las cifras proceden de un registro de sesiones de trabajo mantenido durante el desarrollo, completado con la estimación de las actividades no registradas (lecturas, descargas desatendidas y parte de la redacción); las horas se presentan redondeadas por fase.
+
+El desarrollo se concentró entre abril y junio de 2026, en tres etapas diferenciadas. En abril se realizó la formación inicial e investigación de tecnologías, la obtención de los primeros datos, el desarrollo del proceso ETL y el \textit{benchmark} de almacenamiento, junto con la propuesta formal del TFG. En mayo se construyeron el motor de consultas analíticas y la aplicación web, se desplegó el sistema en el servidor de producción y se incorporaron escenarios adicionales. En junio se completaron la validación del sistema, la ampliación a los 56 escenarios y la redacción final de la memoria. La Tabla~\ref{tab:esfuerzo} desglosa el esfuerzo por fases.
+
+\begin{table}[ht]
+\centering
+\begin{tabularx}{\textwidth}{L>{\raggedright\arraybackslash}p{3.2cm}>{\raggedleft\arraybackslash}p{2cm}}
+\toprule
+\textbf{Fase} & \textbf{Periodo} & \textbf{Horas} \\
+\midrule
+Formación e investigación (TileDB, Triton, tecnologías de almacenamiento, compresión) & abril & 20 \\
+Obtención y preparación de los datos (descargas, transferencia física, organización) & abril--mayo & 15 \\
+Proceso ETL y \textit{benchmark} de almacenamiento (G1--G5) & abril & 30 \\
+Motor de consultas analíticas (24 funciones, optimización, exportación) & abril--mayo & 25 \\
+Aplicación web (interfaz, mapas, modo comparativo, versión bilingüe) & mayo & 30 \\
+Despliegue y operación del servidor & mayo & 10 \\
+Validación, tests automatizados y \textit{benchmark} de consultas & mayo--junio & 10 \\
+Redacción de la memoria y documentación & mayo--junio & 25 \\
+Reuniones, tutorías y propuesta de TFG & abril--junio & 5 \\
+\midrule
+\textbf{Total} & & \textbf{170} \\
+\bottomrule
+\end{tabularx}
+\caption{Esfuerzo invertido por fase del proyecto.}
+\label{tab:esfuerzo}
+\end{table}
+
+El reparto refleja la naturaleza del trabajo: aproximadamente un tercio del esfuerzo corresponde al núcleo de datos (ETL, \textit{benchmark} y motor de consultas), otro tercio a la capa de presentación y operación (aplicación web y despliegue), y el resto a formación, datos, validación y documentación. Las fases no fueron estrictamente secuenciales: el ETL y el motor de consultas se revisaron varias veces a medida que la validación y el uso real de la aplicación revelaban problemas de rendimiento o de memoria, tal y como se describe en la sección de dificultades del capítulo de conclusiones.

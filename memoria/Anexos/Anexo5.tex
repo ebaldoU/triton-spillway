@@ -143,6 +143,20 @@ python -m streamlit run app.py
 
 La aplicación se sirve en \texttt{http://localhost:8501} y detecta automáticamente los \textit{datasets} disponibles en \texttt{TRITON\_BASE\_URI}.
 
+\section{Prueba rápida con los datos de demostración}\label{e.7-prueba-rapida}
+
+Para probar el sistema sin acceso a los datos completos, el repositorio publica dos subconjuntos de demostración (datos1 y datos2, $\sim$430 MB cada uno) recortados a la ventana de 50$\times$50 km del \textit{benchmark}, con el mismo esquema y metadatos que un escenario completo:
+
+\begin{verbatim}
+mkdir -p /ruta/triton_results
+tar -xzf demo_datos1_bbox50km.tar.gz -C /ruta/triton_results/
+tar -xzf demo_datos2_bbox50km.tar.gz -C /ruta/triton_results/
+export TRITON_BASE_URI=/ruta/triton_results
+streamlit run app.py
+\end{verbatim}
+
+La aplicación detecta ambos subconjuntos automáticamente y las 24 consultas, incluido el modo comparativo entre escenarios, funcionan sin ninguna modificación.
+
 \section{Despliegue en servidor}\label{e.7-despliegue-servidor}
 
 La aplicación puede desplegarse como servicio \texttt{systemd} para que arranque automáticamente con el servidor. El flujo general es:
