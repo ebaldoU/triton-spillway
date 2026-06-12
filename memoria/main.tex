@@ -33,6 +33,10 @@
 \counterwithout{figure}{chapter}
 \counterwithout{table}{chapter}
 
+% Evitar líneas huérfanas y viudas en los saltos de página
+\widowpenalty=10000
+\clubpenalty=10000
+
 % Colocación de floats: evitar páginas casi vacías con una sola tabla/figura
 \renewcommand{\topfraction}{0.85}
 \renewcommand{\bottomfraction}{0.6}
