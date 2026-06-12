@@ -171,8 +171,6 @@ export TRITON_BASE_URI=/ruta/triton_results
 streamlit run app.py
 ```
 
-Los subsets se generan con `spillway/make_demo_subset.py`; las consultas acotadas a la ventana producen resultados idénticos a los del escenario completo.
-
 ### Datos de simulación completos
 
 Los arrays TileDB (~17–21 GB/dataset) y los GeoTIFF fuente (~235 GB/dataset) **no están incluidos** en el repositorio por su tamaño. Provienen del simulador hidráulico Triton y no están disponibles públicamente de forma independiente.
