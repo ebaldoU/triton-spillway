@@ -5,7 +5,7 @@ La necesidad de un almacenamiento eficiente para resultados de simulaciones hidr
 
 El contexto de aplicación son las inundaciones fluviales. El simulador Triton \cite{triton} resuelve la propagación del agua sobre una malla regular y produce, para cada variable física y paso temporal, un fichero GeoTIFF (Geographic Tagged Image File Format) \cite{ogc_geotiff}: un formato ráster estándar en SIG (Sistemas de Información Geográfica) que integra los metadatos de georreferenciación en el propio fichero, pero diseñado para el acceso secuencial y no para el análisis de grandes series temporales. Los resultados permiten evaluar la extensión de la mancha de inundación, identificar zonas de riesgo y comparar escenarios. El \hyperref[anexo-c.-contexto-de-las-simulaciones-hidraulicas]{Anexo~C} amplía este contexto para lectores no familiarizados con la modelización hidráulica.
 
-El objetivo principal de este TFG es diseñar e implementar un sistema de almacenamiento y análisis que permita almacenar estos resultados de forma compacta y eficiente, habilitando consultas analíticas rápidas y visualizaciones interactivas sin necesidad de cargar los rásteres completos en memoria. La Figura~\ref{fig:contexto-problema} resume el contraste entre el enfoque original y la solución propuesta.
+El objetivo principal de este TFG es diseñar e implementar un sistema de almacenamiento y análisis que permita almacenar estos resultados de forma compacta y eficiente, habilitando consultas analíticas rápidas y visualizaciones interactivas sin necesidad de cargar los rásteres completos en memoria. La Figura~\ref{fig:contexto-problema} resume el contraste entre el enfoque original y la solución propuesta: los GeoTIFF organizan los datos por variable y paso temporal (80 ficheros independientes), lo que obliga a lecturas masivas en serie para las consultas multi-temporales, mientras que el proceso ETL (\textit{Extract, Transform, Load}) los convierte en un array TileDB sparse 3D (tiempo, fila, columna) que almacena únicamente las celdas húmedas y responde las mismas consultas mediante una sola operación indexada.
 
 \begin{figure}[ht]
 \centering
@@ -68,7 +68,7 @@ El objetivo principal de este TFG es diseñar e implementar un sistema de almace
 \draw[arrow, draw=green!60!black] (tdb.south) -- (qtdb.north);
 
 \end{tikzpicture}
-\caption{Contexto y problemática del trabajo. Los GeoTIFF de Triton organizan los datos por variable y paso temporal (80 ficheros independientes), lo que obliga a lecturas masivas en serie para consultas multi-temporales. El proceso ETL (\textit{Extract, Transform, Load}) los convierte en un array TileDB sparse 3D (tiempo, fila, columna) que almacena únicamente las celdas húmedas y permite responder las mismas consultas mediante una sola operación indexada.}
+\caption{Contexto del trabajo: del almacenamiento original en GeoTIFF al array TileDB sparse.}
 \label{fig:contexto-problema}
 \end{figure}
 \FloatBarrier

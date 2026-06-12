@@ -17,7 +17,7 @@ TileDB soporta dos modos de almacenamiento:
 \item \textbf{Sparse:} Almacena únicamente las celdas no nulas junto con sus coordenadas. Eficiente cuando el dominio es mayoritariamente vacío.
 \end{itemize}
 
-En este proyecto se utiliza el modo disperso porque solo el $\sim$8,3 \% del dominio tiene agua. Almacenar el $\sim$92 \% restante (terreno seco) sería un desperdicio de espacio y tiempo de lectura. La Figura~\ref{fig:dense-vs-sparse} ilustra la diferencia entre ambos modos.
+En este proyecto se utiliza el modo disperso porque solo el $\sim$8,3 \% del dominio tiene agua. Almacenar el $\sim$92 \% restante (terreno seco) sería un desperdicio de espacio y tiempo de lectura. La Figura~\ref{fig:dense-vs-sparse} ilustra la diferencia entre ambos modos sobre un dominio de ejemplo de 6$\times$5 celdas: el modo denso almacena las 30 celdas, incluidas las secas con valor cero, mientras que el disperso guarda únicamente las celdas húmedas junto con sus coordenadas (8 de 30 en el ejemplo). En el dominio real, esta diferencia es la que reduce los 235 GB de GeoTIFF a 17,5 GB en TileDB sparse.
 
 \begin{figure}[ht]
 \centering
@@ -57,7 +57,7 @@ En este proyecto se utiliza el modo disperso porque solo el $\sim$8,3 \% del dom
   }
   \node[font=\small\bfseries, align=center, above=3pt] at (\dx+3,5) {\textbf{Disperso}\\[1pt]{\normalfont\scriptsize 8 celdas ($\sim$27\,\%)}};
 \end{tikzpicture}
-\caption{Diferencia entre almacenamiento denso y disperso sobre un dominio de ejemplo de 6$\times$5 celdas. El modo denso almacena todas las celdas incluyendo las secas (valor cero, en gris). El modo disperso almacena únicamente las celdas húmedas (en azul) junto con sus coordenadas, eliminando el $\sim$73\,\% de entradas vacías en este ejemplo. En el dominio real del proyecto la fracción seca es del $\sim$92\,\%, lo que reduce los 235\,GB de GeoTIFF a 17,5\,GB en TileDB sparse.}
+\caption{Almacenamiento denso frente a disperso sobre un dominio de ejemplo de 6$\times$5 celdas.}
 \label{fig:dense-vs-sparse}
 \end{figure}
 
@@ -111,7 +111,7 @@ El sistema está compuesto por cuatro capas articuladas en torno al array TileDB
     \draw[arrow] (tdb.south) -- ++(0,-3mm) -| (exp.north);
     \draw[arrow] (queries.south) -- (app.north);
 \end{tikzpicture}
-\caption{Arquitectura del sistema. Los GeoTIFF generados por Triton se procesan mediante el ETL (filtrado con rasterio) y se almacenan en TileDB sparse. El motor de consultas analíticas expone los datos a la aplicación Streamlit y permite exportarlos de nuevo a GeoTIFF.}
+\caption{Arquitectura del sistema en cuatro capas en torno al array TileDB sparse.}
 \label{fig:arquitectura}
 \end{figure}
 
@@ -139,7 +139,7 @@ Atributo MH & float32 & Profundidad máxima histórica \\
 \label{tab:array-schema}
 \end{table}
 
-La Figura~\ref{fig:tiledb-estructura} ilustra cómo TileDB organiza físicamente estos datos \cite{tiledb_indexing, tiledb_datalayout}: 20 fragmentos independientes (uno por paso temporal) almacenan únicamente las coordenadas y valores de las celdas húmedas, con los cuatro atributos codificados juntos mediante ByteShuffle+ZSTD-9.
+La Figura~\ref{fig:tiledb-estructura} ilustra cómo TileDB organiza físicamente estos datos \cite{tiledb_indexing, tiledb_datalayout}: 20 fragmentos independientes (uno por paso temporal) almacenan únicamente las coordenadas y valores de las celdas húmedas, con los cuatro atributos codificados juntos mediante ByteShuffle+ZSTD-9. Cada celda húmeda guarda sus tres coordenadas enteras y los cuatro valores float32; las celdas secas ($\sim$92 \% del dominio) no se almacenan, y esta combinación es la que reduce los $\sim$235 GB originales a $\sim$17,5 GB.
 
 \begin{figure}[ht]
 \centering
@@ -289,7 +289,7 @@ La Figura~\ref{fig:tiledb-estructura} ilustra cómo TileDB organiza físicamente
     (\FW+0.12, \FH/2) to[out=5, in=175] (\BX-0.1, \BY+2.5);
 
 \end{tikzpicture}
-\caption{Estructura interna del array TileDB sparse. \textbf{Izquierda:} los 20 pasos temporales se almacenan como 20 fragmentos independientes apilados en la dimensión temporal. La cara frontal del fragmento $t_0$ muestra el dominio espacial: las celdas húmedas (azul, $\sim$8\,\% del total) se almacenan junto con sus coordenadas; las secas (gris) no se guardan. \textbf{Derecha:} cada celda húmeda almacena tres coordenadas enteras y cuatro atributos float32, comprimidos con ByteShuffle+ZSTD-9, dando $\sim$17,5 GB frente a los $\sim$235 GB de los GeoTIFF originales.}
+\caption{Estructura interna del array TileDB sparse: fragmentos por paso temporal (izquierda) y contenido de cada celda húmeda (derecha).}
 \label{fig:tiledb-estructura}
 \end{figure}
 

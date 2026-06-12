@@ -52,7 +52,7 @@ Q5 -- Evolución extensión & Recuento NumPy sobre TileDB & 20 pasos & 0 \\
 Q13 -- Volumen por hora & Suma NumPy sobre TileDB & 20 pasos & 0 \\
 \bottomrule
 \end{tabularx}
-\caption{Resumen de validación funcional. Las primeras seis filas comparan el motor analítico contra los GeoTIFF originales (oráculo externo). Las cuatro últimas corresponden a pruebas de consistencia interna ejecutadas sobre \texttt{datos7}: el motor se compara contra recálculos NumPy directos sobre TileDB. Todas las discrepancias son nulas o de orden $10^{-5}$.}
+\caption{Resumen de la validación funcional: oráculo externo sobre GeoTIFF (filas superiores) y consistencia interna sobre TileDB (filas inferiores).}
 \label{tab:validacion-resumen}
 \end{table}
 
@@ -114,11 +114,11 @@ Se midió un representante de cada categoría y nivel de complejidad: Q1 (instan
   \node[red!65!black, font=\small\bfseries, above=3pt] at (\qx+2.5,3) {Acumulada por píxel};
   \node[gray!60, font=\tiny, below=17pt] at (\qx+2.5,0) {Q7--Q9: 20 fragmentos $\to$ mapa 2D};
 \end{tikzpicture}
-\caption{Tres patrones de acceso al array TileDB. \textbf{Instantánea} (naranja): un único fragmento. \textbf{Escalar por paso} (azul): los 20 fragmentos, resultado numérico. \textbf{Acumulada por píxel} (rojo): los 20 fragmentos actualizando un \textit{grid} de tamaño fijo, lo que genera los tiempos de 79--121 s de la Tabla~\ref{tab:rendimiento-consultas}.}
+\caption{Patrones de acceso al array TileDB: instantánea, escalar por paso y acumulada por píxel.}
 \label{fig:patrones-acceso}
 \end{figure}
 
-El rendimiento del motor de consultas se midió sobre \texttt{datos29}, el \textit{dataset} más voluminoso disponible (21 GB, 1\,500 M celdas húmedas), en condiciones de caché fría sobre la máquina descrita en la sección~\ref{hardware-y-software}. Los tiempos se miden extremo a extremo: desde la llamada a la función hasta la obtención del resultado en Python, incluyendo lectura de TileDB, filtrado y cálculo.
+El rendimiento del motor de consultas se midió sobre \texttt{datos29}, el \textit{dataset} más voluminoso disponible (21 GB, 1\,500 M celdas húmedas), en condiciones de caché fría sobre la máquina descrita en la sección~\ref{hardware-y-software}. Los tiempos se miden extremo a extremo: desde la llamada a la función hasta la obtención del resultado en Python, incluyendo lectura de TileDB, filtrado y cálculo. En la Tabla~\ref{tab:rendimiento-consultas}, la columna de subdominio corresponde al cuadrante central del dominio (50 \% en cada eje, 25 \% del área) y la RAM pico se midió con \texttt{tracemalloc}.
 
 \begin{table}[ht]
 \centering
@@ -142,7 +142,7 @@ Q9  & Hora de calado máximo             & 98{,}3     & 33{,}7 & 750 \\
 Q11 & Ventana para vehículos emergencia & 84{,}1     & 25{,}9 & 750 \\
 \bottomrule
 \end{tabularx}
-\caption{Rendimiento de las consultas analíticas sobre \texttt{datos29} (21 GB). Subdominio: cuadrante central al 50\,\% en cada eje (25\,\% del área). Caché fría, SSD NVMe PCIe Gen4, AMD Ryzen 9 7900X. RAM pico medida con tracemalloc.}
+\caption{Rendimiento de las consultas analíticas sobre \texttt{datos29} (caché fría).}
 \label{tab:rendimiento-consultas}
 \end{table}
 
@@ -150,7 +150,7 @@ Las consultas instantáneas responden en menos de 4 s incluso sobre el dominio c
 
 \section{Escalabilidad con el volumen de datos}\label{escalabilidad}
 
-Para verificar que el rendimiento escala de forma predecible con el tamaño del escenario, se midieron Q4, Q5 y Q7 sobre cuatro \textit{datasets} con distinto número de celdas húmedas: datos7 (334\,M, escenario seco), datos3 (498\,M), datos8 (1\,281\,M) y datos6 (1\,392\,M, escenario húmedo). Los tiempos corresponden a caché caliente, una repetición por consulta y \textit{dataset}, sobre el dominio completo. La Figura~\ref{fig:escalabilidad} resume los resultados.
+Para verificar que el rendimiento escala de forma predecible con el tamaño del escenario, se midieron Q4, Q5 y Q7 sobre cuatro \textit{datasets} con distinto número de celdas húmedas: datos7 (334\,M, escenario seco), datos3 (498\,M), datos8 (1\,281\,M) y datos6 (1\,392\,M, escenario húmedo). Los tiempos corresponden a caché caliente, una repetición por consulta y \textit{dataset}, sobre el dominio completo. La Figura~\ref{fig:escalabilidad} resume los resultados: Q4 (instantánea) escala de forma casi plana, mientras que Q5 y Q7 crecen de forma aproximadamente lineal con el volumen; al pasar de los 334\,M de celdas de datos7 a los 1\,392\,M de datos6, Q5 multiplica su tiempo por 4,4 y Q7 por 4,2.
 
 Al cuadruplicar el volumen (de 334\,M a 1\,392\,M celdas), Q5 pasa de 6,2 a 27,0 s (factor 4,4$\times$) y Q7 de 16,7 a 69,5 s (factor 4,2$\times$), confirmando la escalabilidad aproximadamente lineal con el número de celdas húmedas. Q4, al acceder a un único fragmento TileDB, apenas varía (0,4 a 1,4 s) porque su coste está dominado por la apertura del array, no por el volumen de datos. La pendiente más pronunciada de Q7 respecto a Q5 se debe al \textit{grid} acumulador de tamaño fijo $n_r \times n_c$ que recibe escrituras dispersas en los 20 fragmentos: cuantas más celdas húmedas por fragmento, mayor presión de caché en las actualizaciones.
 
@@ -202,6 +202,6 @@ Al cuadruplicar el volumen (de 334\,M a 1\,392\,M celdas), Q5 pasa de 6,2 a 27,0
 
 \end{axis}
 \end{tikzpicture}
-\caption{Tiempo de consulta (caché caliente, dominio completo) en cuatro escenarios con distinto número de celdas húmedas. Q4 (instantánea) escala de forma casi plana. Q5 y Q7 crecen de forma aproximadamente lineal con el volumen: al pasar de 334\,M (datos7) a 1\,392\,M celdas (datos6), Q5 se multiplica por 4,4$\times$ y Q7 por 4,2$\times$.}
+\caption{Escalabilidad del tiempo de consulta con el número de celdas húmedas (caché caliente, dominio completo).}
 \label{fig:escalabilidad}
 \end{figure}

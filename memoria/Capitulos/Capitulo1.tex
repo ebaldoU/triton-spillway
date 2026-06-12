@@ -34,7 +34,7 @@ MH & Profundidad máxima acumulada desde el inicio (máximo histórico) & m \\
 
 Solo se almacenan celdas con H $\geq$ 0,01 m (umbral de celda húmeda). El módulo del caudal unitario Q\_mod = $\sqrt{QX^2 + QY^2}$ se calcula en tiempo de consulta a partir de QX y QY.
 
-La Figura~\ref{fig:hidraulica-datos} ilustra el ciclo completo de datos: cómo el simulador produce GeoTIFF en cada instante, qué variables contiene cada fichero y cómo varía la mancha de inundación a lo largo del tiempo.
+La Figura~\ref{fig:hidraulica-datos} ilustra el ciclo completo de datos: el simulador produce un GeoTIFF por variable y paso temporal (80 ficheros, $\sim$235 GB), cada fichero es una matriz 2D del dominio, y una consulta típica como Q2 (serie temporal de calado en un punto) debe cruzar los 20 ficheros de H para extraer la secuencia de una sola celda.
 
 \begin{figure}[ht]
 \centering
@@ -109,7 +109,7 @@ La Figura~\ref{fig:hidraulica-datos} ilustra el ciclo completo de datos: cómo e
   \draw[-Latex, thick, draw=gray!50] (\gx+4*\cw+0.1,\gy+2.5*\ch) -- (\rx-0.2,\gy+2.5*\ch);
 
 \end{tikzpicture}
-\caption{Flujo de datos hidráulicos: Triton produce un GeoTIFF por variable y paso temporal (80 ficheros, $\sim$235 GB). Cada fichero es una matriz 2D del dominio. Una consulta típica (Q2: serie temporal de calado en un punto) extrae la secuencia temporal en una celda concreta, cruzando los 20 pasos de H.}
+\caption{Flujo de datos hidráulicos: de la simulación Triton a una consulta de serie temporal.}
 \label{fig:hidraulica-datos}
 \end{figure}
 
