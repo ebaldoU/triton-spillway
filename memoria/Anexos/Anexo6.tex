@@ -52,7 +52,7 @@ Reuniones y tutorías & todo el proyecto & 5 \\
   \node[white, font=\scriptsize\bfseries] at (-232.1:1.7)  {5\,\%};
   % Leyenda
   \begin{scope}[shift={(3.6,2.3)}]
-    \foreach \i/\c/\t in {
+    \foreach \fila/\colorleg/\textoleg in {
       0/blue!70/{Descarga de escenarios por VPN (140 h)},
       1/orange!75/{ETL y \textit{benchmark} de almacenamiento (30 h)},
       2/teal!60/{Aplicación web (30 h)},
@@ -63,8 +63,8 @@ Reuniones y tutorías & todo el proyecto & 5 \\
       7/magenta!40/{Despliegue y operación del servidor (10 h)},
       8/gray!55/{Validación y tests (10 h)},
       9/brown!55/{Reuniones y tutorías (5 h)}} {
-      \fill[\c] (0,-\i*0.52) rectangle +(0.26,0.26);
-      \node[anchor=west, font=\footnotesize] at (0.38,-\i*0.52+0.13) {\t};
+      \fill[\colorleg] (0,-\fila*0.52) rectangle +(0.26,0.26);
+      \node[anchor=west, font=\footnotesize] at (0.38,-\fila*0.52+0.13) {\textoleg};
     }
   \end{scope}
 \end{tikzpicture}
