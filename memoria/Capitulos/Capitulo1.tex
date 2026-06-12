@@ -138,7 +138,7 @@ Celdas con agua (H $\geq$ 0,01 m) & 1\,311\,695\,098 ($\sim$8,3 \%) \\
 
 \chapter{Análisis de tecnologías}\label{analisis-de-tecnologias}
 
-Antes de comenzar el desarrollo se realizó un análisis de las tecnologías disponibles para almacenar grandes volúmenes de datos ráster espacio-temporales, con el objetivo de seleccionar la más adecuada en términos de eficiencia de almacenamiento, velocidad de consulta y facilidad de integración. La sección~\ref{bases-de-datos-para-arrays-multidimensionales} repasa las alternativas evaluadas, la sección~\ref{justificacion-de-tiledb} justifica la elección de TileDB y la sección~\ref{lenguaje-y-librerias} el lenguaje y las bibliotecas empleadas.
+Antes de comenzar el desarrollo se realizó un análisis de las tecnologías disponibles para almacenar grandes volúmenes de datos ráster espacio-temporales, con el objetivo de seleccionar la más adecuada en términos de eficiencia de almacenamiento, velocidad de consulta y facilidad de integración. La sección~\ref{bases-de-datos-para-arrays-multidimensionales} repasa las alternativas evaluadas, la sección~\ref{justificacion-de-tiledb} justifica la elección de TileDB, la sección~\ref{tecnologia-tiledb} describe su funcionamiento interno y la sección~\ref{lenguaje-y-librerias} el lenguaje y las bibliotecas empleadas.
 
 \section{Bases de datos para arrays multidimensionales}\label{bases-de-datos-para-arrays-multidimensionales}
 
@@ -179,7 +179,74 @@ Se eligió TileDB por cuatro motivos:
 \item \textbf{Integración Python/NumPy}: La API permite operar sobre los datos directamente desde Python sin capa intermedia, lo que facilita la integración con el resto del ecosistema científico.
 \end{enumerate}
 
-El capítulo~\ref{tecnologia-tiledb} describe TileDB en detalle.
+La sección~\ref{tecnologia-tiledb} describe su funcionamiento en detalle.
+
+\section{Funcionamiento de TileDB}\label{tecnologia-tiledb}
+
+Una vez justificada la elección, esta sección describe los tres aspectos del funcionamiento interno de TileDB que condicionan el diseño del sistema (capítulo~\ref{diseno-del-sistema}): el modelo de almacenamiento disperso, la gestión de fragmentos y el mecanismo de compresión. TileDB no requiere servidor: los arrays se almacenan directamente en el sistema de ficheros (o en la nube) como directorios con metadatos, fragmentos de datos y ficheros de índice, y el acceso se realiza mediante la biblioteca Python (o C/C++/R) sin ningún servicio en ejecución.
+
+\subsection{Arrays sparse frente a densos}\label{arrays-sparse-vs.-densos}
+
+TileDB soporta dos modos de almacenamiento:
+
+\begin{itemize}
+\item \textbf{Dense:} Almacena todos los valores del dominio, incluidos los nulos. Eficiente cuando el dominio está mayoritariamente relleno.
+\item \textbf{Sparse:} Almacena únicamente las celdas no nulas junto con sus coordenadas. Eficiente cuando el dominio es mayoritariamente vacío.
+\end{itemize}
+
+En este proyecto se utiliza el modo disperso porque solo el $\sim$8,3 \% del dominio tiene agua. Almacenar el $\sim$92 \% restante (terreno seco) sería un desperdicio de espacio y tiempo de lectura. La Figura~\ref{fig:dense-vs-sparse} ilustra la diferencia entre ambos modos sobre un dominio de ejemplo de 6$\times$5 celdas: el modo denso almacena las 30 celdas, incluidas las secas con valor cero, mientras que el disperso guarda únicamente las celdas húmedas junto con sus coordenadas (8 de 30 en el ejemplo). En el dominio real, esta diferencia es la que reduce los 235 GB de GeoTIFF a 17,5 GB en TileDB sparse.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[x=0.6cm, y=0.6cm, font=\small\sffamily]
+  %% --- Cuadrícula izquierda: almacenamiento denso (6 cols × 5 filas) ---
+  \foreach \r in {0,...,4} {
+    \foreach \c in {0,...,5} {
+      \fill[gray!12] (\c,\r) rectangle +(1,1);
+      \draw[gray!45, line width=0.4pt] (\c,\r) rectangle +(1,1);
+      \node[gray!55, font=\tiny, inner sep=0pt] at (\c+0.5,\r+0.5) {0};
+    }
+  }
+  % Celdas húmedas (8 de 30)
+  \foreach \r/\c in {0/3, 1/2, 1/3, 2/1, 2/2, 2/3, 3/2, 4/4} {
+    \fill[blue!28] (\c,\r) rectangle +(1,1);
+    \draw[blue!60!black, line width=0.6pt] (\c,\r) rectangle +(1,1);
+    \node[blue!75!black, font=\tiny\bfseries, inner sep=0pt] at (\c+0.5,\r+0.5) {H};
+  }
+  \node[font=\small\bfseries, align=center, above=3pt] at (3,5) {\textbf{Denso}\\[1pt]{\normalfont\scriptsize 30 celdas (dominio completo)}};
+  \node[rotate=90, gray!55, font=\tiny] at (-0.7, 2.5) {filas};
+  \node[gray!55, font=\tiny, below=3pt] at (3, 0) {columnas};
+
+  %% --- Flecha de filtrado ---
+  \draw[-Latex, thick, draw=blue!65!black] (6.5,2.5) -- (9.5,2.5)
+    node[midway, above, font=\scriptsize\bfseries, blue!65!black] {H $\geq$ 0{,}01 m}
+    node[midway, below, font=\tiny, blue!45!black] {filtro húmedo};
+
+  %% --- Cuadrícula derecha: almacenamiento disperso (solo celdas húmedas) ---
+  \def\dx{10}
+  \draw[gray!28, dashed, line width=0.5pt] (\dx,0) rectangle +(6,5);
+  \foreach \r in {1,...,4} { \draw[gray!18, very thin] (\dx,\r) -- (\dx+6,\r); }
+  \foreach \c in {1,...,5} { \draw[gray!18, very thin] (\dx+\c,0) -- (\dx+\c,5); }
+  \foreach \r/\c in {0/3, 1/2, 1/3, 2/1, 2/2, 2/3, 3/2, 4/4} {
+    \fill[blue!28] (\dx+\c,\r) rectangle +(1,1);
+    \draw[blue!60!black, line width=0.6pt] (\dx+\c,\r) rectangle +(1,1);
+    \node[blue!75!black, font=\tiny\bfseries, inner sep=0pt] at (\dx+\c+0.5,\r+0.5) {H};
+  }
+  \node[font=\small\bfseries, align=center, above=3pt] at (\dx+3,5) {\textbf{Disperso}\\[1pt]{\normalfont\scriptsize 8 celdas ($\sim$27\,\%)}};
+\end{tikzpicture}
+\caption{Almacenamiento denso frente a disperso sobre un dominio de ejemplo de 6$\times$5 celdas.}
+\label{fig:dense-vs-sparse}
+\end{figure}
+
+\subsection{Fragmentos y consolidación}\label{fragmentos-y-consolidacion}
+
+Cada escritura en TileDB crea un fragmento independiente en disco. En este proyecto se realiza una escritura por paso temporal, lo que produce \textbf{20 fragmentos} (uno por cada intervalo de 6 horas). Mantenerlos separados tiene una ventaja importante: TileDB puede filtrar por la dimensión \texttt{time} leyendo solo los fragmentos relevantes, lo que acelera las consultas acotadas temporalmente.
+
+La API de TileDB ofrece \texttt{tiledb.consolidate()} para fusionar todos los fragmentos en uno solo. En este proyecto esta operación \textbf{no se aplica}: la consolidación agrupa celdas de distintos pasos temporales en los mismos tiles, lo que obliga a leer datos innecesarios en consultas que solo acceden a uno o pocos pasos (\textit{tile amplification}, es decir, leer más datos de los necesarios). Las pruebas del \textit{benchmark} (\hyperref[anexo-b.-tablas-de-resultados-completas]{Anexo~B}, grupo G4) confirman que un fragmento por paso temporal es la opción más eficiente.
+
+\subsection{Compresión}\label{compresion}
+
+Se utilizó el filtro ByteShuffle+ZSTD nivel 9 \cite{tiledb_compression_tutorial, tiledb_compression, tiledb_docs_compression}, seleccionado mediante el \textit{benchmark} de 15 configuraciones de la sección~\ref{benchmark-de-almacenamiento}: ByteShuffle reordena los bytes de los float32 agrupando exponentes y mantisas similares antes de comprimir, lo que reduce el almacenamiento un 8,9 \% adicional respecto a ZSTD-1 sin penalización apreciable en lectura.
 
 \section{Lenguaje y bibliotecas}\label{lenguaje-y-librerias}
 

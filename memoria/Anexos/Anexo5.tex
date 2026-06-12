@@ -172,7 +172,7 @@ Además de los componentes del producto final, el repositorio incluye varias her
 \begin{itemize}
 \item \textbf{Visualizador de escritorio} (\texttt{visualize\_tiledb.py}): lee el array sparse y proyecta las celdas húmedas sobre pantalla (máximo 4\,096 px) con cuatro modos de visualización (H, V, Q\_mod, MH) y un panel de cursor en tiempo real, evitando materializar el dominio denso ($\sim$3 GB por variable). Construido con Matplotlib, fue esencial para detectar anomalías geoespaciales en el ETL antes de integrar las consultas en la aplicación web.
 \item \textbf{Utilidades de consola} (\texttt{query\_tiledb.py}, \texttt{query\_max\_depth\_tiledb.py}): estadísticos descriptivos por paso temporal y localización de las N celdas de mayor calado con sus coordenadas UTM, útiles para el \textit{profiling} de casos extremos al calibrar los criterios de peligrosidad.
-\item \textbf{Scripts de \textit{benchmark}} (\texttt{benchmark\_vs\_geotiff.py}, \texttt{benchmark\_queries.py}): reproducen los experimentos de los capítulos de \textit{benchmark} y validación con un único argumento (\texttt{-\/-dataset}).
+\item \textbf{Scripts de \textit{benchmark}} (\texttt{benchmark\_vs\_geotiff.py}, \texttt{benchmark\_queries.py}): reproducen los experimentos del \textit{benchmark} de almacenamiento y de la validación con un único argumento (\texttt{-\/-dataset}).
 \end{itemize}
 
 Ninguna de estas herramientas es necesaria para operar el sistema en producción, pero todas resultaron útiles durante el desarrollo y se conservan en el repositorio para facilitar el diagnóstico de futuros escenarios.

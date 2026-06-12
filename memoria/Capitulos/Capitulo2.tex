@@ -1,79 +1,6 @@
-\chapter{Tecnología: TileDB}\label{tecnologia-tiledb}
-
-Este capítulo describe el funcionamiento interno de TileDB con el objetivo de justificar las decisiones de diseño adoptadas en el capítulo siguiente: las secciones~\ref{que-es-tiledb} y~\ref{arrays-sparse-vs.-densos} presentan la tecnología y su modelo de datos sparse, la sección~\ref{fragmentos-y-consolidacion} la gestión de fragmentos y la sección~\ref{compresion} el mecanismo de compresión.
-
-\section{¿Qué es TileDB?}\label{que-es-tiledb}
-
-TileDB es una base de datos orientada a arrays multidimensionales de código abierto. A diferencia de las bases de datos relacionales (tablas), TileDB organiza los datos en arrays N-dimensionales, lo que lo hace especialmente eficiente para datos científicos, rásteres geoespaciales y series temporales densas o dispersas.
-
-TileDB no requiere servidor: los arrays se almacenan directamente en el sistema de ficheros (o en la nube) como directorios con metadatos, fragmentos de datos y ficheros de índice, y el acceso se realiza mediante la biblioteca Python (o C/C++/R) sin ningún servicio en ejecución.
-
-\section{Arrays sparse vs. densos}\label{arrays-sparse-vs.-densos}
-
-TileDB soporta dos modos de almacenamiento:
-
-\begin{itemize}
-\item \textbf{Dense:} Almacena todos los valores del dominio, incluidos los nulos. Eficiente cuando el dominio está mayoritariamente relleno.
-\item \textbf{Sparse:} Almacena únicamente las celdas no nulas junto con sus coordenadas. Eficiente cuando el dominio es mayoritariamente vacío.
-\end{itemize}
-
-En este proyecto se utiliza el modo disperso porque solo el $\sim$8,3 \% del dominio tiene agua. Almacenar el $\sim$92 \% restante (terreno seco) sería un desperdicio de espacio y tiempo de lectura. La Figura~\ref{fig:dense-vs-sparse} ilustra la diferencia entre ambos modos sobre un dominio de ejemplo de 6$\times$5 celdas: el modo denso almacena las 30 celdas, incluidas las secas con valor cero, mientras que el disperso guarda únicamente las celdas húmedas junto con sus coordenadas (8 de 30 en el ejemplo). En el dominio real, esta diferencia es la que reduce los 235 GB de GeoTIFF a 17,5 GB en TileDB sparse.
-
-\begin{figure}[ht]
-\centering
-\begin{tikzpicture}[x=0.6cm, y=0.6cm, font=\small\sffamily]
-  %% --- Cuadrícula izquierda: almacenamiento denso (6 cols × 5 filas) ---
-  \foreach \r in {0,...,4} {
-    \foreach \c in {0,...,5} {
-      \fill[gray!12] (\c,\r) rectangle +(1,1);
-      \draw[gray!45, line width=0.4pt] (\c,\r) rectangle +(1,1);
-      \node[gray!55, font=\tiny, inner sep=0pt] at (\c+0.5,\r+0.5) {0};
-    }
-  }
-  % Celdas húmedas (8 de 30)
-  \foreach \r/\c in {0/3, 1/2, 1/3, 2/1, 2/2, 2/3, 3/2, 4/4} {
-    \fill[blue!28] (\c,\r) rectangle +(1,1);
-    \draw[blue!60!black, line width=0.6pt] (\c,\r) rectangle +(1,1);
-    \node[blue!75!black, font=\tiny\bfseries, inner sep=0pt] at (\c+0.5,\r+0.5) {H};
-  }
-  \node[font=\small\bfseries, align=center, above=3pt] at (3,5) {\textbf{Denso}\\[1pt]{\normalfont\scriptsize 30 celdas (dominio completo)}};
-  \node[rotate=90, gray!55, font=\tiny] at (-0.7, 2.5) {filas};
-  \node[gray!55, font=\tiny, below=3pt] at (3, 0) {columnas};
-
-  %% --- Flecha de filtrado ---
-  \draw[-Latex, thick, draw=blue!65!black] (6.5,2.5) -- (9.5,2.5)
-    node[midway, above, font=\scriptsize\bfseries, blue!65!black] {H $\geq$ 0{,}01 m}
-    node[midway, below, font=\tiny, blue!45!black] {filtro húmedo};
-
-  %% --- Cuadrícula derecha: almacenamiento disperso (solo celdas húmedas) ---
-  \def\dx{10}
-  \draw[gray!28, dashed, line width=0.5pt] (\dx,0) rectangle +(6,5);
-  \foreach \r in {1,...,4} { \draw[gray!18, very thin] (\dx,\r) -- (\dx+6,\r); }
-  \foreach \c in {1,...,5} { \draw[gray!18, very thin] (\dx+\c,0) -- (\dx+\c,5); }
-  \foreach \r/\c in {0/3, 1/2, 1/3, 2/1, 2/2, 2/3, 3/2, 4/4} {
-    \fill[blue!28] (\dx+\c,\r) rectangle +(1,1);
-    \draw[blue!60!black, line width=0.6pt] (\dx+\c,\r) rectangle +(1,1);
-    \node[blue!75!black, font=\tiny\bfseries, inner sep=0pt] at (\dx+\c+0.5,\r+0.5) {H};
-  }
-  \node[font=\small\bfseries, align=center, above=3pt] at (\dx+3,5) {\textbf{Disperso}\\[1pt]{\normalfont\scriptsize 8 celdas ($\sim$27\,\%)}};
-\end{tikzpicture}
-\caption{Almacenamiento denso frente a disperso sobre un dominio de ejemplo de 6$\times$5 celdas.}
-\label{fig:dense-vs-sparse}
-\end{figure}
-
-\section{Fragmentos y consolidación}\label{fragmentos-y-consolidacion}
-
-Cada escritura en TileDB crea un fragmento independiente en disco. En este proyecto se realiza una escritura por paso temporal, lo que produce \textbf{20 fragmentos} (uno por cada intervalo de 6 horas). Mantenerlos separados tiene una ventaja importante: TileDB puede filtrar por la dimensión \texttt{time} leyendo solo los fragmentos relevantes, lo que acelera las consultas acotadas temporalmente.
-
-La API de TileDB ofrece \texttt{tiledb.consolidate()} para fusionar todos los fragmentos en uno solo. En este proyecto esta operación \textbf{no se aplica}: la consolidación agrupa celdas de distintos pasos temporales en los mismos tiles, lo que obliga a leer datos innecesarios en consultas que solo acceden a uno o pocos pasos (\textit{tile amplification}, es decir, leer más datos de los necesarios). Las pruebas del \textit{benchmark} (\hyperref[anexo-b.-tablas-de-resultados-completas]{Anexo~B}, grupo G4) confirman que un fragmento por paso temporal es la opción más eficiente.
-
-\section{Compresión}\label{compresion}
-
-Se utilizó el filtro ByteShuffle+ZSTD nivel 9 \cite{tiledb_compression_tutorial, tiledb_compression, tiledb_docs_compression}, seleccionado mediante el \textit{benchmark} de 15 configuraciones del capítulo~\ref{benchmark-de-almacenamiento}: ByteShuffle reordena los bytes de los float32 agrupando exponentes y mantisas similares antes de comprimir, lo que reduce el almacenamiento un 8,9 \% adicional respecto a ZSTD-1 sin penalización apreciable en lectura.
-
 \chapter{Diseño del sistema}\label{diseno-del-sistema}
 
-Este capítulo presenta el diseño del sistema desarrollado: la sección~\ref{arquitectura-general} describe la arquitectura en capas, la sección~\ref{arquitectura-del-array-tiledb} el esquema del array TileDB, la sección~\ref{proceso-de-carga-etl-geotiff_to_tiledb_sparse.py} el proceso de ingesta y la sección~\ref{gestion-de-multiples-escenarios-argumento---dataset} la gestión de múltiples escenarios.
+Este capítulo presenta el diseño del sistema desarrollado: la sección~\ref{arquitectura-general} describe la arquitectura en capas, la sección~\ref{arquitectura-del-array-tiledb} el esquema del array TileDB, la sección~\ref{proceso-de-carga-etl-geotiff_to_tiledb_sparse.py} el proceso de ingesta, la sección~\ref{gestion-de-multiples-escenarios-argumento---dataset} la gestión de múltiples escenarios y la sección~\ref{benchmark-de-almacenamiento} la elección experimental de la configuración de almacenamiento.
 
 \section{Arquitectura general}\label{arquitectura-general}
 
@@ -308,4 +235,56 @@ Se ha creado un script en Python que carga los GeoTIFF de un escenario a TileDB.
 El sistema procesa y almacena múltiples escenarios de forma independiente. Cada escenario ocupa su propio array TileDB y se identifica mediante un alias corto (datos1, datos2, \ldots) que \texttt{config.py} traduce al nombre real del directorio de salida de Triton; el módulo de ingesta acepta el argumento \texttt{-\/-dataset} para seleccionar el escenario, y dos variables de entorno controlan las rutas de datos (detalladas, junto con la estructura de directorios, en el \hyperref[anexo-e.-guia-de-despliegue]{Anexo~E}).
 
 La aplicación web descubre automáticamente los \textit{datasets} disponibles inspeccionando el directorio de arrays: cualquier subdirectorio con un array TileDB válido aparece en el selector de la interfaz, con la fecha de inicio extraída del nombre del directorio. Añadir un nuevo escenario consiste únicamente en ejecutar el ETL con el alias correspondiente.
+
+\section{Elección de la configuración de almacenamiento}\label{benchmark-de-almacenamiento}
+
+La última decisión de diseño es la configuración de almacenamiento del array, determinada mediante un \textit{benchmark} sistemático ejecutado sobre los datos reales del dominio de simulación. Se evaluaron cinco grupos de parámetros de forma independiente (G1--G5: filtros de compresión, tamaño de \textit{tile}, tipo de dato, organización temporal y estructura de atributos) y se adoptó la configuración definitiva que se aplica a los 56 conjuntos de datos procesados.
+
+El ahorro de espacio proviene principalmente del almacenamiento disperso (solo el $\sim$8,3 \% del dominio está inundado), no de la compresión en sí; las métricas del array con la configuración inicial (ZSTD-1) se recogen en la Tabla~\ref{tab:metricas-tdb} del \hyperref[anexo-b.-tablas-de-resultados-completas]{Anexo~B}. Para cuantificar el impacto de la compresión se diseñó un \textit{benchmark} con cinco dimensiones de experimento, ejecutado sobre los datos reales del paso temporal 16\_00 (64,3 millones de celdas húmedas).
+
+\subsection{Entorno y metodología experimental}\label{entorno-y-metodologia-experimental}\label{hardware-y-software}
+
+Todos los experimentos se realizaron en la misma máquina para garantizar la comparabilidad de los resultados. Hardware: procesador AMD Ryzen 9 7900X (12 núcleos / 24 hilos, 4,7--5,6 GHz), 32 GB de RAM DDR5 a 5200 MT/s, almacenamiento SSD (\textit{Solid-State Drive}) NVMe PCIe Gen4 de 2 TB. Software: Windows 11 Pro con subsistema WSL2 (Windows Subsystem for Linux~2, Ubuntu 24.04 LTS, kernel 6.6), Python 3.12.3, TileDB 0.36.1, NumPy 2.4.4, rasterio 1.5.0, Streamlit 1.36.
+
+\label{protocolo-de-medicion}Cada caso de prueba sigue el mismo protocolo de medición. Los \textit{benchmarks} de patrones de acceso se ejecutan tres veces y se reporta la mediana; el de filtros de compresión usa 200 repeticiones sobre una región fija de 5 000$\times$5 000 celdas. Antes de cada serie se libera la caché de páginas del sistema operativo para medir el tiempo en frío; las repeticiones siguientes miden el tiempo en caché caliente, que es el valor reportado en las tablas. La RAM pico se mide con \texttt{tracemalloc} (los matices de esta medición y el cálculo del \textit{throughput} se detallan en el \hyperref[anexo-b.-tablas-de-resultados-completas]{Anexo~B}). Todos los scripts están versionados en el repositorio y son reejecutables con un único argumento; los tiempos absolutos dependen del hardware, pero los factores relativos entre TileDB y GeoTIFF son directamente comparables.
+
+\subsection{Resultado final: configuración definitiva}\label{resultado-final-configuracion-definitiva}
+
+A partir de los resultados del \textit{benchmark} se generaron los 56 arrays definitivos (triton\_results/datos1--datos56) con el filtro ByteShuffle + ZSTD-9, manteniendo el resto de parámetros de producción (float32, tile 256$\times$256, array 3D con 1 fragmento por paso, multi-atributo). La Tabla~\ref{tab:benchmark-resumen} resume las comparativas realizadas y la decisión adoptada en cada grupo; los resultados detallados se recogen en el \hyperref[anexo-b.-tablas-de-resultados-completas]{Anexo~B}.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3cm}>{\raggedright\arraybackslash}p{3.8cm}L>{\raggedright\arraybackslash}p{2.8cm}}
+\toprule
+\textbf{Grupo} & \textbf{Comparación} & \textbf{Resultado} & \textbf{Configuración elegida} \\
+\midrule
+G1.\\ Filtros & ZSTD puro (niveles 1, 3, 5, 9), ByteShuffle+ZSTD, BitShuffle+ZSTD & \textbullet~ZSTD puro apenas reduce el tamaño de float32 sin preprocesado ($-$8 \%). \newline \textbullet~ByteShuffle reordena bytes (agrupa exponentes y mantisas de float32 similares antes de comprimir): $-$16 \% adicional. \newline \textbullet~Diferencias de velocidad de lectura entre variantes shuffle son del orden del ruido de caché del SO; criterio determinante: tamaño en disco. & ByteShuffle+ZSTD-9 \\
+G2.\\ Tile espacial & Tiles 256$\times$256, 512$\times$512 y 1\,024$\times$1\,024 celdas & \textbullet~Diferencias despreciables en tamaño y velocidad con datos dispersos. & 256$\times$256 \\
+G3.\\ Tipo de dato & float64 (nativo GeoTIFF), float32, float16 & \textbullet~float16 no soportado. \newline \textbullet~float64: +9,4 \% sobre float32. \newline \textbullet~float32: equilibrio tamaño/precisión. & float32 \\
+G4.\\ Estructura temporal & tile\_t=1 vs tile\_t=4; array 2D vs 3D & \textbullet~tile\_t=1 confina cada tile a un solo paso temporal: alta correlación espacial, mejor compresión ($-$19 \% frente a tile\_t=4, que mezcla pasos con distribuciones heterogéneas). \newline \textbullet~1 fragmento/paso permite filtrado temporal eficiente sin consolidación. & Array 3D, 1 frag./paso \\
+G5.\\ Atributos & 1 array multi-atributo vs 4 arrays independientes & \textbullet~Arrays separados: +14,9 \% en disco y 2,2$\times$ más lentos en lectura conjunta. & 1 array, 4 atributos \\
+\bottomrule
+\end{tabularx}
+\captionsetup{hypcap=false}\captionof{table}{Resumen del \textit{benchmark} de almacenamiento por grupos de parámetros.}
+\label{tab:benchmark-resumen}
+\end{center}
+
+
+\begin{table}[ht]
+\centering
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{5.5cm}LL}
+\toprule
+& \textbf{Configuración inicial (ZSTD-1)} & \textbf{Configuración final (ByteShuffle + ZSTD-9)} \\
+\midrule
+Tamaño total (20 pasos) & 19\,327 MB & 17\,613 MB \\
+Ahorro respecto a configuración inicial & --- & \textbf{$-$1\,714 MB ($-$8,9\,\%)} \\
+Mediana lectura región & $\sim$0,158 s & $\sim$0,196 s (similar) \\
+Tiempo de carga & $\sim$454 s & $\sim$477 s \\
+\bottomrule
+\end{tabularx}
+\caption{Comparativa entre la configuración inicial y la configuración final del array TileDB.}
+\label{tab:configuracion-final}
+\end{table}
+
+
+La configuración final ocupa 1 714 MB menos (-8,9 \%) con tiempos de lectura equivalentes. El incremento de tiempo de carga (+22 s sobre 477 s totales) es asumible dado que la ingesta es un proceso puntual frente a la consulta continua de los datos. Las herramientas construidas sobre esta configuración se presentan en el capítulo~\ref{herramientas-desarrolladas}, y su validación y rendimiento en el capítulo~\ref{validacion-del-sistema}.
 
