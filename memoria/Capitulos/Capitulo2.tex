@@ -252,21 +252,27 @@ Todos los experimentos se realizaron en la misma máquina para garantizar la com
 
 A partir de los resultados del \textit{benchmark} se generaron los 56 arrays definitivos (triton\_results/datos1--datos56) con el filtro ByteShuffle + ZSTD-9, manteniendo el resto de parámetros de producción (float32, tile 256$\times$256, array 3D con 1 fragmento por paso, multi-atributo). La Tabla~\ref{tab:benchmark-resumen} resume las comparativas realizadas y la decisión adoptada en cada grupo; los resultados detallados se recogen en el \hyperref[anexo-b.-tablas-de-resultados-completas]{Anexo~B}.
 
-\begin{center}
-\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3cm}>{\raggedright\arraybackslash}p{3.8cm}L>{\raggedright\arraybackslash}p{2.8cm}}
+\begin{table}[ht]
+\centering
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{2.9cm}L}
 \toprule
-\textbf{Grupo} & \textbf{Comparación} & \textbf{Resultado} & \textbf{Configuración elegida} \\
+\textbf{Grupo (alternativas comparadas)} & \textbf{Elegida} & \textbf{Motivo principal} \\
 \midrule
-G1.\\ Filtros & ZSTD puro (niveles 1, 3, 5, 9), ByteShuffle+ZSTD, BitShuffle+ZSTD & \textbullet~ZSTD puro apenas reduce el tamaño de float32 sin preprocesado ($-$8 \%). \newline \textbullet~ByteShuffle reordena bytes (agrupa exponentes y mantisas de float32 similares antes de comprimir): $-$16 \% adicional. \newline \textbullet~Diferencias de velocidad de lectura entre variantes shuffle son del orden del ruido de caché del SO; criterio determinante: tamaño en disco. & ByteShuffle+ZSTD-9 \\
-G2.\\ Tile espacial & Tiles 256$\times$256, 512$\times$512 y 1\,024$\times$1\,024 celdas & \textbullet~Diferencias despreciables en tamaño y velocidad con datos dispersos. & 256$\times$256 \\
-G3.\\ Tipo de dato & float64 (nativo GeoTIFF), float32, float16 & \textbullet~float16 no soportado. \newline \textbullet~float64: +9,4 \% sobre float32. \newline \textbullet~float32: equilibrio tamaño/precisión. & float32 \\
-G4.\\ Estructura temporal & tile\_t=1 vs tile\_t=4; array 2D vs 3D & \textbullet~tile\_t=1 confina cada tile a un solo paso temporal: alta correlación espacial, mejor compresión ($-$19 \% frente a tile\_t=4, que mezcla pasos con distribuciones heterogéneas). \newline \textbullet~1 fragmento/paso permite filtrado temporal eficiente sin consolidación. & Array 3D, 1 frag./paso \\
-G5.\\ Atributos & 1 array multi-atributo vs 4 arrays independientes & \textbullet~Arrays separados: +14,9 \% en disco y 2,2$\times$ más lentos en lectura conjunta. & 1 array, 4 atributos \\
+G1. Filtros (ZSTD 1/3/5/9, ByteShuffle+ZSTD, BitShuffle+ZSTD) & ByteShuffle+ ZSTD-9 & ByteShuffle reordena los bytes de los float32 antes de comprimir: $-$16 \% adicional; velocidad de lectura equivalente entre variantes \\
+\addlinespace[3pt]
+G2. Tile espacial (256, 512, 1\,024) & 256$\times$256 & Diferencias despreciables con datos dispersos \\
+\addlinespace[3pt]
+G3. Tipo de dato (float64, float32, float16) & float32 & float64 ocupa +9,4 \%; float16 no soportado \\
+\addlinespace[3pt]
+G4. Estructura temporal (tile\_t=1 vs 4; 2D vs 3D) & Array 3D, 1 frag./paso & Confinar cada tile a un paso comprime $-$19 \% y permite filtrado temporal sin consolidación \\
+\addlinespace[3pt]
+G5. Atributos (1 array multi-atributo vs 4 arrays) & 1 array, 4 atributos & Arrays separados: +14,9 \% en disco y 2,2$\times$ más lentos en lectura conjunta \\
 \bottomrule
 \end{tabularx}
-\captionsetup{hypcap=false}\captionof{table}{Resumen del \textit{benchmark} de almacenamiento por grupos de parámetros.}
+\caption{Resumen del \textit{benchmark} de almacenamiento por grupos de parámetros.}
 \label{tab:benchmark-resumen}
-\end{center}
+\end{table}
 
 
 \begin{table}[ht]
