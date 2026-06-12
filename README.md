@@ -159,7 +159,21 @@ Todo el código fuente está disponible en este repositorio bajo licencia acadé
 - Código fuente de la memoria en LaTeX (`memoria/`)
 - Versiones exactas de dependencias (`requirements.txt`)
 
-### Datos de simulación
+### Datos de demostración
+
+La release [`demo-data-v1`](https://github.com/ebaldoU/triton-spillway/releases/tag/demo-data-v1) incluye dos subconjuntos de demostración (datos1 y datos2, ~430 MB cada uno) recortados a una ventana de 50×50 km. Son arrays TileDB sparse con el mismo esquema y metadatos que un escenario completo: la aplicación y las 24 consultas funcionan sin cambios, incluido el modo comparativo entre escenarios.
+
+```bash
+mkdir -p /ruta/triton_results
+tar -xzf demo_datos1_bbox50km.tar.gz -C /ruta/triton_results/
+tar -xzf demo_datos2_bbox50km.tar.gz -C /ruta/triton_results/
+export TRITON_BASE_URI=/ruta/triton_results
+streamlit run app.py
+```
+
+Los subsets se generan con `spillway/make_demo_subset.py`; las consultas acotadas a la ventana producen resultados idénticos a los del escenario completo.
+
+### Datos de simulación completos
 
 Los arrays TileDB (~17–21 GB/dataset) y los GeoTIFF fuente (~235 GB/dataset) **no están incluidos** en el repositorio por su tamaño. Provienen del simulador hidráulico Triton y no están disponibles públicamente de forma independiente.
 
