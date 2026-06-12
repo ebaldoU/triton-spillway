@@ -32,6 +32,12 @@
 \usepackage{chngcntr}
 \counterwithout{figure}{chapter}
 \counterwithout{table}{chapter}
+
+% Colocación de floats: evitar páginas casi vacías con una sola tabla/figura
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\bottomfraction}{0.6}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.8}
 \usepackage{url}
 \usepackage[hidelinks]{hyperref}
 
