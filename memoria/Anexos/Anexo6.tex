@@ -11,7 +11,8 @@ El desarrollo se concentró entre abril y junio de 2026, en tres etapas diferenc
 \textbf{Fase} & \textbf{Periodo} & \textbf{Horas} \\
 \midrule
 Formación e investigación (TileDB, Triton, tecnologías de almacenamiento, compresión) & abril & 20 \\
-Obtención y preparación de los datos (descargas, transferencia física, organización) & abril--mayo & 15 \\
+Descarga de escenarios a través de la VPN universitaria ($\sim$28 escenarios, $\sim$5,5 h por escenario, proceso supervisado) & abril--mayo & 150 \\
+Preparación y organización de los datos (transferencia en disco físico, verificación, espacio en disco) & abril--mayo & 15 \\
 Proceso ETL y \textit{benchmark} de almacenamiento (G1--G5) & abril & 30 \\
 Motor de consultas analíticas (24 funciones, optimización, exportación) & abril--mayo & 25 \\
 Aplicación web (interfaz, mapas, modo comparativo, versión bilingüe) & mayo & 30 \\
@@ -20,11 +21,11 @@ Validación, tests automatizados y \textit{benchmark} de consultas & mayo--junio
 Redacción de la memoria y documentación & mayo--junio & 25 \\
 Reuniones y tutorías & abril--junio & 5 \\
 \midrule
-\textbf{Total} & & \textbf{170} \\
+\textbf{Total} & & \textbf{320} \\
 \bottomrule
 \end{tabularx}
 \caption{Esfuerzo invertido por fase del proyecto.}
 \label{tab:esfuerzo}
 \end{table}
 
-El reparto refleja la naturaleza del trabajo: aproximadamente un tercio del esfuerzo corresponde al núcleo de datos (ETL, \textit{benchmark} y motor de consultas), otro tercio a la capa de presentación y operación (aplicación web y despliegue), y el resto a formación, datos, validación y documentación. Las fases no fueron estrictamente secuenciales: el ETL y el motor de consultas se revisaron varias veces a medida que la validación y el uso real de la aplicación revelaban problemas de rendimiento o de memoria, tal y como se describe en la sección de dificultades del capítulo de conclusiones.
+Destaca la partida de descarga de datos: cerca de la mitad del tiempo total corresponde a la transferencia de escenarios a través de la VPN universitaria, un proceso en gran parte desatendido pero que requería supervisión periódica y condicionó el ritmo del proyecto durante semanas, hasta que se sustituyó por el transporte físico en disco duro (véase la sección~\ref{dificultades-y-desafios}). Excluyendo la obtención de datos, el reparto refleja la naturaleza del trabajo: aproximadamente un tercio del esfuerzo corresponde al núcleo de datos (ETL, \textit{benchmark} y motor de consultas), otro tercio a la capa de presentación y operación (aplicación web y despliegue), y el resto a formación, validación y documentación. Las fases no fueron estrictamente secuenciales: el ETL y el motor de consultas se revisaron varias veces a medida que la validación y el uso real de la aplicación revelaban problemas de rendimiento o de memoria.
