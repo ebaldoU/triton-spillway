@@ -246,7 +246,7 @@ La API de TileDB ofrece \texttt{tiledb.consolidate()} para fusionar todos los fr
 
 \subsection{Compresión}\label{compresion}
 
-Se utilizó el filtro ByteShuffle+ZSTD nivel 9 \cite{tiledb_compression_tutorial, tiledb_compression, tiledb_docs_compression}, seleccionado mediante el \textit{benchmark} de 15 configuraciones de la sección~\ref{benchmark-de-almacenamiento}: ByteShuffle reordena los bytes de los float32 agrupando exponentes y mantisas similares antes de comprimir, lo que reduce el almacenamiento un 8,9 \% adicional respecto a ZSTD-1 sin penalización apreciable en lectura.
+Se utilizó el filtro ByteShuffle+ZSTD nivel 9 \cite{tiledb_compression_tutorial, tiledb_compression, tiledb_docs_compression}, seleccionado mediante el \textit{benchmark} de 15 configuraciones de la sección~\ref{benchmark-de-almacenamiento}, cuyos resultados completos se recogen en la Tabla~\ref{tab:g1-filtros} del \hyperref[anexo-b.-tablas-de-resultados-completas]{Anexo~B}: ByteShuffle reordena los bytes de los float32 agrupando exponentes y mantisas similares antes de comprimir, lo que reduce el almacenamiento un 8,9 \% adicional respecto a ZSTD-1 sin penalización apreciable en lectura.
 
 \section{Lenguaje y bibliotecas}\label{lenguaje-y-librerias}
 
