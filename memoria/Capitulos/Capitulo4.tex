@@ -22,7 +22,7 @@ datos4 & 20 & 1\,000 aleatorias & H, QX, QY, MH & 0 \\
 \label{tab:validacion-etl}
 \end{table}
 
-En todos los casos el valor leído de TileDB coincide exactamente con el valor del GeoTIFF fuente (diferencia absoluta $= 0$ en float32), lo que confirma que el filtrado de celdas húmedas, la conversión de tipos y la escritura comprimida no introducen pérdida de información.
+En todos los casos el valor leído de TileDB coincide exactamente con el del GeoTIFF fuente (diferencia absoluta $= 0$ en float32): el filtrado, la conversión de tipos y la escritura comprimida no introducen pérdida de información.
 
 \FloatBarrier
 \section{Validación funcional de las consultas}\label{validacion-funcional}
