@@ -2,7 +2,7 @@
 
 Este capítulo verifica que el sistema desarrollado produce resultados correctos y cuantifica su rendimiento: las secciones~\ref{validacion-etl} y~\ref{validacion-funcional} comprueban la integridad de la ingesta y la correctitud de las consultas, y las secciones~\ref{rendimiento-consultas} y~\ref{escalabilidad} evalúan la latencia, el consumo de recursos y la escalabilidad del motor analítico.
 
-\section{Validación de la integridad del ETL}\label{validacion-etl}
+\section{Validación de la integridad del proceso ETL}\label{validacion-etl}
 
 La primera fuente de error potencial es el proceso de ingesta: si el ETL introduce pérdidas o modificaciones durante la transformación GeoTIFF$\to$TileDB, los resultados de todas las consultas estarán contaminados. Para detectarlo, el módulo de ingesta incorpora una verificación automática al final de cada carga: extrae una muestra aleatoria de celdas del array TileDB recién creado y compara sus valores de H, QX, QY y MH con los ficheros GeoTIFF originales usando \texttt{rasterio}. La Tabla~\ref{tab:validacion-etl} resume los resultados de esta verificación sobre los cuatro \textit{datasets} de referencia.
 
@@ -18,7 +18,7 @@ datos3 & 20 & 1\,000 aleatorias & H, QX, QY, MH & 0 \\
 datos4 & 20 & 1\,000 aleatorias & H, QX, QY, MH & 0 \\
 \bottomrule
 \end{tabularx}
-\caption{Resultados de la verificación de integridad del ETL por muestreo aleatorio (TileDB vs GeoTIFF original).}
+\caption{Resultados de la verificación de integridad del proceso ETL por muestreo aleatorio (TileDB vs GeoTIFF original).}
 \label{tab:validacion-etl}
 \end{table}
 
