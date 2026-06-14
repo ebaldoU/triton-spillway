@@ -190,3 +190,19 @@ def test_q15_semaforo(array_sintetico):
     assert np_["verde_km2"] == pytest.approx(1 * 100 / 1e6)
     assert np_["amarillo_km2"] == 0.0
     assert np_["rojo_km2"] == pytest.approx(2 * 100 / 1e6)
+
+
+def test_q17_cinco_niveles_disjuntos():
+    # Una celda en cada banda + límites superiores + una seca (no cuenta).
+    H = np.array([0.005,            # seca (<H_WET): no cuenta
+                  0.10, 0.25,       # somera (≤0.25)
+                  0.30, 0.50,       # niños (0.25<H≤0.50)
+                  0.75, 1.00,       # adultos (0.50<H≤1.00)
+                  1.50, 2.00,       # crítico (1.00<H≤2.00)
+                  2.50])            # extremo (>2.00)
+    s, n, a, c, e = ca.russo_cinco_niveles(H)
+    assert (s, n, a, c, e) == (2, 2, 2, 2, 1)
+    # Regresión: "adultos" NO debe englobar crítico/extremo (antes daba 5).
+    assert a == 2
+    # Las cinco bandas son disjuntas: suman todas las celdas húmedas.
+    assert s + n + a + c + e == int((H >= ca.H_WET).sum())

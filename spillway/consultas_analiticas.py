@@ -575,6 +575,23 @@ def russo_traffic_light_counts(H: np.ndarray) -> tuple[int, int, int]:
     return verde, amarillo, rojo
 
 
+# Tramos propios del desglose de 5 niveles de Q17 (no son umbrales Russo)
+H_CRIT    = 1.00
+H_EXTREMO = 2.00
+
+
+def russo_cinco_niveles(H: np.ndarray) -> tuple[int, int, int, int, int]:
+    """Cuenta celdas en los 5 niveles DISJUNTOS de peligrosidad por calado (Q17):
+    somera (H≤0.25), niños (0.25<H≤0.50), adultos (0.50<H≤1.00),
+    crítico (1.00<H≤2.00) y extremo (H>2.00)."""
+    somera  = int(((H >= H_WET)   & (H <= H_NINO)).sum())
+    ninos   = int(((H > H_NINO)   & (H <= H_ADULTO)).sum())
+    adultos = int(((H > H_ADULTO) & (H <= H_CRIT)).sum())
+    critico = int(((H > H_CRIT)   & (H <= H_EXTREMO)).sum())
+    extremo = int((H > H_EXTREMO).sum())
+    return somera, ninos, adultos, critico, extremo
+
+
 def area_por_nivel_peligro(hora: int, bbox=None) -> dict:
     """
     Q15 — Área (km²) por nivel de peligro según calado:

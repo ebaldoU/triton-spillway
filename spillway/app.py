@@ -2313,6 +2313,17 @@ def q15_area_peligro(meta, hora, bbox):
     return {"verde": v, "amarillo": a, "rojo": r, "total": v + a + r}
 
 
+def q17_area_niveles(meta, hora, bbox):
+    """Q17 — km² en los 5 niveles disjuntos de peligrosidad, sobre H crudo de la
+    ventana (no sobre el grid de pintado, que está submuestreado en bbox grandes)."""
+    hora_idx = ca.hora_a_t(hora)
+    r_min, r_max, c_min, c_max = compute_window(meta, bbox)
+    with tiledb.open(meta["uri"], mode="r") as A:
+        res = A.query(attrs=["H"])[hora_idx, r_min:r_max+1, c_min:c_max+1]
+    cell2 = _cell_km2(meta)
+    return tuple(c * cell2 for c in ca.russo_cinco_niveles(res["H"]))
+
+
 # ── Q16: ventana de evacuación ───────────────────────────────────────────────
 def q16_evacuacion(meta, umbral_h, umbral_q, bbox, progress=None):
     n_steps = meta["n_steps"]
@@ -3650,7 +3661,6 @@ try:
         progress.progress(1.0, text=_t("completed"))
         russo_cmap, tvals, _, zmax = russo_colorscale()
         ttext = russo_ticktext(st.session_state.get("lang", "es"))
-        cell_km2 = _cell_km2(meta)
         t17 = _t("q17_map_title").format(hora=hora)
         hm17 = dict(zmin=0.0, zmax=zmax, cbar_tickvals=tvals, cbar_ticktext=ttext,
                     hover_label="H", hover_unit="m", zsmooth=False)
@@ -3660,25 +3670,21 @@ try:
                                  f"{t17} — {_dataset_display(dataset)}",  russo_cmap, "H (m)", **hm17)
             fig_b = make_heatmap(grid2, x_ax2, y_ax2,
                                  f"{t17} — {_dataset_display(dataset2)}", russo_cmap, "H (m)", **hm17)
-            v_c,  a_c,  r_c  = ca.russo_traffic_light_counts(grid)
-            v_c2, a_c2, r_c2 = ca.russo_traffic_light_counts(grid2)
-            crit1  = float(((grid  > 1.00) & (grid  <= 2.00)).sum())
-            crit2  = float(((grid2 > 1.00) & (grid2 <= 2.00)).sum())
-            extr1  = float((grid  > 2.00).sum())
-            extr2  = float((grid2 > 2.00).sum())
+            s1, n1, a1, cr1, e1 = q17_area_niveles(meta, hora, bbox)
+            s2, n2, a2, cr2, e2 = q17_area_niveles(get_meta(dataset2), hora, bbox)
             ca1, ca2 = st.columns(2)
             for _lbl, _v1, _v2 in [
-                (_t("q17_shallow"),  v_c,   v_c2),
-                (_t("q17_children"), a_c,   a_c2),
-                (_t("q17_adults"),   r_c,   r_c2),
-                (_t("q17_critical"), crit1, crit2),
-                (_t("q17_extreme"),  extr1, extr2),
+                (_t("q17_shallow"),  s1,  s2),
+                (_t("q17_children"), n1,  n2),
+                (_t("q17_adults"),   a1,  a2),
+                (_t("q17_critical"), cr1, cr2),
+                (_t("q17_extreme"),  e1,  e2),
             ]:
                 cmetric(ca1, f"{_dataset_display(dataset)} — {_lbl}",
-                        f"{_v1 * cell_km2:.1f} km²")
+                        f"{_v1:.1f} km²")
                 cmetric(ca2, f"{_dataset_display(dataset2)} — {_lbl}",
-                        f"{_v2 * cell_km2:.1f} km²",
-                        f"{(_v2 - _v1) * cell_km2:+.1f} km²")
+                        f"{_v2:.1f} km²",
+                        f"{(_v2 - _v1):+.1f} km²")
             with ca1:
                 ca1.plotly_chart(fig_a, width="stretch", config=PLOT_CONFIG, theme=None)
                 download_geotiff_button(grid,  x_ax,  y_ax,  "q17", dataset,  hora,
@@ -3688,16 +3694,13 @@ try:
                 download_geotiff_button(grid2, x_ax2, y_ax2, "q17", dataset2, hora,
                                         ds_label=_dataset_display(dataset2))
         else:
-            v_c, a_c, r_c = ca.russo_traffic_light_counts(grid)
-            verde, amarillo, rojo = v_c * cell_km2, a_c * cell_km2, r_c * cell_km2
+            somera, ninos, adultos, critico, extremo = q17_area_niveles(meta, hora, bbox)
             c1, c2, c3, c4, c5 = st.columns(5)
-            c1.metric(_t("q17_shallow"),  f"{verde:.1f} km²")
-            c2.metric(_t("q17_children"), f"{amarillo:.1f} km²")
-            c3.metric(_t("q17_adults"),   f"{rojo:.1f} km²", help=_t("q17_adults_help"))
-            v1 = float(((grid > 1.00) & (grid <= 2.00)).sum() * cell_km2)
-            v2 = float((grid > 2.00).sum() * cell_km2)
-            c4.metric(_t("q17_critical"), f"{v1:.1f} km²")
-            c5.metric(_t("q17_extreme"),  f"{v2:.1f} km²")
+            c1.metric(_t("q17_shallow"),  f"{somera:.1f} km²")
+            c2.metric(_t("q17_children"), f"{ninos:.1f} km²")
+            c3.metric(_t("q17_adults"),   f"{adultos:.1f} km²", help=_t("q17_adults_help"))
+            c4.metric(_t("q17_critical"), f"{critico:.1f} km²")
+            c5.metric(_t("q17_extreme"),  f"{extremo:.1f} km²")
             show(make_heatmap(grid, x_ax, y_ax, t17, russo_cmap, "H (m)", **hm17))
             download_geotiff_button(grid, x_ax, y_ax, "q17", dataset, hora)
         st.caption(_t("q17_caption"))
