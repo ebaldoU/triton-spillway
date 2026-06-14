@@ -24,7 +24,7 @@ QX (caudal unitario en dirección X, m\textsuperscript{2}/s): componente este-oe
 
 QY (caudal unitario en dirección Y, m\textsuperscript{2}/s): componente norte-sur del flujo de agua por unidad de anchura, análogo a QX en la dirección perpendicular.
 
-MH (calado máximo histórico, m): mayor valor de calado registrado en la celda desde el inicio de la simulación hasta el instante actual. Permite determinar el nivel máximo alcanzado sin necesidad de procesar todos los pasos anteriores.
+MH (calado máximo histórico, m): mayor valor de calado registrado en la celda desde el inicio de la simulación hasta el instante actual. Es una variable que produce el propio simulador y se conserva en el array por completitud e interoperabilidad; las consultas del motor que necesitan el máximo (por ejemplo, la hora del calado máximo) lo recalculan a partir de la serie de H, de modo que sus resultados no dependen de este atributo.
 
 El módulo del caudal unitario Q\_mod = $\sqrt{QX^2 + QY^2}$ (m\textsuperscript{2}/s) se emplea en los criterios de peligrosidad hidrodinámica (véase la sección~\ref{motor-de-consultas-analiticas}) y se calcula en tiempo de consulta a partir de QX y QY almacenados, sin ocupar espacio adicional en el array.
 

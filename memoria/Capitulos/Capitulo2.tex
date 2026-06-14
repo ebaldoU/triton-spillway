@@ -240,7 +240,7 @@ La aplicación web descubre automáticamente los \textit{datasets} disponibles i
 
 La última decisión de diseño es la configuración de almacenamiento del array, determinada mediante un \textit{benchmark} sistemático ejecutado sobre los datos reales del dominio de simulación. Se evaluaron cinco grupos de parámetros de forma independiente (G1--G5: filtros de compresión, tamaño de \textit{tile}, tipo de dato, organización temporal y estructura de atributos) y se adoptó la configuración definitiva que se aplica a los 56 conjuntos de datos procesados.
 
-El ahorro de espacio proviene principalmente del almacenamiento disperso (solo el $\sim$8,3 \% del dominio está inundado), no de la compresión en sí; las métricas del array con la configuración inicial (ZSTD-1) se recogen en la Tabla~\ref{tab:metricas-tdb} del \hyperref[anexo-b.-tablas-de-resultados-completas]{Anexo~B}. Para cuantificar el impacto de la compresión se diseñó un \textit{benchmark} con cinco dimensiones de experimento, ejecutado sobre los datos reales del paso temporal 16\_00 (64,3 millones de celdas húmedas).
+El ahorro de espacio proviene principalmente del almacenamiento disperso (solo el $\sim$8,3 \% del dominio está inundado), no de la compresión en sí; las métricas del array con la configuración inicial (ZSTD-1) se recogen en la Tabla~\ref{tab:metricas-tdb} del \hyperref[anexo-b.-tablas-de-resultados-completas]{Anexo~B}. Para cuantificar el impacto de la compresión se diseñó un \textit{benchmark} con cinco dimensiones de experimento, ejecutado sobre los datos reales del paso temporal 16\_00 (64,3 millones de celdas húmedas, en torno al $\sim$8,3 \% de los 787 millones del paso).
 
 \subsection{Entorno y metodología experimental}\label{entorno-y-metodologia-experimental}\label{hardware-y-software}
 
@@ -281,8 +281,8 @@ G5. Atributos (1 array multi-atributo vs 4 arrays) & 1 array, 4 atributos & Arra
 \toprule
 & \textbf{Configuración inicial (ZSTD-1)} & \textbf{Configuración final (ByteShuffle + ZSTD-9)} \\
 \midrule
-Tamaño total (20 pasos) & 19\,327 MB & 17\,613 MB \\
-Ahorro respecto a configuración inicial & --- & \textbf{$-$1\,714 MB ($-$8,9\,\%)} \\
+Tamaño total (20 pasos) & 19\,327 MB & 17\,611 MB \\
+Ahorro respecto a configuración inicial & --- & \textbf{$-$1\,716 MB ($-$8,9\,\%)} \\
 Mediana lectura región & $\sim$0,158 s & $\sim$0,196 s (similar) \\
 Tiempo de carga & $\sim$454 s & $\sim$477 s \\
 \bottomrule
