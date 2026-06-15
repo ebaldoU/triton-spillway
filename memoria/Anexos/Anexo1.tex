@@ -26,7 +26,7 @@ Q9. Hora de calado máximo: para cada celda, identifica en qué hora de la simul
 
 Q11. Ventana de paso para vehículos de emergencia: para cada celda, calcula el intervalo horario en que el calado es inferior a 0,60 m, que es el límite a partir del cual los vehículos de emergencia no pueden circular.
 
-\section{Bloque D. Indicadores de peligrosidad (Russo et al., 2013)}\label{bloque-d.-indicadores-de-peligrosidad-russo-et-al.-2013}
+\section{Bloque D. Indicadores de peligrosidad de Russo et al.}\label{bloque-d.-indicadores-de-peligrosidad-russo-et-al.-2013}
 
 Las consultas Q10a, Q10b, Q10c y Q11b de este bloque emplean umbrales operativos derivados de los resultados experimentales de Russo et al.\ \cite{russo2013}, alineados con las guías técnicas españolas para clasificación de zonas inundables. Son umbrales conservadores destinados a uso operativo; los valores de instabilidad estricta determinados experimentalmente en el artículo original son ligeramente superiores. Q17 combina esos umbrales con tramos adicionales propios de esta aplicación, como se detalla en su descripción.
 
@@ -40,7 +40,7 @@ Q11b. Transitabilidad para vehículos de emergencia: identifica las celdas húme
 
 Q17. Semáforo global de peligrosidad: genera un mapa categórico con cinco niveles de riesgo basados en el calado. Los umbrales de 0,25 m y 0,50 m se apoyan en los criterios de Russo et al.\ \cite{russo2013} para niños y adultos respectivamente; los niveles superiores de 1,0 m y 2,0 m se introducen como escalones adicionales de severidad. El umbral de 1,0 m coincide con el criterio de calado del Real Decreto 9/2008 \cite{rd9_2008} para zona de graves daños (véase Q18 en el Bloque H); el de 2,0 m es un nivel de escala adicional sin referencia normativa directa, orientado a identificar condiciones de inundación catastrófica. Los cinco niveles son: Somera (H $\leq$ 0,25 m), Peligrosa para niños (0,25--0,50 m), Peligrosa para adultos (0,50--1,00 m), Crítica (1,00--2,00 m) y Extrema (H $>$ 2,00 m).
 
-\section{Bloque E. Inestabilidad hidrodinámica (Xia et al., 2011/2014)}\label{bloque-e.-inestabilidad-xia}
+\section{Bloque E. Inestabilidad hidrodinámica de Xia et al.}\label{bloque-e.-inestabilidad-xia}
 
 Este bloque aplica los modelos de inestabilidad experimental de Xia et al.\ \cite{xia2014} para personas y de Xia et al.\ \cite{xia2011vehicles} para vehículos. A diferencia del bloque D, que usa umbrales fijos sobre H y $Q_{mod}$, estos criterios computan para cada celda la velocidad crítica a partir de la cual el flujo desestabiliza al individuo o al vehículo, en función del calado local.
 
@@ -48,11 +48,11 @@ Para personas, la velocidad crítica $U_{c,p}(H)$ depende de la estatura y masa 
 
 Para vehículos, la velocidad crítica de inestabilidad $U_{c,v}(H)$ se obtiene de Xia et al.\ \cite{xia2011vehicles} para un Mini Cooper ($H_c = 1{,}417$ m, $\rho_c = 1\,009$ kg/m³), con parámetros distintos según el grado de sumersión: parcial ($H < H_c$: $\alpha = 1{,}225$, $\beta = -0{,}708$) y total ($H \geq H_c$: $\alpha = 0{,}932$, $\beta = 0{,}121$). La curva naranja corresponde a $0{,}5 \times U_{c,v}$ y la roja a $U_{c,v}$.
 
-Q10a-Xia. Inestabilidad de adultos (Xia et al., 2014): mapa de riesgo de inestabilidad para un adulto medio español ($h_p = 1{,}68$ m, $m_p = 73{,}76$ kg) en tres niveles: seguro, moderado y alto.
+Q10a-Xia. Inestabilidad de adultos (Xia et al.\ \cite{xia2014}): mapa de riesgo de inestabilidad para un adulto medio español ($h_p = 1{,}68$ m, $m_p = 73{,}76$ kg) en tres niveles: seguro, moderado y alto.
 
-Q10b-Xia. Inestabilidad de niños (Xia et al., 2014): mapa de riesgo de inestabilidad para un niño de 8 años ($h_p = 1{,}26$ m, $m_p = 25{,}64$ kg) con los mismos tres niveles. Los umbrales son más estrictos al ser la masa y estatura menores.
+Q10b-Xia. Inestabilidad de niños (Xia et al.\ \cite{xia2014}): mapa de riesgo de inestabilidad para un niño de 8 años ($h_p = 1{,}26$ m, $m_p = 25{,}64$ kg) con los mismos tres niveles. Los umbrales son más estrictos al ser la masa y estatura menores.
 
-Q10c-Xia. Inestabilidad de vehículos (Xia et al., 2011): mapa de riesgo de inestabilidad para un turismo tipo Mini Cooper en tres niveles. El cambio de régimen al alcanzar la altura del vehículo ($H_c$) produce un salto en la curva de velocidad crítica.
+Q10c-Xia. Inestabilidad de vehículos (Xia et al.\ \cite{xia2011vehicles}): mapa de riesgo de inestabilidad para un turismo tipo Mini Cooper en tres niveles. El cambio de régimen al alcanzar la altura del vehículo ($H_c$) produce un salto en la curva de velocidad crítica.
 
 \section{Bloque F. Estadísticos espaciales}\label{bloque-f.-estadisticos-espaciales}
 

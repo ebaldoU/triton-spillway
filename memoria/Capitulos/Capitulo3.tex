@@ -23,8 +23,8 @@ Las consultas acumuladas por píxel (bloques C y G) emplean un \textit{grid} de 
 A. Puntuales & Q1, Q2, Q3 & Calado en punto, serie temporal y velocidad en zona \\
 B. Umbrales & Q4/Q6, Q5 & Mapa de zonas inundadas con umbral predeterminado (Q4) o libre (Q6, variante parametrizada de Q4); evolución temporal de la extensión (Q5) \\
 C. Temporales & Q7, Q8, Q9, Q11 & Hora de llegada del frente, duración de la inundación, hora de calado máximo y ventana de emergencia (intervalo con $H < 0{,}60$ m, límite de transitabilidad para vehículos de emergencia) \\
-D. Russo et al.\ (2013) & Q10a, Q10b, Q10c, Q11b, Q17 & Peligro para adultos/niños/vehículos por umbrales de H y $Q_{mod}$ (Russo et al.); semáforo de 5 niveles con los cortes de 0,25 m y 0,50 m de Russo y tramos superiores propios de la aplicación \\
-E. Xia et al.\ (2011/2014) & Q10a-Xia, Q10b-Xia, Q10c-Xia & Inestabilidad de adultos/niños/vehículos por velocidad crítica de inestabilidad ($U_{c,p}$, $U_{c,v}$); tres niveles de riesgo \\
+D. Russo et al.\ \cite{russo2013} & Q10a, Q10b, Q10c, Q11b, Q17 & Peligro para adultos/niños/vehículos por umbrales de H y $Q_{mod}$; semáforo de 5 niveles con los cortes de 0,25 m y 0,50 m de Russo y tramos superiores propios de la aplicación \\
+E. Xia et al.\ \cite{xia2011vehicles, xia2014} & Q10a-Xia, Q10b-Xia, Q10c-Xia & Inestabilidad de adultos/niños/vehículos por velocidad crítica de inestabilidad ($U_{c,p}$, $U_{c,v}$); tres niveles de riesgo \\
 F. Estadísticos & Q12, Q13, Q14, Q15 & Área, volumen, estadísticos de zona y semáforo de calado (3 niveles) \\
 G. Evacuación & Q16 & Ventana temporal disponible para evacuación por píxel; valor $-$1 indica celdas que nunca alcanzan el umbral crítico en toda la simulación \\
 H. Daños normativos & Q18 & Zona de graves daños según el Real Decreto 9/2008 (Reglamento del Dominio Público Hidráulico): celda afectada si cumple al menos una de $H > 1$ m, $V > 1$ m/s ó $H{\cdot}V > 0{,}5$ m$^2$/s \\
