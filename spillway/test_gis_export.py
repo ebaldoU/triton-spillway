@@ -12,7 +12,7 @@ def test_write_cog_is_tiled_with_overviews(tmp_path):
         assert ds.profile["tiled"] is True
         assert ds.overviews(1), "el COG debe tener overviews"
 
-import defusedxml.ElementTree as ET
+import xml.etree.ElementTree as ET  # contenido autogenerado por gis_style, no entrada externa
 import gis_style
 
 def test_qml_has_depth_stops():
