@@ -26,6 +26,7 @@ import bench_ram_sweep
 def test_classify_run_oom_vs_ok():
     assert bench_ram_sweep.classify_run(0)["status"] == "ok"
     assert bench_ram_sweep.classify_run(137)["status"] == "oom"
+    assert bench_ram_sweep.classify_run(-9)["status"] == "oom"
     assert bench_ram_sweep.classify_run(1)["status"] == "error"
 
 import bench_report

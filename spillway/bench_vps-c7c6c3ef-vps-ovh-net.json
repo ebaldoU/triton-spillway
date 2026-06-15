@@ -1,0 +1,74 @@
+{
+  "maquina": {
+    "hostname": "vps-c7c6c3ef-vps-ovh-net",
+    "cpu_model": "Intel Core Processor (Haswell, no TSX)",
+    "cpu_cores": 8,
+    "ram_total_mb": 23463,
+    "disk_type": "SSD",
+    "os": "Linux-6.14.0-37-generic-x86_64-with-glibc2.41",
+    "kernel": "6.14.0-37-generic",
+    "python": "3.13.3",
+    "tiledb": "(0, 36, 1)",
+    "timestamp": "2026-06-15T22:48:29+00:00"
+  },
+  "runs": [
+    {
+      "tipo": "queries",
+      "dataset": "datos1",
+      "casos": [
+        {
+          "query": "Q1  20 pasos \u00d7 mapa completo  [H,QX,QY,MH]",
+          "tiempos_s": [
+            61.87127044610679
+          ],
+          "media_s": 61.87127044610679,
+          "bytes": 36043430696
+        },
+        {
+          "query": "Q2  20 pasos \u00d7 mapa completo  [H]",
+          "tiempos_s": [
+            37.93449589796364
+          ],
+          "media_s": 37.93449589796364,
+          "bytes": 20596246112
+        },
+        {
+          "query": "Q3  1 paso (10_00) \u00d7 mapa completo  [H,QX,QY,MH]",
+          "tiempos_s": [
+            2.8797738081775606
+          ],
+          "media_s": 2.8797738081775606,
+          "bytes": 1685462548
+        },
+        {
+          "query": "Q4  20 pasos \u00d7 regi\u00f3n 5k\u00d75k  [H,QX,QY,MH]",
+          "tiempos_s": [
+            4.252473208820447
+          ],
+          "media_s": 4.252473208820447,
+          "bytes": 2625341488
+        },
+        {
+          "query": "Q5  1 paso (10_00) \u00d7 regi\u00f3n 5k\u00d75k  [H,QX,QY,MH]",
+          "tiempos_s": [
+            0.20090847904793918
+          ],
+          "media_s": 0.20090847904793918,
+          "bytes": 128785804
+        }
+      ],
+      "maquina": {
+        "hostname": "vps-c7c6c3ef-vps-ovh-net",
+        "cpu_model": "Intel Core Processor (Haswell, no TSX)",
+        "cpu_cores": 8,
+        "ram_total_mb": 23463,
+        "disk_type": "SSD",
+        "os": "Linux-6.14.0-37-generic-x86_64-with-glibc2.41",
+        "kernel": "6.14.0-37-generic",
+        "python": "3.13.3",
+        "tiledb": "(0, 36, 1)",
+        "timestamp": "2026-06-15T22:48:29+00:00"
+      }
+    }
+  ]
+}

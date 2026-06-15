@@ -1,0 +1,37 @@
+{
+  "tipo": "ram_sweep",
+  "dataset": "datos1",
+  "hostname": "PCQuique",
+  "niveles": [
+    {
+      "status": "ok",
+      "mem_gb": 12,
+      "elapsed_s": 84.15972821899959,
+      "returncode": 0
+    },
+    {
+      "status": "ok",
+      "mem_gb": 8,
+      "elapsed_s": 82.92389883800024,
+      "returncode": 0
+    },
+    {
+      "status": "ok",
+      "mem_gb": 6,
+      "elapsed_s": 82.69507507700109,
+      "returncode": 0
+    },
+    {
+      "status": "ok",
+      "mem_gb": 4,
+      "elapsed_s": 77.25847597000029,
+      "returncode": 0
+    },
+    {
+      "status": "oom",
+      "mem_gb": 2,
+      "elapsed_s": 1.8044814599998062,
+      "returncode": -9
+    }
+  ]
+}

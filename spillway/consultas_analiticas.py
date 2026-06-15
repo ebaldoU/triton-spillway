@@ -65,7 +65,7 @@ XIA_RHO_F      = 1000.0    # densidad del agua (kg/m³)
 XIA_ALPHA_LOW  = 3.472;    XIA_BETA_LOW  = 0.188   # curva naranja (inicio zona moderada)
 XIA_ALPHA_HIGH = 7.867;    XIA_BETA_HIGH = 0.462   # curva roja (inicio zona alta)
 
-# ── Criterio Xia et al. (2022) — Inestabilidad de vehículos ───
+# ── Criterio Xia et al. (2011) — Inestabilidad de vehículos ───
 # Parámetros para Mini Cooper [22]
 XIA_VEH_HC    = 1.417      # altura del vehículo (m)
 XIA_VEH_RHO_C = 1009.0     # densidad del vehículo (kg/m³)
@@ -535,7 +535,7 @@ def xia_risk_personas(H: np.ndarray, Q_mod: np.ndarray, tipo: str = 'adultos') -
 
 
 def xia_ucrit_vehiculos(H: np.ndarray):
-    """Velocidades críticas de arrastre para vehículos (Xia et al., 2022).
+    """Velocidades críticas de arrastre para vehículos (Xia et al., 2011).
     Devuelve (ucrit_low=0.5×ucrit, ucrit_high=ucrit) para curva naranja y roja."""
     import math
     g = 9.81
@@ -550,7 +550,7 @@ def xia_ucrit_vehiculos(H: np.ndarray):
 
 
 def xia_risk_vehiculos(H: np.ndarray, Q_mod: np.ndarray) -> np.ndarray:
-    """Nivel de riesgo de arrastre para vehículos (Xia et al., 2022).
+    """Nivel de riesgo de arrastre para vehículos (Xia et al., 2011).
     0 = seguro | 1 = riesgo moderado | 2 = riesgo alto."""
     V = Q_mod / np.maximum(H, 0.001)
     uc_low, uc_high = xia_ucrit_vehiculos(H)

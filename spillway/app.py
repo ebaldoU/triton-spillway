@@ -314,10 +314,10 @@ _LANG = {
         "q17_map_title": "Mapa de peligrosidad (semáforo Russo) — hora {hora} h",
         "q17_caption": "🟦 Somera (≤0.25 m) · 🟨 Peligroso niños (0.25–0.50) · 🟧 Peligroso adultos (0.50–1.00) · 🟥 Crítico (1.00–2.00) · 🟪 Extremo (>2.00 m) · según umbrales Russo et al. (2013)",
         "xia_personas_title": "Inestabilidad {tipo} — Xia et al. (2014) — hora {hora} h",
-        "xia_vehiculos_title": "Inestabilidad de vehículos — Xia et al. (2022) — hora {hora} h",
+        "xia_vehiculos_title": "Inestabilidad de vehículos — Xia et al. (2011) — hora {hora} h",
         "xia_safe": "🟢 Zona segura", "xia_moderate": "🟡 Riesgo moderado", "xia_high": "🔴 Riesgo alto",
         "xia_caption_personas": "Criterio de inestabilidad para {tipo}: velocidad crítica U_c,p según Xia et al. (2014). 🟢 V < curva naranja · 🟡 V entre curvas · 🔴 V ≥ curva roja.",
-        "xia_caption_vehiculos": "Criterio de arrastre para Mini Cooper según Xia et al. (2022). 🟢 V < 0.5·U_c,v · 🟡 0.5·U_c,v ≤ V < U_c,v · 🔴 V ≥ U_c,v.",
+        "xia_caption_vehiculos": "Criterio de arrastre para Mini Cooper según Xia et al. (2011). 🟢 V < 0.5·U_c,v · 🟡 0.5·U_c,v ≤ V < U_c,v · 🔴 V ≥ U_c,v.",
         "q18_title": "Zona de graves daños (RD 9/2008) — hora {hora} h",
         "q18_area": "Área graves daños",
         "q18_caption": "Zona de graves daños según Real Decreto 9/2008 (Dominio Público Hidráulico): H > 1 m, V > 1 m/s ó H·V > 0.5 m²/s.",
@@ -354,7 +354,7 @@ _LANG = {
 | 💧 B | Extensión de zonas inundadas a un umbral dado | < 5 s |
 | ⏱️ C | Hora de llegada del frente, duración y hora del pico | 15–90 s |
 | ⚠️ D | Inestabilidad según Russo et al. (2013): umbrales H y Q_mod | 5–30 s |
-| ⚠️ E | Inestabilidad según Xia et al. (2014/2022): velocidad crítica | 5–30 s |
+| ⚠️ E | Inestabilidad según Xia et al. (2011/2014): velocidad crítica | 5–30 s |
 | 🔴 F | Zona de graves daños normativa (RD 9/2008) | 5–30 s |
 | 📊 G | Estadísticos de área, volumen y calado en zona | < 10 s |
 | 🚨 H | Tiempo disponible para evacuar antes de umbral crítico | 20–60 s |
@@ -500,10 +500,10 @@ _LANG = {
         "q17_map_title": "Hazard map (Russo traffic-light) — hour {hora} h",
         "q17_caption": "🟦 Shallow (≤0.25 m) · 🟨 Dangerous for children (0.25–0.50) · 🟧 Dangerous for adults (0.50–1.00) · 🟥 Critical (1.00–2.00) · 🟪 Extreme (>2.00 m) · Russo et al. (2013) thresholds",
         "xia_personas_title": "Instability ({tipo}) — Xia et al. (2014) — hour {hora} h",
-        "xia_vehiculos_title": "Vehicle instability — Xia et al. (2022) — hour {hora} h",
+        "xia_vehiculos_title": "Vehicle instability — Xia et al. (2011) — hour {hora} h",
         "xia_safe": "🟢 Safe zone", "xia_moderate": "🟡 Moderate risk", "xia_high": "🔴 High risk",
         "xia_caption_personas": "Instability criterion for {tipo}: critical velocity U_c,p from Xia et al. (2014). 🟢 V < orange curve · 🟡 V between curves · 🔴 V ≥ red curve.",
-        "xia_caption_vehiculos": "Vehicle sweep criterion for Mini Cooper from Xia et al. (2022). 🟢 V < 0.5·U_c,v · 🟡 0.5·U_c,v ≤ V < U_c,v · 🔴 V ≥ U_c,v.",
+        "xia_caption_vehiculos": "Vehicle sweep criterion for Mini Cooper from Xia et al. (2011). 🟢 V < 0.5·U_c,v · 🟡 0.5·U_c,v ≤ V < U_c,v · 🔴 V ≥ U_c,v.",
         "q18_title": "Severe damage zone (RD 9/2008) — hour {hora} h",
         "q18_area": "Severe damage area",
         "q18_caption": "Severe damage zone according to Real Decreto 9/2008 (Spanish Public Water Domain Regulation): H > 1 m, V > 1 m/s or H·V > 0.5 m²/s.",
@@ -540,7 +540,7 @@ _LANG = {
 | 💧 B | Extent of flooded areas at a given threshold | < 5 s |
 | ⏱️ C | Arrival time of flood front, duration, and peak hour | 15–90 s |
 | ⚠️ D | Instability by Russo et al. (2013): H and Q_mod thresholds | 5–30 s |
-| ⚠️ E | Instability by Xia et al. (2014/2022): critical velocity | 5–30 s |
+| ⚠️ E | Instability by Xia et al. (2011/2014): critical velocity | 5–30 s |
 | 🔴 F | Severe damage zone: RD 9/2008 normative criterion | 5–30 s |
 | 📊 G | Area, volume, and depth statistics for a zone | < 10 s |
 | 🚨 H | Time available to evacuate before critical threshold | 20–60 s |
@@ -1341,7 +1341,7 @@ label#spw-backdrop {
         <div class="spw-brow"><div class="spw-bicon">&#x1F4A7;</div><div class="spw-bdesc"><b>B &mdash; Umbrales espaciales</b>Extensi&oacute;n inundada a un umbral dado (Q4&ndash;Q6)</div></div>
         <div class="spw-brow"><div class="spw-bicon">&#x23F1;&#xFE0F;</div><div class="spw-bdesc"><b>C &mdash; Indicadores temporales</b>Hora de llegada, duraci&oacute;n y hora del pico (Q7&ndash;Q9, Q11)</div></div>
         <div class="spw-brow"><div class="spw-bicon">&#x26A0;&#xFE0F;</div><div class="spw-bdesc"><b>D &mdash; Inestabilidad Russo (2013)</b>Criterios adultos / ni&ntilde;os / veh&iacute;culos por H y Q_mod (Q10a&ndash;Q17)</div></div>
-        <div class="spw-brow"><div class="spw-bicon">&#x26A0;&#xFE0F;</div><div class="spw-bdesc"><b>E &mdash; Inestabilidad Xia (2014/2022)</b>Velocidad cr&iacute;tica para personas y veh&iacute;culos; 3 niveles (Q10a-Xia&ndash;Q10c-Xia)</div></div>
+        <div class="spw-brow"><div class="spw-bicon">&#x26A0;&#xFE0F;</div><div class="spw-bdesc"><b>E &mdash; Inestabilidad Xia (2011/2014)</b>Velocidad cr&iacute;tica para personas y veh&iacute;culos; 3 niveles (Q10a-Xia&ndash;Q10c-Xia)</div></div>
         <div class="spw-brow"><div class="spw-bicon">&#x1F534;</div><div class="spw-bdesc"><b>F &mdash; Da&ntilde;os normativos (RD 9/2008)</b>Zona de graves da&ntilde;os: H&gt;1 m, V&gt;1 m/s &oacute; H&middot;V&gt;0,5 m&sup2;/s (Q18)</div></div>
         <div class="spw-brow"><div class="spw-bicon">&#x1F4CA;</div><div class="spw-bdesc"><b>G &mdash; Estad&iacute;sticos espaciales</b>&Aacute;rea, volumen y percentiles de calado (Q12&ndash;Q15)</div></div>
         <div class="spw-brow"><div class="spw-bicon">&#x1F6A8;</div><div class="spw-bdesc"><b>H &mdash; Evacuaci&oacute;n</b>Tiempo disponible antes del umbral cr&iacute;tico (Q16)</div></div>
@@ -1364,7 +1364,7 @@ label#spw-backdrop {
         <div class="spw-brow"><div class="spw-bicon">&#x1F4A7;</div><div class="spw-bdesc"><b>B &mdash; Spatial thresholds</b>Flooded extent at a given depth threshold (Q4&ndash;Q6)</div></div>
         <div class="spw-brow"><div class="spw-bicon">&#x23F1;&#xFE0F;</div><div class="spw-bdesc"><b>C &mdash; Temporal indicators</b>Arrival time, flood duration, peak depth hour (Q7&ndash;Q9, Q11)</div></div>
         <div class="spw-brow"><div class="spw-bicon">&#x26A0;&#xFE0F;</div><div class="spw-bdesc"><b>D &mdash; Russo instability (2013)</b>H and Q_mod thresholds for adults / children / vehicles (Q10a&ndash;Q17)</div></div>
-        <div class="spw-brow"><div class="spw-bicon">&#x26A0;&#xFE0F;</div><div class="spw-bdesc"><b>E &mdash; Xia instability (2014/2022)</b>Critical velocity for people and vehicles; 3 risk levels (Q10a-Xia&ndash;Q10c-Xia)</div></div>
+        <div class="spw-brow"><div class="spw-bicon">&#x26A0;&#xFE0F;</div><div class="spw-bdesc"><b>E &mdash; Xia instability (2011/2014)</b>Critical velocity for people and vehicles; 3 risk levels (Q10a-Xia&ndash;Q10c-Xia)</div></div>
         <div class="spw-brow"><div class="spw-bicon">&#x1F534;</div><div class="spw-bdesc"><b>F &mdash; Normative damage (RD 9/2008)</b>Severe damage zone: H&gt;1 m, V&gt;1 m/s or H&middot;V&gt;0.5 m&sup2;/s (Q18)</div></div>
         <div class="spw-brow"><div class="spw-bicon">&#x1F4CA;</div><div class="spw-bdesc"><b>G &mdash; Spatial statistics</b>Area, volume, and depth percentiles (Q12&ndash;Q15)</div></div>
         <div class="spw-brow"><div class="spw-bicon">&#x1F6A8;</div><div class="spw-bdesc"><b>H &mdash; Evacuation</b>Time available before critical threshold (Q16)</div></div>
@@ -2218,7 +2218,7 @@ def q10_peligrosidad(meta, hora, tipo, bbox):
 
 # ── Xia et al.: inestabilidad personas/vehículos ─────────────────────────────
 def q10_xia(meta, hora, tipo, bbox):
-    """Mapa de inestabilidad según Xia et al. (2014/2022).
+    """Mapa de inestabilidad según Xia et al. (2011/2014).
     tipo: 'adultos' | 'ninos' | 'vehiculos'
     Grid de salida: NaN=seco | 0=seguro | 1=riesgo moderado | 2=riesgo alto."""
     cell2 = _cell_km2(meta)
@@ -2825,10 +2825,10 @@ GRUPOS_ES = {
         "Q11b — Accesibilidad de emergencia":        ("q11b", "Celdas accesibles (H < 0.60 m) en un instante dado."),
         "Q17 — Semáforo Russo (5 niveles)":        ("q17",  "Mapa categórico por umbrales de calado: somera / niños / adultos / crítico / extremo."),
     },
-    "⚠️ E — Inestabilidad Xia et al. (2014/2022)": {
+    "⚠️ E — Inestabilidad Xia et al. (2011/2014)": {
         "Q10a-Xia — Inestabilidad adultos":        ("q10a_xia", "Velocidad crítica U_c,p para adulto medio (Xia et al., 2014)."),
         "Q10b-Xia — Inestabilidad niños":          ("q10b_xia", "Velocidad crítica U_c,p para niño de 8 años (Xia et al., 2014)."),
-        "Q10c-Xia — Inestabilidad vehículos":      ("q10c_xia", "Velocidad crítica de arrastre Mini Cooper (Xia et al., 2022)."),
+        "Q10c-Xia — Inestabilidad vehículos":      ("q10c_xia", "Velocidad crítica de arrastre Mini Cooper (Xia et al., 2011)."),
     },
     "🔴 F — Daños normativos (RD 9/2008)": {
         "Q18 — Zona de graves daños":              ("q18", "H > 1 m ó V > 1 m/s ó H·V > 0.5 m²/s."),
@@ -2868,10 +2868,10 @@ GRUPOS_EN = {
         "Q11b — Emergency accessibility":          ("q11b",     "Cells accessible to emergency vehicles (H < 0.60 m) at a given timestep."),
         "Q17 — Russo traffic-light (5 levels)":    ("q17",      "Categorical depth map: shallow / children / adults / critical / extreme."),
     },
-    "⚠️ E — Xia et al. (2014/2022) instability": {
+    "⚠️ E — Xia et al. (2011/2014) instability": {
         "Q10a-Xia — Adult instability":            ("q10a_xia", "Critical velocity U_c,p for an average adult (Xia et al., 2014)."),
         "Q10b-Xia — Child instability":            ("q10b_xia", "Critical velocity U_c,p for an 8-year-old child (Xia et al., 2014)."),
-        "Q10c-Xia — Vehicle instability":          ("q10c_xia", "Critical sweep velocity for Mini Cooper (Xia et al., 2022)."),
+        "Q10c-Xia — Vehicle instability":          ("q10c_xia", "Critical sweep velocity for Mini Cooper (Xia et al., 2011)."),
     },
     "🔴 F — Normative damage (RD 9/2008)": {
         "Q18 — Severe damage zone":                ("q18",      "H > 1 m or V > 1 m/s or H·V > 0.5 m²/s."),
@@ -3772,7 +3772,7 @@ try:
             download_geotiff_button(grid, x_ax, y_ax, "q16", dataset)
         st.caption(_t("q16_caption"))
 
-    # ── Q10a/b/c-Xia: inestabilidad según Xia et al. (2014/2022) ────────────
+    # ── Q10a/b/c-Xia: inestabilidad según Xia et al. (2011/2014) ────────────
     elif qid in ("q10a_xia", "q10b_xia", "q10c_xia"):
         tipo_xia = {"q10a_xia": "adultos", "q10b_xia": "ninos", "q10c_xia": "vehiculos"}[qid]
         progress.progress(0.3, text=_t("loading_step"))

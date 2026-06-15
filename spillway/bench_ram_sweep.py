@@ -15,10 +15,11 @@ PY = sys.executable
 
 
 def classify_run(returncode: int) -> dict:
-    # 137 = 128 + 9 (SIGKILL), tipico del OOM-killer del cgroup
+    # SIGKILL del OOM-killer del cgroup: subprocess lo devuelve como -9, y a
+    # traves de un shell como 137 (128 + 9). Ambos significan agotamiento de RAM.
     if returncode == 0:
         return {"status": "ok"}
-    if returncode == 137:
+    if returncode in (137, -9):
         return {"status": "oom"}
     return {"status": "error"}
 

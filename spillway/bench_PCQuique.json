@@ -1,0 +1,296 @@
+{
+  "maquina": {
+    "hostname": "PCQuique",
+    "cpu_model": "AMD Ryzen 9 7900X 12-Core Processor",
+    "cpu_cores": 24,
+    "ram_total_mb": 15536,
+    "disk_type": "HDD",
+    "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "kernel": "6.6.87.2-microsoft-standard-WSL2",
+    "python": "3.12.3",
+    "tiledb": "(0, 36, 1)",
+    "timestamp": "2026-06-15T20:07:08+00:00"
+  },
+  "runs": [
+    {
+      "tipo": "vs_geotiff",
+      "dataset": "datos1",
+      "tdb_mb": 17272.73920726776,
+      "gtiff_mb": 240468.75,
+      "reduccion_pct": 92.81705452069437,
+      "have_gtiff": false,
+      "casos": [
+        {
+          "caso": "C1 \u2014 Instante completo (4 vars)",
+          "frio_tdb_s": 2.90135253499966,
+          "cal_tdb_s": 1.9703842006665582,
+          "frio_tif_s": null,
+          "cal_tif_s": null,
+          "factor": null,
+          "ram_tdb_mb": 2327.5122509002686,
+          "ram_tif_mb": null
+        },
+        {
+          "caso": "C2 \u2014 Ventana 50\u00d750 km (4 vars)",
+          "frio_tdb_s": 0.05923049999955765,
+          "cal_tdb_s": 0.05904449799997261,
+          "frio_tif_s": null,
+          "cal_tif_s": null,
+          "factor": null,
+          "ram_tdb_mb": 157.50907707214355,
+          "ram_tif_mb": null
+        },
+        {
+          "caso": "C3 \u2014 Serie temporal 1 p\u00edxel (20 pasos)",
+          "frio_tdb_s": 0.05289322799990259,
+          "cal_tdb_s": 0.04726204566668457,
+          "frio_tif_s": null,
+          "cal_tif_s": null,
+          "factor": null,
+          "ram_tdb_mb": 90.0077714920044,
+          "ram_tif_mb": null
+        },
+        {
+          "caso": "C4 \u2014 Peligro personas, 20 pasos (H,QX,QY)",
+          "frio_tdb_s": 53.61136145899991,
+          "cal_tdb_s": 50.466778157666795,
+          "frio_tif_s": null,
+          "cal_tif_s": null,
+          "factor": null,
+          "ram_tdb_mb": 4077.259494781494,
+          "ram_tif_mb": null
+        },
+        {
+          "caso": "C5 \u2014 Estad\u00edsticos zona 50\u00d750 km",
+          "frio_tdb_s": 0.07182341800034919,
+          "cal_tdb_s": 0.056181755999962966,
+          "frio_tif_s": null,
+          "cal_tif_s": null,
+          "factor": null,
+          "ram_tdb_mb": 90.00745105743408,
+          "ram_tif_mb": null
+        },
+        {
+          "caso": "C6 \u2014 Exportar ventana a GeoTIFF",
+          "frio_tdb_s": 0.4894237929997871,
+          "cal_tdb_s": 0.36271842599990123,
+          "frio_tif_s": null,
+          "cal_tif_s": null,
+          "factor": null,
+          "ram_tdb_mb": 217.43665885925293,
+          "ram_tif_mb": null
+        }
+      ],
+      "maquina": {
+        "hostname": "PCQuique",
+        "cpu_model": "AMD Ryzen 9 7900X 12-Core Processor",
+        "cpu_cores": 24,
+        "ram_total_mb": 15536,
+        "disk_type": "HDD",
+        "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+        "kernel": "6.6.87.2-microsoft-standard-WSL2",
+        "python": "3.12.3",
+        "tiledb": "(0, 36, 1)",
+        "timestamp": "2026-06-15T20:07:08+00:00"
+      }
+    },
+    {
+      "tipo": "queries",
+      "dataset": "datos1",
+      "casos": [
+        {
+          "query": "Q1  20 pasos \u00d7 mapa completo  [H,QX,QY,MH]",
+          "tiempos_s": [
+            44.97259041999996
+          ],
+          "media_s": 44.97259041999996,
+          "bytes": 36043430696
+        },
+        {
+          "query": "Q2  20 pasos \u00d7 mapa completo  [H]",
+          "tiempos_s": [
+            27.794724366000082
+          ],
+          "media_s": 27.794724366000082,
+          "bytes": 20596246112
+        },
+        {
+          "query": "Q3  1 paso (10_00) \u00d7 mapa completo  [H,QX,QY,MH]",
+          "tiempos_s": [
+            1.72731758000009
+          ],
+          "media_s": 1.72731758000009,
+          "bytes": 1685462548
+        },
+        {
+          "query": "Q4  20 pasos \u00d7 regi\u00f3n 5k\u00d75k  [H,QX,QY,MH]",
+          "tiempos_s": [
+            3.3261375359998056
+          ],
+          "media_s": 3.3261375359998056,
+          "bytes": 2625341488
+        },
+        {
+          "query": "Q5  1 paso (10_00) \u00d7 regi\u00f3n 5k\u00d75k  [H,QX,QY,MH]",
+          "tiempos_s": [
+            0.11804787399978522
+          ],
+          "media_s": 0.11804787399978522,
+          "bytes": 128785804
+        }
+      ],
+      "maquina": {
+        "hostname": "PCQuique",
+        "cpu_model": "AMD Ryzen 9 7900X 12-Core Processor",
+        "cpu_cores": 24,
+        "ram_total_mb": 15536,
+        "disk_type": "HDD",
+        "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+        "kernel": "6.6.87.2-microsoft-standard-WSL2",
+        "python": "3.12.3",
+        "tiledb": "(0, 36, 1)",
+        "timestamp": "2026-06-15T20:08:33+00:00"
+      }
+    },
+    {
+      "tipo": "vs_geotiff",
+      "dataset": "datos2",
+      "tdb_mb": 17492.460391044617,
+      "gtiff_mb": 240468.75,
+      "reduccion_pct": 92.72568248845448,
+      "have_gtiff": false,
+      "casos": [
+        {
+          "caso": "C1 \u2014 Instante completo (4 vars)",
+          "frio_tdb_s": 2.2449388129998624,
+          "cal_tdb_s": 1.8008884780001608,
+          "frio_tif_s": null,
+          "cal_tif_s": null,
+          "factor": null,
+          "ram_tdb_mb": 2327.5122509002686,
+          "ram_tif_mb": null
+        },
+        {
+          "caso": "C2 \u2014 Ventana 50\u00d750 km (4 vars)",
+          "frio_tdb_s": 0.05581454899993332,
+          "cal_tdb_s": 0.05499560133330306,
+          "frio_tif_s": null,
+          "cal_tif_s": null,
+          "factor": null,
+          "ram_tdb_mb": 157.50907707214355,
+          "ram_tif_mb": null
+        },
+        {
+          "caso": "C3 \u2014 Serie temporal 1 p\u00edxel (20 pasos)",
+          "frio_tdb_s": 0.06476190800003678,
+          "cal_tdb_s": 0.044994252333253826,
+          "frio_tif_s": null,
+          "cal_tif_s": null,
+          "factor": null,
+          "ram_tdb_mb": 90.0077714920044,
+          "ram_tif_mb": null
+        },
+        {
+          "caso": "C4 \u2014 Peligro personas, 20 pasos (H,QX,QY)",
+          "frio_tdb_s": 46.75143277999996,
+          "cal_tdb_s": 48.421238011999925,
+          "frio_tif_s": null,
+          "cal_tif_s": null,
+          "factor": null,
+          "ram_tdb_mb": 4056.0577278137207,
+          "ram_tif_mb": null
+        },
+        {
+          "caso": "C5 \u2014 Estad\u00edsticos zona 50\u00d750 km",
+          "frio_tdb_s": 0.06873240999993868,
+          "cal_tdb_s": 0.052319520999996406,
+          "frio_tif_s": null,
+          "cal_tif_s": null,
+          "factor": null,
+          "ram_tdb_mb": 90.00745105743408,
+          "ram_tif_mb": null
+        },
+        {
+          "caso": "C6 \u2014 Exportar ventana a GeoTIFF",
+          "frio_tdb_s": 0.437463661000038,
+          "cal_tdb_s": 0.37570620166661683,
+          "frio_tif_s": null,
+          "cal_tif_s": null,
+          "factor": null,
+          "ram_tdb_mb": 217.39337921142578,
+          "ram_tif_mb": null
+        }
+      ],
+      "maquina": {
+        "hostname": "PCQuique",
+        "cpu_model": "AMD Ryzen 9 7900X 12-Core Processor",
+        "cpu_cores": 24,
+        "ram_total_mb": 15536,
+        "disk_type": "HDD",
+        "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+        "kernel": "6.6.87.2-microsoft-standard-WSL2",
+        "python": "3.12.3",
+        "tiledb": "(0, 36, 1)",
+        "timestamp": "2026-06-15T20:12:15+00:00"
+      }
+    },
+    {
+      "tipo": "queries",
+      "dataset": "datos2",
+      "casos": [
+        {
+          "query": "Q1  20 pasos \u00d7 mapa completo  [H,QX,QY,MH]",
+          "tiempos_s": [
+            45.949489300000096
+          ],
+          "media_s": 45.949489300000096,
+          "bytes": 36498464100
+        },
+        {
+          "query": "Q2  20 pasos \u00d7 mapa completo  [H]",
+          "tiempos_s": [
+            24.95790729400005
+          ],
+          "media_s": 24.95790729400005,
+          "bytes": 20856265200
+        },
+        {
+          "query": "Q3  1 paso (10_00) \u00d7 mapa completo  [H,QX,QY,MH]",
+          "tiempos_s": [
+            1.840844405000098
+          ],
+          "media_s": 1.840844405000098,
+          "bytes": 1696655436
+        },
+        {
+          "query": "Q4  20 pasos \u00d7 regi\u00f3n 5k\u00d75k  [H,QX,QY,MH]",
+          "tiempos_s": [
+            3.3347110189997693
+          ],
+          "media_s": 3.3347110189997693,
+          "bytes": 2632368368
+        },
+        {
+          "query": "Q5  1 paso (10_00) \u00d7 regi\u00f3n 5k\u00d75k  [H,QX,QY,MH]",
+          "tiempos_s": [
+            0.11879334000013841
+          ],
+          "media_s": 0.11879334000013841,
+          "bytes": 128970940
+        }
+      ],
+      "maquina": {
+        "hostname": "PCQuique",
+        "cpu_model": "AMD Ryzen 9 7900X 12-Core Processor",
+        "cpu_cores": 24,
+        "ram_total_mb": 15536,
+        "disk_type": "HDD",
+        "os": "Linux-6.6.87.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+        "kernel": "6.6.87.2-microsoft-standard-WSL2",
+        "python": "3.12.3",
+        "tiledb": "(0, 36, 1)",
+        "timestamp": "2026-06-15T20:13:41+00:00"
+      }
+    }
+  ]
+}
