@@ -1,4 +1,4 @@
-\chapter{Resultados experimentales detallados}\label{anexo-b.-tablas-de-resultados-completas}
+\chapter{Resultados experimentales}\label{anexo-b.-tablas-de-resultados-completas}
 
 Este anexo recoge los resultados experimentales completos que el cuerpo de la memoria presenta de forma resumida: las tablas de los cinco grupos del \textit{benchmark} de almacenamiento (G1--G5), la evolución horaria de celdas húmedas por \textit{dataset}, las métricas de la configuración inicial, los detalles del protocolo de medición, la validación del \textit{benchmark} sobre un segundo escenario y la comparativa multi-escenario.
 
@@ -109,7 +109,7 @@ Se compararon tres organizaciones para almacenar múltiples pasos temporales, us
 \end{table}
 
 
-El array 3D con tile\_t=1 ocupa un 19 \% menos que con tile\_t=4 (4 109 MB frente a 5 054 MB). La razón es que con tile\_t=1 cada tile solo contiene celdas de un paso temporal, cuyos valores hidráulicos presentan alta correlación espacial; ZSTD los comprime eficazmente. Con tile\_t=4 se mezclan valores de cuatro pasos con distribuciones distintas, reduciendo la compresibilidad.
+El array 3D con tile\_t=1 ocupa un 19 \% menos que con tile\_t=4 (4\,109 MB frente a 5\,054 MB). La razón es que con tile\_t=1 cada tile solo contiene celdas de un paso temporal, cuyos valores hidráulicos presentan alta correlación espacial; ZSTD los comprime eficazmente. Con tile\_t=4 se mezclan valores de cuatro pasos con distribuciones distintas, reduciendo la compresibilidad.
 
 La decisión fue adoptar el array 3D con 1 fragmento por paso temporal. El código de producción define el tile de la dimensión temporal como \texttt{min(n\_times, 16) = 16}; sin embargo, al escribirse un fragmento independiente por cada paso (con un único paso por fragmento), las celdas de distintos pasos no comparten tiles en el mismo fragmento, obteniendo el mismo comportamiento práctico que con tile\_t=1.
 

@@ -36,18 +36,4 @@ Todo el proceso se encapsula en un único comando que, dado un escenario y un in
 \texttt{python gis\_demo.py -{}-dataset datos1 -{}-step 10\_00 -{}-out paquete\_gis}
 \end{quote}
 
-El proyecto \texttt{.qgz} referencia el COG mediante ruta relativa, de modo que el paquete puede entregarse como una carpeta autocontenida sin que se rompan los enlaces: quien lo recibe solo tiene que abrir el proyecto. La Figura~\ref{fig:qgis-calado} muestra la capa de calado abierta en QGIS con el estilo aplicado, y la Figura~\ref{fig:qgis-cog} las propiedades del raster, donde se aprecian las pirámides (\textit{overviews}) que lo identifican como COG.
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=\textwidth]{Imagenes/Captura_QGIS_calado}
-\caption{Capa de calado exportada desde el almacén TileDB y abierta en QGIS con el estilo de peligrosidad aplicado automáticamente.}
-\label{fig:qgis-calado}
-\end{figure}
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=\textwidth]{Imagenes/Captura_QGIS_COG}
-\caption{Propiedades del raster en QGIS: organización en \textit{tiles} y \textit{overviews} precalculados característicos de un Cloud-Optimized GeoTIFF.}
-\label{fig:qgis-cog}
-\end{figure}
+El proyecto \texttt{.qgz} referencia el COG mediante ruta relativa, de modo que el paquete puede entregarse como una carpeta autocontenida sin que se rompan los enlaces: quien lo recibe solo tiene que abrir el proyecto en QGIS y la capa aparece ya estilizada, con la misma codificación de peligrosidad que la aplicación web.
