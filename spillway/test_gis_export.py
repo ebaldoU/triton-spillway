@@ -11,3 +11,13 @@ def test_write_cog_is_tiled_with_overviews(tmp_path):
     with rasterio.open(out) as ds:
         assert ds.profile["tiled"] is True
         assert ds.overviews(1), "el COG debe tener overviews"
+
+import defusedxml.ElementTree as ET
+import gis_style
+
+def test_qml_has_depth_stops():
+    qml = gis_style.depth_qml()
+    root = ET.fromstring(qml)  # debe parsear
+    values = [item.get("value") for item in root.iter("item")]
+    for thr in ("0.01", "0.25", "0.5", "1", "2"):
+        assert thr in values, f"falta la parada {thr}"
