@@ -2,7 +2,7 @@
 
 Este anexo resume la planificación temporal del trabajo. Dado que no se mantuvo un registro horario exacto por actividad, en lugar de un desglose de horas se presenta un cronograma que refleja cuándo se desarrolló cada fase, que es la información de la que se dispone con fiabilidad. El desarrollo se concentró entre abril y junio de 2026.
 
-Conviene aclarar una particularidad del proyecto: la obtención de los escenarios mediante la VPN universitaria se extendió durante varias semanas, pero fue un proceso en gran parte \emph{desatendido} (descargas que avanzaban en segundo plano y que solo requerían supervisión puntual para reanudar cortes de conexión y verificar la integridad de los ficheros frente al ETL). Por ello aparece en el cronograma como una franja larga de calendario solapada con el resto de tareas, y no como una dedicación equivalente en esfuerzo: el trabajo efectivo se concentró en las demás fases, que sí exigieron atención continua. Cuando las descargas se volvieron el cuello de botella, se sustituyeron por el transporte físico en disco duro (véase la sección~\ref{conclusiones-y-trabajo-futuro}).
+La obtención y verificación de los escenarios fue una de las fases más laboriosas del proyecto. La transferencia a través de la VPN universitaria se extendió durante varias semanas ---con un ancho de banda que imponía entre 5 y 6 horas por escenario--- y no fue un proceso meramente pasivo: exigió supervisar y reanudar de forma continua las descargas interrumpidas por cortes de conexión y, sobre todo, verificar la integridad de cada escenario comprobando uno a uno que el resultado del ETL coincidía con los GeoTIFF originales. En el cronograma ocupa una franja larga porque su duración en calendario fue grande y se solapó con el resto de tareas; cuando la transferencia se convirtió en el cuello de botella se sustituyó por el transporte físico en disco duro (véase la sección~\ref{conclusiones-y-trabajo-futuro}).
 
 \begin{table}[ht]
 \centering
@@ -17,7 +17,7 @@ Conviene aclarar una particularidad del proyecto: la obtención de los escenario
 \textbf{Fase} & 1 & 2 & 3 & 4 & 1 & 2 & 3 & 4 & 5 & 1 & 2 & 3 & 4 \\
 \midrule
 Formación e investigación        & \barra & \barra &       &       &       &       &       &       &       &       &       &       &       \\
-Obtención de escenarios (VPN, desatendida) & \barra & \barra & \barra & \barra & \barra & \barra & \barra &       &       &       &       &       &       \\
+Obtención y verificación de escenarios (VPN) & \barra & \barra & \barra & \barra & \barra & \barra & \barra &       &       &       &       &       &       \\
 Proceso ETL y \textit{benchmark} de almacenamiento &       & \barra & \barra & \barra &       &       &       &       &       &       &       &       &       \\
 Motor de consultas analíticas    &       &       &       & \barra & \barra & \barra & \barra &       &       &       &       &       &       \\
 Aplicación web                   &       &       &       &       &       & \barra & \barra & \barra & \barra &       &       &       &       \\
