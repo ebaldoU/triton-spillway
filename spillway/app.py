@@ -2006,7 +2006,9 @@ def stream_spatial_multi(meta, attrs, step_processor, bbox, progress=None, label
     `grids` es un dict compartido que se va actualizando. Memoria constante.
     """
     r_min, r_max, c_min, c_max, scale, gr, gc, x_ax, y_ax = _grid_for(meta, bbox)
-    grids = {"gr": gr, "gc": gc, "scale": scale, "cellsize": meta["cellsize"]}
+    grids = {"gr": gr, "gc": gc, "scale": scale, "cellsize": meta["cellsize"],
+             "r_min": r_min, "c_min": c_min,
+             "sub_nr": r_max - r_min + 1, "sub_nc": c_max - c_min + 1}
     n_steps = meta["n_steps"]
 
     with tiledb.open(meta["uri"], mode="r") as A:
@@ -2116,21 +2118,25 @@ def q9_hora_max(meta, bbox, progress=None):
         gr, gc = grids["gr"], grids["gc"]
         g_hmax = grids.setdefault("hmax", np.zeros((gr, gc), np.float32))
         g_tmax = grids.setdefault("tmax", np.full((gr, gc), -1, np.int16))
+        pres   = grids.setdefault("pres", np.zeros((grids["sub_nr"], grids["sub_nc"]), np.uint8))
         # H máximo de este paso en cada celda del grid
         H_step = np.zeros((gr, gc), np.float32)
         np.maximum.at(H_step, (r_s, c_s), res["H"].astype(np.float32))
         upd    = H_step > g_hmax
         g_hmax[upd] = H_step[upd]
         g_tmax[upd] = t_idx
+        # Presencia a resolución real: conteo exacto de celdas inundadas (no de píxeles)
+        pres[res["row"] - grids["r_min"], res["col"] - grids["c_min"]] = 1
     grids, x_ax, y_ax = stream_spatial_multi(meta, ["H"], _proc, bbox, progress, "Q9")
     gr, gc = grids["gr"], grids["gc"]
     g_hmax = grids.get("hmax", np.zeros((gr, gc), np.float32))
     g_tmax = grids.get("tmax", np.full((gr, gc), -1, np.int16))
+    pres   = grids.get("pres")
     hora_max = np.where(g_tmax >= 0, (g_tmax + 1) * STEP_H, np.nan).astype(np.float32)
     valid = g_tmax >= 0
     horas_validas = hora_max[valid]
     stats = {
-        "n":             int(valid.sum()),
+        "n":             int(pres.sum()) if pres is not None else 0,
         "hora_pico_min": int(horas_validas.min()) if valid.any() else 0,
         "hora_pico_max": int(horas_validas.max()) if valid.any() else 0,
         "H_max":         float(g_hmax.max())      if valid.any() else 0,
@@ -2265,18 +2271,22 @@ def q11_ventana_emergencia(meta, bbox, progress=None):
         gr, gc = grids["gr"], grids["gc"]
         g_min = grids.setdefault("tmin", np.full((gr, gc), n_steps, np.int16))
         g_max = grids.setdefault("tmax", np.full((gr, gc), -1,       np.int16))
+        pres  = grids.setdefault("pres", np.zeros((grids["sub_nr"], grids["sub_nc"]), np.uint8))
         mask = res["H"] < H_EMERGENCIA  # sparse ya filtra H >= H_WET
         if mask.any():
             np.minimum.at(g_min, (r_s[mask], c_s[mask]), t_idx)
             np.maximum.at(g_max, (r_s[mask], c_s[mask]), t_idx)
+            # Presencia a resolución real: conteo exacto de celdas practicables
+            pres[res["row"][mask] - grids["r_min"], res["col"][mask] - grids["c_min"]] = 1
     grids, x_ax, y_ax = stream_spatial_multi(meta, ["H"], _proc, bbox, progress, "Q11")
     gr, gc = grids["gr"], grids["gc"]
     g_min = grids.get("tmin", np.full((gr, gc), n_steps, np.int16))
     g_max = grids.get("tmax", np.full((gr, gc), -1, np.int16))
+    pres  = grids.get("pres")
     valid = g_max >= 0
     ventana = np.where(valid, (g_max - g_min + 1).astype(np.float32) * STEP_H, np.nan)
     stats = {
-        "n":     int(valid.sum()),
+        "n":     int(pres.sum()) if pres is not None else 0,
         "media": float(ventana[valid].mean()) if valid.any() else 0,
         "min":   float(ventana[valid].min())  if valid.any() else 0,
         "max":   float(ventana[valid].max())  if valid.any() else 0,
@@ -2337,14 +2347,21 @@ def q16_evacuacion(meta, umbral_h, umbral_q, bbox, progress=None):
         gr, gc = grids["gr"], grids["gc"]
         g_lleg = grids.setdefault("lleg", np.full((gr, gc), n_steps, np.int16))
         g_crit = grids.setdefault("crit", np.full((gr, gc), n_steps, np.int16))
+        # Grids a resolución real (uint8: 20 pasos caben de sobra) para los conteos exactos
+        f_lleg = grids.setdefault("lleg_full", np.full((grids["sub_nr"], grids["sub_nc"]), n_steps, np.uint8))
+        f_crit = grids.setdefault("crit_full", np.full((grids["sub_nr"], grids["sub_nc"]), n_steps, np.uint8))
         H     = res["H"]
         Q_mod = np.sqrt(res["QX"]**2 + res["QY"]**2)
+        r_loc = res["row"] - grids["r_min"]
+        c_loc = res["col"] - grids["c_min"]
         m_wet = H >= H_WET
         if m_wet.any():
             np.minimum.at(g_lleg, (r_s[m_wet], c_s[m_wet]), t_idx)
+            np.minimum.at(f_lleg, (r_loc[m_wet], c_loc[m_wet]), t_idx)
         m_cri = (H > umbral_h) | (Q_mod > umbral_q)
         if m_cri.any():
             np.minimum.at(g_crit, (r_s[m_cri], c_s[m_cri]), t_idx)
+            np.minimum.at(f_crit, (r_loc[m_cri], c_loc[m_cri]), t_idx)
     grids, x_ax, y_ax = stream_spatial_multi(meta, ["H", "QX", "QY"], _proc, bbox, progress, "Q16")
     gr, gc = grids["gr"], grids["gc"]
     g_lleg = grids.get("lleg", np.full((gr, gc), n_steps, np.int16))
@@ -2357,11 +2374,19 @@ def q16_evacuacion(meta, umbral_h, umbral_q, bbox, progress=None):
                  np.maximum(0, g_crit - g_lleg) * STEP_H),
         np.nan
     ).astype(np.float32)
-    nunca      = int(((g_crit == n_steps) & wet).sum())
-    ya_peli    = int(((g_crit <= g_lleg)  & wet).sum())
     vv         = ventana[wet]
+    # Conteos exactos sobre los grids a resolución real
+    f_lleg = grids.get("lleg_full")
+    f_crit = grids.get("crit_full")
+    if f_lleg is None:
+        n_real = nunca = ya_peli = 0
+    else:
+        wet_real = f_lleg < n_steps
+        n_real   = int(wet_real.sum())
+        nunca    = int(((f_crit == n_steps) & wet_real).sum())
+        ya_peli  = int(((f_crit <= f_lleg)  & wet_real).sum())
     stats = {
-        "n":       int(wet.sum()),
+        "n":       n_real,
         "nunca":   nunca,
         "ya_peli": ya_peli,
         "media":   float(vv.mean()) if vv.size else 0,
