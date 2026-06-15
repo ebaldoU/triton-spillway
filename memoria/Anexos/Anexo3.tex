@@ -6,7 +6,7 @@ Este anexo proporciona el contexto hidráulico del trabajo para lectores no fami
 
 Las simulaciones hidráulicas 2D modelizan la propagación de inundaciones resolviendo numéricamente las ecuaciones de Saint-Venant (también denominadas ecuaciones de aguas poco profundas o shallow water equations). Derivadas de la conservación de masa y cantidad de movimiento, estas ecuaciones describen el movimiento del agua sobre terreno complejo bajo la hipótesis de que la dimensión vertical es pequeña comparada con la extensión horizontal, condición característica de las llanuras de inundación fluvial.
 
-El dominio de simulación se discretiza en una malla cartesiana regular (en este proyecto, 34 200 $\times$ 23 040 celdas de 10 $\times$ 10 m) y las variables de estado (calado y caudales) se calculan en cada celda y cada paso de tiempo. El resultado es una secuencia temporal de campos rasterizados que describe la evolución de la inundación. Los pasos de tiempo no corresponden a la discretización numérica interna del simulador, sino a los instantes de exportación configurados por el usuario; en este proyecto, un paso cada seis horas.
+El dominio de simulación se discretiza en una malla cartesiana regular (en este proyecto, 34\,200 $\times$ 23\,040 celdas de 10 $\times$ 10 m) y las variables de estado (calado y caudales) se calculan en cada celda y cada paso de tiempo. El resultado es una secuencia temporal de campos rasterizados que describe la evolución de la inundación. Los pasos de tiempo no corresponden a la discretización numérica interna del simulador, sino a los instantes de exportación configurados por el usuario; en este proyecto, un paso cada seis horas.
 
 \section{El simulador Triton}\label{c.2-el-simulador-triton}
 

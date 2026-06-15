@@ -15,7 +15,7 @@ El proceso ETL (\textit{geotiff\_to\_tiledb\_sparse.py}) transforma los ficheros
 ]
     \node[startstop] (start) {Inicio (\ttfamily --dataset)};
     \node[loop, below=of start] (loop1) {\textbf{Bucle:} para cada paso temporal $t \in \{0, \ldots, 19\}$};
-    \node[process, below=of loop1] (read) {Lectura paralela de 4 GeoTIFF (H, QX, QY, MH)\\\scriptsize ThreadPoolExecutor, ventanas de 5 000 filas};
+    \node[process, below=of loop1] (read) {Lectura paralela de 4 GeoTIFF (H, QX, QY, MH)\\\scriptsize ThreadPoolExecutor, ventanas de 5\,000 filas};
     \node[process, below=of read] (filter) {Filtro de celdas húmedas\\\scriptsize H $\geq$ 0,01 m};
     \node[process, below=of filter] (accum) {Acumulación de coordenadas (row, col) y valores};
     \node[process, below=of accum] (write) {Escritura en TileDB sparse\\\scriptsize 1 fragmento por paso, filtro ByteShuffle + ZSTD-9};

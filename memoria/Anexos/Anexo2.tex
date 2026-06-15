@@ -36,7 +36,7 @@ Delta + ZSTD & --- & --- & \multicolumn{1}{l}{ERROR (no acepta float32)} & --- \
 \end{table}
 
 
-El hallazgo más relevante es que ZSTD solo reduce el tamaño apenas un 8 \% respecto a sin compresión (de 1 029 MB a 943 MB), porque los valores float32 de la simulación no presentan redundancia de bytes suficiente. Al anteponer ByteShuffle o BitShuffle, que reordenan los bytes de cada float para agrupar exponentes y mantisas similares, ZSTD alcanza un 16 \% de reducción adicional ($\sim$860--872 MB). ByteShuffle + ZSTD-1 es la excepción: con nivel 1 ZSTD no explota el reordenamiento y el \textit{overhead} de descompresión supera el ahorro de I/O, resultando en lecturas lentas e inestables (mediana 0,195 s, $\sigma$ = 0,084 s).
+El hallazgo más relevante es que ZSTD solo reduce el tamaño apenas un 8 \% respecto a sin compresión (de 1\,029 MB a 943 MB), porque los valores float32 de la simulación no presentan redundancia de bytes suficiente. Al anteponer ByteShuffle o BitShuffle, que reordenan los bytes de cada float para agrupar exponentes y mantisas similares, ZSTD alcanza un 16 \% de reducción adicional ($\sim$860--872 MB). ByteShuffle + ZSTD-1 es la excepción: con nivel 1 ZSTD no explota el reordenamiento y el \textit{overhead} de descompresión supera el ahorro de I/O, resultando en lecturas lentas e inestables (mediana 0,195 s, $\sigma$ = 0,084 s).
 
 Un dato llamativo es que ZSTD-1 (configuración inicial) resulta más lento en lectura que sin compresión (0,158 s frente a 0,161 s), ya que no comprime lo suficiente para reducir el I/O pero sí introduce \textit{overhead} de CPU. ZSTD-5 en adelante recupera ese tiempo gracias a la mayor compresión.
 
@@ -44,7 +44,7 @@ Respecto a la elección final del filtro, los tiempos de lectura entre las confi
 
 \section{Tamaño de tile espacial (G2)}\label{g2.-tamano-de-tile-espacial}
 
-Se compararon tiles de 256$\times$256, 512$\times$512 y 1 024$\times$1 024 celdas manteniendo ZSTD-3 como filtro. Las diferencias son despreciables tanto en tamaño como en lectura, como muestra la Tabla~\ref{tab:g2-tile}.
+Se compararon tiles de 256$\times$256, 512$\times$512 y 1\,024$\times$1\,024 celdas manteniendo ZSTD-3 como filtro. Las diferencias son despreciables tanto en tamaño como en lectura, como muestra la Tabla~\ref{tab:g2-tile}.
 
 
 \begin{table}[ht]
@@ -191,10 +191,10 @@ La Tabla~\ref{tab:metricas-tdb} recoge las métricas del array TileDB de datos1 
 \textbf{Métrica} & \textbf{Valor} \\
 \midrule
 Pasos temporales & 20 \\
-Resolución ráster & 34 200 $\times$ 23 040 px \\
+Resolución ráster & 34\,200 $\times$ 23\,040 px \\
 Variables & H, QX, QY, MH \\
-Celdas totales del dominio & 15 759 360 000 \\
-Celdas almacenadas en TileDB & 1 311 695 098 \\
+Celdas totales del dominio & 15\,759\,360\,000 \\
+Celdas almacenadas en TileDB & 1\,311\,695\,098 \\
 \% del dominio con agua & 8,3 \% \\
 \addlinespace[6pt]
 Ficheros GeoTIFF originales & 235 GB \\
@@ -223,7 +223,7 @@ Tiempo de carga (20 pasos) & 454 s ($\sim$7,5 min) \\
 
 \section{Validación del benchmark sobre un segundo escenario}\label{validacion-benchmark-datos2}
 
-Para verificar la robustez de los resultados obtenidos con datos1, el \textit{benchmark} TileDB (ByteShuffle+ZSTD-9) vs GeoTIFF se repitió íntegramente sobre un segundo conjunto de datos (datos2), cargado mediante el mismo \textit{pipeline} ETL. datos2 contiene 1 303 516 575 celdas húmedas (17 492 MB en TileDB), frente a 1 311 695 098 celdas de datos1 (17 611 MB). Los resultados se recogen en la Tabla~\ref{tab:bench-datos2}.
+Para verificar la robustez de los resultados obtenidos con datos1, el \textit{benchmark} TileDB (ByteShuffle+ZSTD-9) vs GeoTIFF se repitió íntegramente sobre un segundo conjunto de datos (datos2), cargado mediante el mismo \textit{pipeline} ETL. datos2 contiene 1\,303\,516\,575 celdas húmedas (17\,492 MB en TileDB), frente a 1\,311\,695\,098 celdas de datos1 (17\,611 MB). Los resultados se recogen en la Tabla~\ref{tab:bench-datos2}.
 
 \begin{center}
 \begin{tabularx}{\textwidth}{p{4.5cm}XXXXX}
@@ -271,7 +271,7 @@ C6. Exportar GeoTIFF & 2,4$\times$ TDB & 2,1$\times$ TDB & $\checkmark$ TDB gana
 \clearpage
 \section{Comparativa multi-escenario}\label{comparativa-multiescenario}
 
-La Tabla~\ref{tab:metricas-datasets} recoge las métricas principales de los cuatro \textit{datasets} de referencia. datos1, datos2 y datos4 representan escenarios de inundación de magnitud similar (extensión máxima 7 433--7 718 km\textsuperscript{2}, $\sim$1 300 M celdas húmedas), mientras que datos3 corresponde a un escenario significativamente más seco (extensión máxima 2 838 km\textsuperscript{2}, 498 M celdas), con el pico de inundación en la hora 6 frente a las horas 90--96 del resto.
+La Tabla~\ref{tab:metricas-datasets} recoge las métricas principales de los cuatro \textit{datasets} de referencia. datos1, datos2 y datos4 representan escenarios de inundación de magnitud similar (extensión máxima 7\,433--7\,718 km\textsuperscript{2}, $\sim$1\,300 M celdas húmedas), mientras que datos3 corresponde a un escenario significativamente más seco (extensión máxima 2\,838 km\textsuperscript{2}, 498 M celdas), con el pico de inundación en la hora 6 frente a las horas 90--96 del resto.
 
 \begin{table}[ht]
 \centering
@@ -280,12 +280,12 @@ La Tabla~\ref{tab:metricas-datasets} recoge las métricas principales de los cua
 \textbf{Métrica} & \textbf{datos1} & \textbf{datos2} & \textbf{datos3} & \textbf{datos4} \\
 \midrule
 Pasos temporales & 20 & 20 & 20 & 20 \\
-Celdas húmedas totales (M) & 1 311,7 & 1 303,5 & 498,4 & 1 323,5 \\
-Extensión máxima (km\textsuperscript{2}) & 7 433 & 7 718 & 2 838 & 7 569 \\
+Celdas húmedas totales (M) & 1\,311,7 & 1\,303,5 & 498,4 & 1\,323,5 \\
+Extensión máxima (km\textsuperscript{2}) & 7\,433 & 7\,718 & 2\,838 & 7\,569 \\
 Hora del pico (h) & 90 & 96 & 6 & 96 \\
-Extensión en hora 60 (km\textsuperscript{2}) & 6 196 & 6 059 & 2 358 & 6 196 \\
-Peligrosidad adultos (Russo) h60 (km\textsuperscript{2}) & 2 311 & 2 294 & 717 & 2 311 \\
-Volumen máximo (Mm\textsuperscript{3}) & 4 462,8 & 4 325,3 & 1 327,9 & 4 462,8 \\
+Extensión en hora 60 (km\textsuperscript{2}) & 6\,196 & 6\,059 & 2\,358 & 6\,196 \\
+Peligrosidad adultos (Russo) h60 (km\textsuperscript{2}) & 2\,311 & 2\,294 & 717 & 2\,311 \\
+Volumen máximo (Mm\textsuperscript{3}) & 4\,462,8 & 4\,325,3 & 1\,327,9 & 4\,462,8 \\
 \bottomrule
 \end{tabularx}
 \caption{Métricas globales por \textit{dataset} (datos1--datos4).}

@@ -81,7 +81,7 @@ La problemática de partida combina tres dimensiones que se refuerzan entre sí:
 
 \section{Volumen y estructura de los datos}\label{volumen-y-estructura}
 
-Cada simulación con el simulador Triton produce 80 ficheros GeoTIFF georreferenciados (4 variables físicas $\times$ 20 pasos temporales), con un tamaño aproximado de 3 GB por fichero y un total cercano a 235 GB por escenario. El dominio espacial está discretizado en una malla regular de 34 200 $\times$ 23 040 píxeles, lo que supone aproximadamente 787 millones de celdas por paso temporal y unas 15 700 millones de celdas en la simulación completa. Procesar este volumen con herramientas convencionales exige cargar cada ráster completo en memoria, lo que requiere alrededor de 3 GB por variable y resulta inviable en estaciones de trabajo con menos de 32 GB de RAM.
+Cada simulación con el simulador Triton produce 80 ficheros GeoTIFF georreferenciados (4 variables físicas $\times$ 20 pasos temporales), con un tamaño aproximado de 3 GB por fichero y un total cercano a 235 GB por escenario. El dominio espacial está discretizado en una malla regular de 34\,200 $\times$ 23\,040 píxeles, lo que supone aproximadamente 787 millones de celdas por paso temporal y unas 15\,700 millones de celdas en la simulación completa. Procesar este volumen con herramientas convencionales exige cargar cada ráster completo en memoria, lo que requiere alrededor de 3 GB por variable y resulta inviable en estaciones de trabajo con menos de 32 GB de RAM.
 
 \section{Inadecuación del formato GeoTIFF para consultas analíticas}\label{inadecuacion-geotiff}
 

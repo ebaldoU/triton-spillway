@@ -7,7 +7,7 @@ Este capítulo presenta el diseño del sistema desarrollado: la sección~\ref{ar
 El sistema está compuesto por cuatro capas articuladas en torno al array TileDB sparse como componente central de almacenamiento, tal y como muestra la Figura~\ref{fig:arquitectura}:
 
 \begin{enumerate}
-\item \textbf{Ingesta (ETL):} El módulo de ingesta lee los ficheros GeoTIFF generados por Triton, aplica el filtro de celdas húmedas (H $\geq$ 0,01 m) y escribe los datos en TileDB con filtro ByteShuffle+ZSTD-9. La lectura se realiza por franjas de 5 000 filas para limitar el uso de memoria.
+\item \textbf{Ingesta (ETL):} El módulo de ingesta lee los ficheros GeoTIFF generados por Triton, aplica el filtro de celdas húmedas (H $\geq$ 0,01 m) y escribe los datos en TileDB con filtro ByteShuffle+ZSTD-9. La lectura se realiza por franjas de 5\,000 filas para limitar el uso de memoria.
 \item \textbf{Almacenamiento:} Array TileDB sparse con dimensiones (time, row, col) y atributos (H, QX, QY, MH). Un fragmento por paso temporal facilita el filtrado temporal eficiente.
 \item \textbf{Análisis:} El motor de consultas proporciona 24 funciones que operan directamente sobre el array TileDB sin exportación previa.
 \item \textbf{Visualización y exportación:} Un visualizador interactivo, un exportador a GeoTIFF para interoperabilidad SIG y la aplicación web Streamlit con mapas interactivos, comparativa multi-escenario y panel de ayuda.
@@ -244,9 +244,9 @@ El ahorro de espacio proviene principalmente del almacenamiento disperso (solo e
 
 \subsection{Entorno y metodología experimental}\label{entorno-y-metodologia-experimental}\label{hardware-y-software}
 
-Todos los experimentos se realizaron en la misma máquina para garantizar la comparabilidad de los resultados. Hardware: procesador AMD Ryzen 9 7900X (12 núcleos / 24 hilos, 4,7--5,6 GHz), 32 GB de RAM DDR5 a 5200 MT/s, almacenamiento SSD (\textit{Solid-State Drive}) NVMe PCIe Gen4 de 2 TB. Software: Windows 11 Pro con subsistema WSL2 (Windows Subsystem for Linux~2, Ubuntu 24.04 LTS, kernel 6.6), Python 3.12.3, TileDB 0.36.1, NumPy 2.4.4, rasterio 1.5.0, Streamlit 1.36.
+Todos los experimentos se realizaron en la misma máquina para garantizar la comparabilidad de los resultados. Hardware: procesador AMD Ryzen 9 7900X (12 núcleos / 24 hilos, 4,7--5,6 GHz), 32 GB de RAM DDR5 a 5\,200 MT/s, almacenamiento SSD (\textit{Solid-State Drive}) NVMe PCIe Gen4 de 2 TB. Software: Windows 11 Pro con subsistema WSL2 (Windows Subsystem for Linux~2, Ubuntu 24.04 LTS, kernel 6.6), Python 3.12.3, TileDB 0.36.1, NumPy 2.4.4, rasterio 1.5.0, Streamlit 1.36.
 
-\label{protocolo-de-medicion}Cada caso de prueba sigue el mismo protocolo de medición. Los \textit{benchmarks} de patrones de acceso se ejecutan tres veces y se reporta la mediana; el de filtros de compresión usa 200 repeticiones sobre una región fija de 5 000$\times$5 000 celdas. Antes de cada serie se libera la caché de páginas del sistema operativo para medir el tiempo en frío; las repeticiones siguientes miden el tiempo en caché caliente, que es el valor reportado en las tablas. La RAM pico se mide con \texttt{tracemalloc} (los matices de esta medición y el cálculo del \textit{throughput} se detallan en el \hyperref[anexo-b.-tablas-de-resultados-completas]{Anexo~B}). Todos los scripts están versionados en el repositorio y son reejecutables con un único argumento; los tiempos absolutos dependen del hardware, pero los factores relativos entre TileDB y GeoTIFF son directamente comparables.
+\label{protocolo-de-medicion}Cada caso de prueba sigue el mismo protocolo de medición. Los \textit{benchmarks} de patrones de acceso se ejecutan tres veces y se reporta la mediana; el de filtros de compresión usa 200 repeticiones sobre una región fija de 5\,000$\times$5\,000 celdas. Antes de cada serie se libera la caché de páginas del sistema operativo para medir el tiempo en frío; las repeticiones siguientes miden el tiempo en caché caliente, que es el valor reportado en las tablas. La RAM pico se mide con \texttt{tracemalloc} (los matices de esta medición y el cálculo del \textit{throughput} se detallan en el \hyperref[anexo-b.-tablas-de-resultados-completas]{Anexo~B}). Todos los scripts están versionados en el repositorio y son reejecutables con un único argumento; los tiempos absolutos dependen del hardware, pero los factores relativos entre TileDB y GeoTIFF son directamente comparables.
 
 \subsection{Resultado final: configuración definitiva}\label{resultado-final-configuracion-definitiva}
 
@@ -292,5 +292,5 @@ Tiempo de carga & $\sim$454 s & $\sim$477 s \\
 \end{table}
 
 
-La configuración final ocupa 1 716 MB menos (-8,9 \%) con tiempos de lectura equivalentes. El incremento de tiempo de carga (+22 s sobre 477 s totales) es asumible dado que la ingesta es un proceso puntual frente a la consulta continua de los datos. Las herramientas construidas sobre esta configuración se presentan en el capítulo~\ref{herramientas-desarrolladas}, y su validación y rendimiento en el capítulo~\ref{validacion-del-sistema}.
+La configuración final ocupa 1\,716 MB menos (-8,9 \%) con tiempos de lectura equivalentes. El incremento de tiempo de carga (+22 s sobre 477 s totales) es asumible dado que la ingesta es un proceso puntual frente a la consulta continua de los datos. Las herramientas construidas sobre esta configuración se presentan en el capítulo~\ref{herramientas-desarrolladas}, y su validación y rendimiento en el capítulo~\ref{validacion-del-sistema}.
 
