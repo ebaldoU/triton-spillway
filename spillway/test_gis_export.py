@@ -35,3 +35,21 @@ def test_qgz_uses_relative_datasource(tmp_path):
     assert 'H_10_00.tif' in xml
     assert '/tmp' not in xml and str(tmp_path) not in xml  # nada de rutas absolutas
     assert 'relative' in xml.lower()
+
+
+def test_qgz_rejects_path_traversal(tmp_path):
+    import pytest
+    qgz = tmp_path / "p.qgz"
+    with pytest.raises(ValueError):
+        gis_package.build_qgz(str(qgz), cog_filename="../etc/passwd.tif",
+                              layer_name="x")
+
+
+def test_qgz_escapes_special_chars(tmp_path):
+    qgz = tmp_path / "p.qgz"
+    gis_package.build_qgz(str(qgz), cog_filename="H_10_00.tif",
+                          layer_name='Calado <"&">')
+    with zipfile.ZipFile(qgz) as z:
+        xml = z.read([n for n in z.namelist() if n.endswith(".qgs")][0]).decode()
+    assert "<\"&\">" not in xml          # los caracteres crudos no aparecen sin escapar
+    assert "&lt;" in xml and "&amp;" in xml
