@@ -1,0 +1,37 @@
+\chapter{Marco tecnológico: TileDB en detalle}\label{anexo-h.-marco-tecnologico-tiledb}
+
+Este anexo amplía el marco tecnológico presentado en el capítulo~\ref{analisis-de-tecnologias}, centrándose en los aspectos internos de TileDB que explican las decisiones de diseño del sistema. No pretende sustituir a la documentación oficial \cite{tiledb_web}, sino reunir en un solo lugar los conceptos necesarios para entender por qué el almacén se comporta como lo hace.
+
+\section{Modelo de datos de array}\label{h-modelo}
+
+TileDB organiza los datos como \textit{arrays} multidimensionales. Un array se define por dos elementos: las \textbf{dimensiones}, que forman el sistema de coordenadas por el que se indexa (en este trabajo, tiempo, fila y columna), y los \textbf{atributos}, que son los valores almacenados en cada celda (las variables hidráulicas H, QX, QY y MH). La diferencia con una imagen ráster convencional es que las dimensiones no son solo ejes de una matriz: son un índice por el que se puede consultar de forma eficiente.
+
+Un array puede ser \textbf{denso} (se almacenan todas las celdas, haya o no dato) o \textbf{disperso} (\textit{sparse}, solo se almacenan las celdas con dato, guardando explícitamente sus coordenadas). La elección es la decisión central de este trabajo: en una inundación, en cada instante solo alrededor del 8 \% del dominio está mojado, de modo que un array disperso almacena únicamente esas celdas y evita el coste de las celdas secas, mientras que uno denso las guardaría todas.
+
+\section{Fragmentos y modelo de escritura}\label{h-fragmentos}
+
+TileDB no modifica los datos en el sitio. Cada operación de escritura crea un \textbf{fragmento} (\textit{fragment}) independiente e inmutable, una especie de capa con los datos de esa escritura. Una lectura posterior combina de forma transparente todos los fragmentos para devolver la vista completa del array. Este modelo, inspirado en los sistemas de tipo \textit{log-structured}, favorece la escritura concurrente y evita bloqueos.
+
+El proceso ETL de este trabajo escribe los datos paso a paso, lo que genera \textbf{20 fragmentos}, uno por instante temporal. Esta estructura no es casual: como cada fragmento contiene un único paso, las consultas que necesitan un solo instante leen exactamente un fragmento, y el sistema se mantiene predecible. Que existan 20 fragmentos es, por tanto, el estado correcto del array; un único fragmento consolidado degrada el rendimiento, como se explica en la sección~\ref{h-consolidacion}.
+
+\section{Tiles, orden global e indexación}\label{h-tiles}
+
+Dentro de un array, la unidad física de almacenamiento, compresión y lectura es el \textbf{tile}. Un tile agrupa un bloque de celdas que se comprime y se lee como una sola pieza; en este sistema los tiles espaciales son de 256$\times$256 celdas \cite{tiledb_datalayout}. La consecuencia práctica es que la granularidad de acceso es el tile: para leer una sola celda hay que descomprimir el tile que la contiene.
+
+En un array disperso, TileDB ordena las celdas según un \textbf{orden global} sobre sus coordenadas y mantiene un índice (de tipo R-tree) que permite localizar rápidamente qué tiles intersecan una región consultada \cite{tiledb_indexing}. Gracias a este índice, una consulta sobre una ventana espacial no recorre todo el array: salta directamente a los tiles relevantes.
+
+\section{Pipeline de filtros}\label{h-filtros}
+
+La compresión en TileDB se configura como una \textbf{cadena de filtros} (\textit{filter pipeline}) que se aplica a cada tile antes de escribirlo \cite{tiledb_compression}. El sistema emplea dos filtros encadenados: primero \textit{ByteShuffle}, que reordena los bytes de los valores \texttt{float32} agrupando los de igual posición (todos los primeros bytes juntos, luego los segundos, etc.), y después ZSTD, que comprime el resultado. El reordenamiento previo es clave porque los bytes de igual posición de valores hidráulicos cercanos son muy parecidos, lo que crea largas secuencias repetidas que ZSTD comprime mucho mejor. La elección concreta de filtro y nivel se determinó experimentalmente en el \textit{benchmark} de almacenamiento del Anexo~\ref{anexo-b.-tablas-de-resultados-completas}.
+
+\section{Consolidación y amplificación de tiles}\label{h-consolidacion}
+
+TileDB ofrece una operación de \textbf{consolidación} que fusiona varios fragmentos en uno solo, pensada para escenarios con miles de escrituras pequeñas. En este sistema, sin embargo, consolidar los 20 fragmentos en uno resulta contraproducente: al mezclar los pasos temporales en tiles compartidos, una consulta que solo necesita un instante se ve obligada a leer y descomprimir tiles que contienen también otros pasos. Este fenómeno, conocido como \textbf{amplificación de tiles} (\textit{tile amplification}, leer más datos de los necesarios), llegó a multiplicar por 16 el tiempo de las consultas multi-paso durante el desarrollo. Por ello el sistema mantiene deliberadamente los 20 fragmentos sin consolidar.
+
+\section{Lectura por ventana}\label{h-windowed}
+
+La combinación del modelo disperso, el índice sobre coordenadas y los tiles permite la \textbf{lectura por ventana} (\textit{windowed read}): dada una región del dominio, TileDB consulta el índice para identificar los tiles que la intersecan, lee solo esos tiles y descomprime únicamente lo necesario. Esta es la base de la ventaja de rendimiento medida frente a GeoTIFF (capítulo~\ref{validacion-del-sistema}): mientras que leer una subregión de un GeoTIFF clásico obliga a recorrer estructuras pensadas para acceso secuencial, el índice disperso de TileDB acota el trabajo a la zona consultada.
+
+\section{Encaje con las alternativas}\label{h-alternativas}
+
+Las alternativas valoradas se analizan en el capítulo~\ref{analisis-de-tecnologias}. En resumen, SciDB, la referencia académica de las bases de datos de arrays, carece de versiones públicas recientes de su edición abierta y exige servidor dedicado; las bibliotecas de array sobre fichero (HDF5, Zarr) no ofrecen de serie la indexación dispersa sobre coordenadas que aquí resulta decisiva. TileDB combina el modelo disperso, la compresión por filtros encadenados y el acceso por ventana en una biblioteca embebida sin servidor \cite{tiledb_github}, lo que se ajusta a los requisitos del problema sin la complejidad operativa de un sistema cliente-servidor.
