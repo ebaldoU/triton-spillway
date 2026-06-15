@@ -10,13 +10,15 @@ A continuación se presentan las conclusiones técnicas y experimentales derivad
 
 El sistema demuestra que TileDB sparse es una solución viable para el almacenamiento y análisis de simulaciones hidráulicas de alta resolución. La aportación principal es la reducción del volumen de datos de 235 GB por simulación (GeoTIFF, 20 pasos $\times$ 4 variables) a 17,5 GB en TileDB sparse con filtro ByteShuffle+ZSTD-9: una reducción del 92,7 \% y un ratio de 13,7$\times$. Esta compresión proviene mayoritariamente del modelo sparse (solo el $\sim$8,3 \% del dominio está inundado) y, en menor medida, del filtro (-8,9 \% adicional respecto a ZSTD-1).
 
-El motor de consultas analíticas implementa 24 funciones en ocho bloques que cubren desde consultas básicas hasta indicadores de inestabilidad hidrodinámica según los criterios de Russo et al.\ (2013) y Xia et al.\ (2011/2014), además de la zona de graves daños definida por la normativa (Real Decreto 9/2008). Las consultas acumuladas por píxel emplean un \textit{grid} acumulador de tamaño fijo ($\sim$750 MB) que hace viable el análisis sobre más de 1 300 millones de celdas húmedas sin saturar memoria. La arquitectura multi-dataset permite incorporar nuevas simulaciones sin modificar el código: los 56 \textit{datasets} procesados (40 episodios históricos de 1980--2019 y 16 de proyección climática futura bajo el escenario SSP5-8.5 hasta 2035) reutilizan el mismo \textit{pipeline} ETL y los mismos scripts analíticos.
+El motor de consultas analíticas implementa 24 funciones en ocho bloques que cubren desde consultas básicas hasta indicadores de inestabilidad hidrodinámica según los criterios de Russo et al.\ (2013) y Xia et al.\ (2011/2014), además de la zona de graves daños definida por la normativa (Real Decreto 9/2008). Las consultas acumuladas por píxel emplean un \textit{grid} acumulador de tamaño fijo ($\sim$750 MB) que hace viable el análisis sobre más de 1 300 millones de celdas húmedas sin saturar memoria. La arquitectura multi-dataset permite incorporar nuevas simulaciones sin modificar el código: los 56 \textit{datasets} procesados (40 episodios históricos de 1980--2019 y 16 de proyección climática futura bajo el escenario SSP5-8.5 hasta 2035) reutilizan el mismo \textit{pipeline} ETL y los mismos scripts analíticos. Por último, el sistema interopera con las herramientas SIG de escritorio: exporta sus resultados a Cloud-Optimized GeoTIFF con un estilo de calado y un proyecto QGIS listos para abrir (capítulo~\ref{cap:gis}).
 
 \subsection{Conclusiones experimentales}\label{conclusiones-experimentales}
 
 El \textit{benchmark} comparativo (6 casos de prueba, 3 repeticiones en caché caliente) muestra que TileDB supera a GeoTIFF en cinco de los seis patrones evaluados, con ventajas de hasta 12,4$\times$ en lecturas de instantes completos y 7,1--9,9$\times$ en cálculos de peligrosidad sobre la serie temporal. Los resultados son consistentes en los cuatro \textit{datasets} de referencia (datos1--datos4), lo que confirma que las ventajas son inherentes al modelo sparse y no específicas de una simulación concreta.
 
 En cuanto al rendimiento, las consultas acotadas espacialmente se resuelven en décimas de segundo y las de un instante completo en $\sim$2 s, aptas para uso interactivo; las multi-paso sobre el dominio completo (30--120 s) se gestionan mediante caché en la aplicación web. En términos de impacto operativo, la aceleración de 12,4$\times$ frente a GeoTIFF reduce la lectura de un instante completo de 22,7 s a 1,8 s, habilitando la visualización interactiva en el navegador, y el cálculo de peligrosidad pasa de 293 s a 41 s, haciendo viable el análisis durante un episodio activo de crecida.
+
+La evaluación en dos máquinas de distinta clase (sección~\ref{rendimiento-multimaquina}) confirma que estas propiedades no dependen del hardware concreto: el orden relativo de los patrones de acceso se conserva entre el portátil de desarrollo y el servidor de producción, y el consumo de memoria acotado por el \textit{grid} de tamaño fijo mantiene el rendimiento estable hasta un umbral bajo de RAM, por debajo del cual el proceso se aborta de forma abrupta.
 
 \subsection{Limitaciones}\label{limitaciones}
 
@@ -25,7 +27,7 @@ El sistema cumple los objetivos planteados, pero durante el desarrollo y la eval
 \begin{itemize}
 \item \textbf{Consultas de píxel único.} GeoTIFF supera a TileDB en 5,3$\times$ para la lectura de un único píxel a lo largo de toda la serie temporal, ya que \texttt{rasterio} realiza una lectura directa sin descomprimir índices dispersos.
 
-\item \textbf{Entorno de ejecución.} Los experimentos se realizaron en WSL2 con 32 GB de RAM compartida. En entornos con menos memoria, las consultas multi-paso podrían requerir ajustes en el parámetro de resolución del \textit{grid} acumulador.
+\item \textbf{Entorno de ejecución.} Los experimentos se realizaron bajo WSL2, que expone 16 GB de los 32 GB físicos del equipo. La sección~\ref{sensibilidad-ram} caracteriza la sensibilidad a la memoria: el rendimiento se mantiene estable hasta 4 GB, pero por debajo de ese umbral las consultas multi-paso son abortadas por falta de memoria.
 
 \item \textbf{Exportación masiva.} Exportar todos los pasos y variables a GeoTIFF produciría $\sim$20 GB, anulando la ventaja de compresión. La exportación está concebida como herramienta puntual de interoperabilidad SIG, no de almacenamiento.
 
@@ -64,6 +66,8 @@ Las siguientes líneas de extensión ampliarían el alcance del sistema sin modi
 \item \textbf{Índice de riesgo compuesto.} Combinar los criterios de Russo, Xia y el RD 9/2008 en un único índice por celda que facilite la comparación directa entre escenarios.
 
 \item \textbf{Exportación de informes.} Generar automáticamente un informe PDF por escenario con las métricas principales y los mapas más relevantes.
+
+\item \textbf{Servicio de mapas OGC.} Exponer las capas mediante un servicio web conforme a los estándares WMS/WCS que lea TileDB al vuelo, de modo que herramientas como QGIS las consuman como capas remotas sin necesidad de exportación previa. Sería la evolución natural de la interoperabilidad estática descrita en el capítulo~\ref{cap:gis}, y encajaría con la infraestructura ya desplegada en el servidor.
 \end{itemize}
 
 Estas extensiones comparten la base técnica ya implementada y podrían desarrollarse de forma incremental, sin modificar la arquitectura central del sistema.

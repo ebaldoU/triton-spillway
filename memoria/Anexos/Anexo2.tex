@@ -4,7 +4,7 @@ Este anexo recoge los resultados experimentales completos que el cuerpo de la me
 
 \section{Filtros de compresión (G1)}\label{g1.-filtros-de-compresion}
 
-Se evaluaron tres familias de filtros: ZSTD puro (niveles 1, 3, 5, 7 y 9), ByteShuffle + ZSTD y BitShuffle + ZSTD (mismos niveles), así como la combinación DeltaFilter + ZSTD. Esta última no fue aplicable porque TileDB no acepta DeltaFilter sobre atributos de tipo float32. La Tabla~\ref{tab:g1-filtros} recoge los resultados completos.
+Se evaluaron tres familias de filtros: ZSTD puro (niveles 1, 3, 5 y 9), ByteShuffle + ZSTD y BitShuffle + ZSTD (niveles 1, 3, 5, 7 y 9), así como la combinación DeltaFilter + ZSTD. Esta última no fue aplicable porque TileDB no acepta DeltaFilter sobre atributos de tipo float32. La Tabla~\ref{tab:g1-filtros} recoge los resultados completos.
 
 
 \begin{table}[ht]
@@ -257,8 +257,8 @@ La Tabla~\ref{tab:comparativa-datos1-datos2} contrasta los factores de aceleraci
 \textbf{Caso} & \textbf{Factor datos1} & \textbf{Factor datos2} & \textbf{Consistencia} \\
 \midrule
 C1. Instante completo & 12,4$\times$ TDB & 9,7$\times$ TDB & $\checkmark$ TDB gana \\
-C2. Ventana 50$\times$50 km & 3,2$\times$ TDB & 3,7$\times$ TDB & $\checkmark$ TDB gana \\
-C3. Serie 1 píxel & 5,6$\times$ TIF & 5,4$\times$ TIF & $\checkmark$ TIF gana \\
+C2. Ventana 50$\times$50 km & 3,1$\times$ TDB & 3,7$\times$ TDB & $\checkmark$ TDB gana \\
+C3. Serie 1 píxel & 5,3$\times$ TIF & 5,4$\times$ TIF & $\checkmark$ TIF gana \\
 C4. Peligrosidad (Russo) & 7,1$\times$ TDB & 9,9$\times$ TDB & $\checkmark$ TDB gana \\
 C5. Estadísticos & 2,4$\times$ TDB & 3,7$\times$ TDB & $\checkmark$ TDB gana \\
 C6. Exportar GeoTIFF & 2,4$\times$ TDB & 2,1$\times$ TDB & $\checkmark$ TDB gana \\

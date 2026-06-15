@@ -206,3 +206,75 @@ Para verificar que el rendimiento escala de forma predecible con el tamaño del 
 \caption{Escalabilidad del tiempo de consulta con el número de celdas húmedas (caché caliente, dominio completo).}
 \label{fig:escalabilidad}
 \end{figure}
+
+\FloatBarrier
+\section{Rendimiento en distintas máquinas}\label{rendimiento-multimaquina}
+
+Los tiempos anteriores se midieron en una única máquina. Para comprobar que las propiedades del sistema no dependen de ese hardware concreto, las mismas consultas se ejecutaron en dos equipos de distinta clase: el portátil de desarrollo y el servidor de producción donde se despliega la aplicación. La Tabla~\ref{tab:specs-maquinas} resume sus características. El portátil tiene una CPU de gama alta con muchos núcleos pero ejecuta el sistema bajo WSL2, que limita la memoria disponible a 16~GB; el servidor es un VPS con menos núcleos, más memoria utilizable y almacenamiento SSD. Las características de cada máquina se registran automáticamente junto a cada medición para garantizar la reproducibilidad.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.0cm}L>{\centering\arraybackslash}p{1.8cm}>{\centering\arraybackslash}p{1.6cm}}
+\toprule
+\textbf{Máquina} & \textbf{CPU} & \textbf{RAM (GB)} & \textbf{Disco} \\
+\midrule
+Portátil (desarrollo) & AMD Ryzen 9 7900X (12 / 24 hilos) & 32 (16 WSL2) & SSD NVMe \\
+Servidor VPS (producción) & 8 vCPU & 23 & SSD \\
+\bottomrule
+\end{tabularx}
+\caption{Características de las máquinas empleadas en la evaluación de rendimiento.}
+\label{tab:specs-maquinas}
+\end{table}
+
+La Tabla~\ref{tab:multimaquina} compara el tiempo de las cinco consultas del \textit{benchmark} de patrones de acceso sobre el mismo escenario (\texttt{datos1}) en ambas máquinas. Como los GeoTIFF originales se eliminan tras la ingesta, la comparación se realiza sobre los tiempos de TileDB, que es lo que mide este \textit{benchmark}; la reducción de almacenamiento frente a GeoTIFF ya se cuantificó en el capítulo~\ref{diseno-del-sistema}.
+
+\begin{table}[ht]
+\centering
+\small
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{6.6cm}>{\centering\arraybackslash}p{2.6cm}>{\centering\arraybackslash}p{2.6cm}}
+\toprule
+\textbf{Consulta} & \textbf{Portátil (s)} & \textbf{VPS (s)} \\
+\midrule
+Escaneo completo, 4 variables (20 pasos)   & 45{,}0 & 61{,}9 \\
+Escaneo completo, 1 variable H (20 pasos)  & 27{,}8 & 37{,}9 \\
+Paso único, 4 variables (dominio completo) & 1{,}73 & 2{,}88 \\
+Ventana 5\,000$\times$5\,000, 4 variables (20 pasos) & 3{,}33 & 4{,}25 \\
+Ventana 5\,000$\times$5\,000, paso único    & 0{,}12 & 0{,}20 \\
+\bottomrule
+\end{tabularx}
+\caption{Tiempo de las consultas del \textit{benchmark} de patrones de acceso en las dos máquinas (escenario \texttt{datos1}).}
+\label{tab:multimaquina}
+\end{table}
+
+El portátil resulta entre 1,3 y 1,7$\times$ más rápido que el VPS, una diferencia atribuible a su CPU más potente, ya que ambas máquinas leen el mismo almacén. Lo relevante es que el \emph{orden relativo} de los patrones de acceso se conserva: el escaneo completo domina el coste, la reducción a una sola variable casi lo divide a la mitad, y la restricción a una ventana espacial abarata las consultas en uno o dos órdenes de magnitud en las dos máquinas. El comportamiento del índice disperso es, por tanto, consistente entre hardware distinto.
+
+\subsection{Sensibilidad a la memoria disponible}\label{sensibilidad-ram}
+
+Una preocupación recurrente durante el desarrollo fue el consumo de memoria con datasets grandes. Para caracterizarlo, el \textit{benchmark} de consultas se repitió en el portátil limitando la memoria del proceso con \texttt{systemd-run} (\textit{cgroups}) a valores decrecientes. La Figura~\ref{fig:curva-ram} muestra el resultado: el tiempo total se mantiene prácticamente constante (entre 84 y 77~s) desde 12~GB hasta 4~GB, y solo por debajo de ese umbral el sistema operativo aborta el proceso por falta de memoria (a 2~GB el \textit{OOM-killer} lo termina en menos de 2~s).
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.82\textwidth, height=6.8cm,
+  xlabel={Memoria disponible para el proceso (GB)},
+  ylabel={Tiempo total de consultas (s)},
+  xlabel style={font=\small}, ylabel style={font=\small},
+  tick label style={font=\small},
+  xmin=1, xmax=13, ymin=0, ymax=95,
+  xtick={2,4,6,8,10,12},
+  ymajorgrids=true, grid style={dashed, gray!35},
+]
+\addplot[mark=*, blue!70!black, line width=1pt]
+  coordinates {(4,77.3) (6,82.7) (8,82.9) (12,84.2)};
+\addplot[only marks, mark=x, mark size=5pt, red!75!black, line width=1.2pt]
+  coordinates {(2,3)};
+\node[red!75!black, font=\scriptsize, anchor=south] at (axis cs:2,5) {OOM};
+\end{axis}
+\end{tikzpicture}
+\caption{Tiempo del \textit{benchmark} de consultas en el portátil al limitar la memoria del proceso. El rendimiento es estable hasta 4~GB; a 2~GB el proceso se aborta por agotamiento de memoria (marcado como OOM).}
+\label{fig:curva-ram}
+\end{figure}
+
+Este resultado confirma una decisión de diseño clave: al acumular los resultados sobre un \textit{grid} de tamaño fijo en lugar de materializar listas (sección~\ref{rendimiento-consultas}), el consumo de memoria queda acotado e independiente del volumen de celdas húmedas, lo que hace que el rendimiento sea robusto frente a la memoria disponible hasta un umbral bajo. Justifica además la recomendación de despliegue de al menos 16~GB de RAM en el servidor, que deja un margen amplio sobre ese umbral.

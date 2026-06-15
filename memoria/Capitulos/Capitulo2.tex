@@ -259,7 +259,7 @@ A partir de los resultados del \textit{benchmark} se generaron los 56 arrays def
 \toprule
 \textbf{Grupo (alternativas comparadas)} & \textbf{Elegida} & \textbf{Motivo principal} \\
 \midrule
-G1. Filtros (ZSTD 1/3/5/9, ByteShuffle+ZSTD, BitShuffle+ZSTD) & ByteShuffle+ ZSTD-9 & ByteShuffle reordena los bytes de los float32 antes de comprimir: $-$16 \% adicional; velocidad de lectura equivalente entre variantes \\
+G1. Filtros (ZSTD 1/3/5/9, ByteShuffle+ZSTD, BitShuffle+ZSTD) & ByteShuffle+ ZSTD-9 & ByteShuffle reordena los bytes de los float32 antes de comprimir: $-$16 \% frente a sin compresión; velocidad de lectura equivalente entre variantes \\
 \addlinespace[3pt]
 G2. Tile espacial (256, 512, 1\,024) & 256$\times$256 & Diferencias despreciables con datos dispersos \\
 \addlinespace[3pt]

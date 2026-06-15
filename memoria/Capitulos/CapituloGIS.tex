@@ -1,0 +1,46 @@
+\chapter{Interoperabilidad con sistemas GIS}\label{cap:gis}
+
+El almacén TileDB y la aplicación web resuelven la consulta analítica de los escenarios, pero un sistema de datos espaciales no debe ser una isla: los técnicos de gestión de inundaciones trabajan habitualmente con herramientas SIG de escritorio, y entre ellas QGIS es el estándar de facto por ser libre y ampliamente adoptado. Para que el trabajo sea útil más allá de la propia aplicación, este capítulo describe cómo se expone el contenido del almacén disperso a esas herramientas mediante formatos abiertos, sin necesidad de que conozcan TileDB.
+
+La estrategia elegida es la exportación a formatos que QGIS lee de forma nativa, acompañada de un estilo y un proyecto listos para abrir. Es una vía deliberadamente sencilla y de bajo riesgo: reutiliza el exportador a GeoTIFF ya existente y no introduce servicios adicionales que mantener.
+
+\section{Exportación a Cloud-Optimized GeoTIFF}\label{gis-cog}
+
+El formato de intercambio es el \textit{Cloud-Optimized GeoTIFF} (COG), una variante del GeoTIFF que organiza la imagen en \textit{tiles} internos y añade vistas reducidas (\textit{overviews}) precalculadas. Esta organización permite a un cliente leer solo la región y el nivel de detalle que necesita en lugar de descargar el fichero entero, exactamente la misma filosofía de lectura parcial que motiva el uso de TileDB en este trabajo (sección~\ref{rendimiento-consultas}). Un COG es además un GeoTIFF corriente: cualquier herramienta que lea GeoTIFF lo abre, lo que maximiza la compatibilidad.
+
+El exportador (\texttt{export\_to\_geotiff.py}) incorpora una opción \texttt{-{}-cog} que, además de escribir los valores de la variable solicitada, marca el fichero como \textit{tiled} con bloques de 512$\times$512 píxeles y construye \textit{overviews} en los factores 2, 4, 8 y 16 por submuestreo promediado. La compresión se mantiene en DEFLATE sin pérdida, coherente con el resto del sistema. La salida conserva la georreferenciación (sistema de coordenadas y transformación afín) leída de los metadatos del array, de modo que la capa aparece en su posición geográfica correcta al cargarla.
+
+\section{Estilo de calado y proyecto reproducible}\label{gis-estilo}
+
+Un raster recién exportado se dibujaría en escala de grises, poco informativa. Para que la lectura sea inmediata se genera junto al COG un fichero de estilo QML que QGIS aplica automáticamente al cargar la capa. El estilo usa una rampa de color por umbrales de calado coherente con la aplicación web: las mismas fronteras derivadas de Russo et al. (2013) que separan el agua somera de las situaciones peligrosas para niños (0,25 m), adultos (0,50 m), crítica (1,00 m) y extrema ($\geq$2,00 m). De este modo, un mapa abierto en QGIS y otro generado por la aplicación se interpretan con el mismo criterio cromático.
+
+Para reducir aún más la fricción se produce también un proyecto de QGIS (\texttt{.qgz}) ya montado, que referencia el COG mediante \emph{ruta relativa} y lo presenta con su estilo. Gracias a la ruta relativa, el paquete (COG, estilo y proyecto) puede copiarse o entregarse como una carpeta autocontenida sin que se rompan los enlaces. Quien lo recibe solo tiene que abrir el proyecto: no necesita saber cargar capas ni configurar simbología.
+
+\section{Flujo de trabajo y resultado}\label{gis-flujo}
+
+Todo el proceso se encapsula en un único comando, \texttt{gis\_demo.py}, que dado un escenario y un instante temporal genera el paquete completo:
+
+\begin{quote}
+\texttt{python gis\_demo.py -{}-dataset datos1 -{}-step 10\_00 -{}-out paquete\_gis}
+\end{quote}
+
+El comando extrae el calado del instante indicado sobre el dominio completo, escribe el COG, deja a su lado el estilo QML y construye el proyecto \texttt{.qgz}. La Figura~\ref{fig:qgis-calado} muestra la capa de calado resultante abierta en QGIS con el estilo aplicado, y la Figura~\ref{fig:qgis-cog} las propiedades del raster, donde se aprecian las pirámides (\textit{overviews}) que lo identifican como COG.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{Imagenes/Captura_QGIS_calado}
+\caption{Capa de calado exportada desde el almacén TileDB y abierta en QGIS con el estilo de peligrosidad aplicado automáticamente.}
+\label{fig:qgis-calado}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\textwidth]{Imagenes/Captura_QGIS_COG}
+\caption{Propiedades del raster en QGIS: organización en \textit{tiles} y \textit{overviews} precalculados característicos de un Cloud-Optimized GeoTIFF.}
+\label{fig:qgis-cog}
+\end{figure}
+
+\FloatBarrier
+\section{Limitaciones y evolución}\label{gis-limitaciones}
+
+La interoperabilidad descrita es una exportación estática: produce una instantánea de una variable y un paso temporal como fichero. Es suficiente para compartir resultados concretos e integrarlos en un análisis SIG, pero no ofrece acceso dinámico al almacén. La evolución natural sería un servicio web de mapas conforme a los estándares OGC (WMS/WCS) que sirviera las capas leyendo TileDB al vuelo, de modo que QGIS las consumiera como capas remotas sin paso de exportación previo. Esa vía, descrita en el trabajo futuro (sección~\ref{conclusiones-y-trabajo-futuro}), encajaría de forma directa con la infraestructura ya desplegada en el servidor.
