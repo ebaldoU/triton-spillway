@@ -1,10 +1,12 @@
 \chapter{Herramientas desarrolladas}\label{herramientas-desarrolladas}
 
-Este capítulo describe las herramientas que, junto con el módulo de ingesta, constituyen el producto final del trabajo: la exportación a GeoTIFF (sección~\ref{exportacion-a-geotiff}), el motor de consultas analíticas (sección~\ref{motor-de-consultas-analiticas}), la comparativa frente a GeoTIFF (sección~\ref{benchmark-vs-geotiff}) y la aplicación web (sección~\ref{aplicacion-web-interactiva}). Las herramientas auxiliares de exploración y diagnóstico desarrolladas como apoyo (visualizador de escritorio y utilidades de consola) se describen en el \hyperref[anexo-e.-guia-de-despliegue]{Anexo~E}.
+Este capítulo describe las herramientas que, junto con el módulo de ingesta, constituyen el producto final del trabajo: la exportación e interoperabilidad con sistemas GIS (sección~\ref{exportacion-a-geotiff}), el motor de consultas analíticas (sección~\ref{motor-de-consultas-analiticas}), la comparativa frente a GeoTIFF (sección~\ref{benchmark-vs-geotiff}) y la aplicación web (sección~\ref{aplicacion-web-interactiva}). Las herramientas auxiliares de exploración y diagnóstico desarrolladas como apoyo (visualizador de escritorio y utilidades de consola) se describen en el \hyperref[anexo-e.-guia-de-despliegue]{Anexo~E}.
 
-\section{Exportación a GeoTIFF}\label{exportacion-a-geotiff}
+\section{Exportación e interoperabilidad con sistemas GIS}\label{exportacion-a-geotiff}
 
 El sistema incluye exportación a GeoTIFF para interoperabilidad con herramientas SIG como QGIS, que no leen el formato TileDB: reconstruye el ráster denso a partir del array sparse (las celdas secas reciben \textit{nodata}), conservando EPSG:32614 y la resolución de 10 m, con posibilidad de restringirse a una subregión. Los metadatos geoespaciales se almacenan en el propio array durante la ingesta, por lo que no es necesario conservar los GeoTIFF originales en el servidor. Está disponible desde la aplicación web (botón de descarga por consulta) y de forma autónoma, concebida como herramienta puntual: exportar el escenario completo produciría $\sim$20 GB, anulando la ventaja de compresión.
+
+Para una integración más directa, el exportador genera además \textit{Cloud-Optimized GeoTIFF} (COG), una variante con \textit{tiles} internos y vistas reducidas que permite la lectura parcial eficiente, junto con un estilo de calado y un proyecto de QGIS listos para abrir. Así, el resultado se visualiza en QGIS con la misma codificación de peligrosidad que la aplicación web y sin configuración manual. El formato, el estilo y el flujo de trabajo completo se detallan en el \hyperref[anexo-g.-interoperabilidad-gis]{Anexo~G}.
 
 \section{Motor de consultas analíticas}\label{motor-de-consultas-analiticas}
 
