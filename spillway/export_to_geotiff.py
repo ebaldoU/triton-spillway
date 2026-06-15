@@ -51,21 +51,29 @@ def sparse_to_dense(rows: np.ndarray, cols: np.ndarray, values: np.ndarray,
     return grid
 
 
-def write_geotiff(path: Path, grid: np.ndarray, transform: rasterio.Affine, crs: str) -> None:
+def write_geotiff(path: Path, grid: np.ndarray, transform: rasterio.Affine,
+                  crs: str, cog: bool = False) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    with rasterio.open(path, "w", driver="GTiff",
-                       height=grid.shape[0], width=grid.shape[1],
-                       count=1, dtype=np.float32, crs=crs,
-                       transform=transform, nodata=NODATA, compress="deflate") as dst:
+    opts = dict(driver="GTiff", height=grid.shape[0], width=grid.shape[1],
+                count=1, dtype=np.float32, crs=crs, transform=transform,
+                nodata=NODATA, compress="deflate")
+    if cog:
+        opts.update(tiled=True, blockxsize=512, blockysize=512)
+    with rasterio.open(path, "w", **opts) as dst:
         dst.write(grid, 1)
-    print(f"  → {path}  ({grid.shape[1]}×{grid.shape[0]} px)")
+        if cog:
+            from rasterio.enums import Resampling
+            dst.build_overviews([2, 4, 8, 16], Resampling.average)
+            dst.update_tags(ns="rio_overview", resampling="average")
+    print(f"  → {path}  ({grid.shape[1]}×{grid.shape[0]} px){' [COG]' if cog else ''}")
 
 
 # ── Exportación ───────────────────────────────────────────────────────
 
 def export_step(tiledb_uri: str, meta: dict, step_idx: int, step_name: str,
                 vars_: list[str], row_min: int, row_max: int,
-                col_min: int, col_max: int, output_dir: Path) -> None:
+                col_min: int, col_max: int, output_dir: Path,
+                cog: bool = False) -> None:
     nrows = row_max - row_min
     ncols = col_max - col_min
     transform = build_transform(meta, row_min, col_min)
@@ -81,7 +89,7 @@ def export_step(tiledb_uri: str, meta: dict, step_idx: int, step_name: str,
     cols = result["col"]
     for var in vars_:
         grid = sparse_to_dense(rows, cols, result[var], row_min, col_min, nrows, ncols)
-        write_geotiff(output_dir / f"{var}_{step_name}.tif", grid, transform, crs)
+        write_geotiff(output_dir / f"{var}_{step_name}.tif", grid, transform, crs, cog=cog)
 
 
 # ── CLI ───────────────────────────────────────────────────────────────
@@ -100,6 +108,8 @@ def main() -> None:
                         help="Subregión espacial (defecto: dominio completo)")
     parser.add_argument("--out", default=str(OUTPUT_DIR),
                         help=f"Directorio de salida (defecto: {OUTPUT_DIR})")
+    parser.add_argument("--cog", action="store_true",
+                        help="Genera Cloud-Optimized GeoTIFF (tiles + overviews)")
     args = parser.parse_args()
 
     tiledb_uri = f"{BASE_URI}/{resolve_dataset(args.dataset)}"
@@ -119,10 +129,10 @@ def main() -> None:
 
     if args.all_steps:
         for idx, name in enumerate(time_steps):
-            export_step(tiledb_uri, meta, idx, name, vars_, row_min, row_max, col_min, col_max, output_dir)
+            export_step(tiledb_uri, meta, idx, name, vars_, row_min, row_max, col_min, col_max, output_dir, cog=args.cog)
     else:
         idx = step_to_index(args.step, time_steps)
-        export_step(tiledb_uri, meta, idx, args.step, vars_, row_min, row_max, col_min, col_max, output_dir)
+        export_step(tiledb_uri, meta, idx, args.step, vars_, row_min, row_max, col_min, col_max, output_dir, cog=args.cog)
 
     print(f"\nListo. Archivos en: {output_dir}")
 
