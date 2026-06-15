@@ -2093,7 +2093,11 @@ def q8_duracion(meta, umbral, bbox, progress=None):
         g = grids.setdefault("cnt", np.zeros((grids["gr"], grids["gc"]), np.int16))
         mask = res["H"] >= umbral
         if mask.any():
-            np.add.at(g, (r_s[mask], c_s[mask]), 1)
+            # Presencia por píxel en este paso: +1 por píxel inundado, no por celda
+            # cruda (con submuestreo varias celdas caen en el mismo píxel del grid).
+            step = np.zeros((grids["gr"], grids["gc"]), np.uint8)
+            step[r_s[mask], c_s[mask]] = 1
+            g += step
     cond = f"H >= {umbral}" if umbral > H_WET else None
     grids, x_ax, y_ax = stream_spatial_multi(meta, ["H"], _proc, bbox, progress, "Q8", cond=cond)
     g = grids.get("cnt", np.zeros((grids["gr"], grids["gc"]), np.int16))
@@ -2223,9 +2227,11 @@ def q10_xia(meta, hora, tipo, bbox):
         np.maximum.at(risk_grid, (r_s, c_s), risk_arr.view(np.int8))
         grid = np.where(risk_grid >= 0, risk_grid.astype(np.float32), np.nan)
         has = risk_grid >= 0
-        n_seg  = int((risk_grid[has] == 0).sum())
-        n_mod  = int((risk_grid[has] == 1).sum())
-        n_high = int((risk_grid[has] == 2).sum())
+        # Conteos sobre las celdas crudas (el grid está submuestreado y, además,
+        # np.maximum.at lo colapsa al riesgo máximo del píxel, sesgando las áreas).
+        n_seg  = int((risk_arr == 0).sum())
+        n_mod  = int((risk_arr == 1).sum())
+        n_high = int((risk_arr == 2).sum())
         return grid, has, {
             "n_seguro": n_seg, "n_moderado": n_mod,  "n_alto": n_high,
             "area_seguro_km2":   n_seg  * cell2,
