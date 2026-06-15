@@ -27,3 +27,18 @@ def test_classify_run_oom_vs_ok():
     assert bench_ram_sweep.classify_run(0)["status"] == "ok"
     assert bench_ram_sweep.classify_run(137)["status"] == "oom"
     assert bench_ram_sweep.classify_run(1)["status"] == "error"
+
+import bench_report
+
+def test_latex_row_from_machine():
+    machine = {
+        "maquina": {"hostname": "portatil", "cpu_cores": 8, "ram_total_mb": 32000,
+                    "disk_type": "SSD"},
+        "runs": [{"tipo": "vs_geotiff", "casos": [
+            {"caso": "C1", "cal_tdb_s": 1.0, "cal_tif_s": 2.0, "factor": 2.0,
+             "ram_tdb_mb": 100.0}]}],
+    }
+    row = bench_report.latex_specs_row(machine)
+    assert "portatil" in row
+    assert "32" in row  # GB de RAM
+    assert row.rstrip().endswith(r"\\")
