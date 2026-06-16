@@ -164,17 +164,17 @@ Dataset: datos1
   GTIFF_DIR:  $TRITON_GTIFF_DIR/datos1
   TILEDB_URI: .../output_10_..._19800728_19800801
 Pasos encontrados: 20
-Resolución: 23040 x 34200 px  |  Franja: 5000 filas
-  [ 1/20] paso 00_00 - 56,862,388 celdas mojadas  (23.4s)
-  [ 2/20] paso 06_00 - 57,340,112 celdas mojadas  (21.8s)
+Resolución: 23.040 x 34.200 px  |  Franja: 5.000 filas
+  [ 1/20] paso 00_00 - 56.862.388 celdas mojadas  (23,4s)
+  [ 2/20] paso 06_00 - 57.340.112 celdas mojadas  (21,8s)
   ...
-  [20/20] paso 114_00 - 74,123,946 celdas mojadas (24.1s)
+  [20/20] paso 114_00 - 74.123.946 celdas mojadas (24,1s)
 
 Array TileDB sparse creado en:    .../output_10_...
 Pasos temporales:                  20
-Total celdas almacenadas:          1,311,695,098
-Umbral aplicado:                   H >= 0.01 m
-Tiempo total:                      454.3s
+Total celdas almacenadas:          1.311.695.098
+Umbral aplicado:                   H >= 0,01 m
+Tiempo total:                      454,3s
 \end{verbatim}
 
 El tiempo total varía entre 7 y 15 minutos según el \textit{dataset} (el tamaño de \texttt{datos29}, el más grande con 21 GB, requiere aproximadamente el doble de tiempo). El número de fragmentos resultante debe ser exactamente 20; puede verificarse con:
