@@ -12,7 +12,7 @@ Conviene matizar que el modelo disperso no es superior en términos absolutos. G
 
 \section{Modelo de escritura: fragmentos y consolidación}\label{h-fragmentos}
 
-TileDB no modifica los datos en el sitio. Cada operación de escritura crea un \textbf{fragmento} (\textit{fragment}) independiente e inmutable, una especie de capa con los datos de esa escritura, y una lectura posterior combina de forma transparente todos los fragmentos para devolver la vista completa del array. Este modelo, inspirado en las estructuras de tipo \textit{log-structured} habituales en los sistemas de almacenamiento modernos \cite{oneil_lsm}, favorece la escritura concurrente y evita bloqueos.
+TileDB no modifica los datos en el sitio. Cada operación de escritura crea un \textbf{fragmento} (\textit{fragment}) independiente e inmutable, una capa con los datos de esa escritura, y una lectura posterior combina de forma transparente todos los fragmentos para devolver la vista completa del array. Este modelo, inspirado en las estructuras de tipo \textit{log-structured} habituales en los sistemas de almacenamiento modernos \cite{oneil_lsm}, favorece la escritura concurrente y evita bloqueos.
 
 El proceso ETL de este trabajo escribe los datos paso a paso, lo que genera \textbf{20 fragmentos}, uno por instante temporal. Esta estructura no es casual: como cada fragmento contiene un único paso, las consultas que necesitan un solo instante leen exactamente un fragmento, y el comportamiento del sistema se mantiene predecible.
 
