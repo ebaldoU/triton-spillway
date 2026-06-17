@@ -35,9 +35,9 @@ Los requisitos que se indican a continuación se han determinado a partir de las
 \begin{itemize}
 \item \textbf{Sistema operativo:} Linux (Ubuntu 22.04+ recomendado) o Windows con WSL2.
 \item \textbf{Python:} 3.10 o superior.
-\item \textbf{RAM:} 16 GB mínimo recomendados para el ETL de un \textit{dataset} completo. El pico durante la ingesta ($\sim$4 GB) proviene de los acumuladores de coordenadas y los buffers de lectura por franjas; para la aplicación web en uso normal, 8 GB son suficientes.
+\item \textbf{RAM:} 16 GB mínimo recomendados para el proceso ETL de un \textit{dataset} completo. El pico durante la ingesta ($\sim$4 GB) proviene de los acumuladores de coordenadas y los buffers de lectura por franjas; para la aplicación web en uso normal, 8 GB son suficientes.
 \item \textbf{Disco:} 17--21 GB por \textit{dataset} procesado en TileDB. Los GeoTIFF fuente ($\sim$235 GB por escenario) solo son necesarios durante la ingesta; después pueden eliminarse del servidor para liberar espacio.
-\item \textbf{CPU:} Sin requisitos especiales; el ETL paraleliza la lectura de los 4 GeoTIFF con \texttt{ThreadPoolExecutor} y no requiere GPU ni instrucciones vectoriales específicas.
+\item \textbf{CPU:} Sin requisitos especiales; el proceso ETL paraleliza la lectura de los 4 GeoTIFF con \texttt{ThreadPoolExecutor} y no requiere GPU ni instrucciones vectoriales específicas.
 \end{itemize}
 
 Con una máquina que cumpla estos requisitos mínimos es posible tanto procesar nuevos escenarios como servir la aplicación web con tiempos de respuesta interactivos para las consultas instantáneas y multi-paso (véase la Tabla~\ref{tab:rendimiento-consultas} para los tiempos medidos en producción).
@@ -66,8 +66,8 @@ El sistema expone tres variables de entorno. La Tabla~\ref{tab:env-vars} describ
 \toprule
 \textbf{Variable} & \textbf{Apunta a\ldots} & \textbf{Debe contener} \\
 \midrule
-\texttt{TRITON\_BASE\_URI} & El directorio \texttt{triton\_results/} & Un subdirectorio por escenario (array TileDB de 17--21 GB cada uno). Los crea el ETL automáticamente. \\
-\texttt{TRITON\_GTIFF\_DIR} & Raíz de los GeoTIFF fuente & Un subdirectorio por escenario nombrado con el alias del \textit{dataset} (\texttt{datos1/}, \texttt{datos2/}, \ldots), con 80 ficheros GeoTIFF cada uno (4 variables $\times$ 20 pasos). Solo necesaria para el ETL. \\
+\texttt{TRITON\_BASE\_URI} & El directorio \texttt{triton\_results/} & Un subdirectorio por escenario (array TileDB de 17--21 GB cada uno). Los crea el proceso ETL automáticamente. \\
+\texttt{TRITON\_GTIFF\_DIR} & Raíz de los GeoTIFF fuente & Un subdirectorio por escenario nombrado con el alias del \textit{dataset} (\texttt{datos1/}, \texttt{datos2/}, \ldots), con 80 ficheros GeoTIFF cada uno (4 variables $\times$ 20 pasos). Solo necesaria para el proceso ETL. \\
 \texttt{TRITON\_OUTPUT\_DIR} & Directorio de exportación & Lo crea el sistema al exportar. Recibe los GeoTIFF generados por la exportación. Opcional. \\
 \bottomrule
 \end{tabularx}
@@ -121,7 +121,7 @@ TFG/
   export/                        <- TRITON_OUTPUT_DIR
 \end{verbatim}
 
-\noindent Los GeoTIFF de cada escenario solo son necesarios durante la ingesta con el ETL. Una vez generado el array TileDB, la carpeta \texttt{datosN/} puede eliminarse del servidor para liberar espacio ($\sim$235 GB por escenario).
+\noindent Los GeoTIFF de cada escenario solo son necesarios durante la ingesta con el proceso ETL. Una vez generado el array TileDB, la carpeta \texttt{datosN/} puede eliminarse del servidor para liberar espacio ($\sim$235 GB por escenario).
 
 \section{Ejecución del ETL}\label{e.5-etl}
 
@@ -184,7 +184,7 @@ Mientras el túnel esté activo, la aplicación es accesible en \texttt{http://l
 Además de los componentes del producto final, el repositorio incluye varias herramientas de apoyo desarrolladas durante el proyecto para inspeccionar el array TileDB sin pasar por la aplicación web:
 
 \begin{itemize}
-\item \textbf{Visualizador de escritorio} (\texttt{visualize\_tiledb.py}): lee el array sparse y proyecta las celdas húmedas sobre pantalla (máximo 4\,096 px) con cuatro modos de visualización (H, V, Q\_mod, MH) y un panel de cursor en tiempo real, evitando materializar el dominio denso ($\sim$3 GB por variable). Construido con Matplotlib, fue esencial para detectar anomalías geoespaciales en el ETL antes de integrar las consultas en la aplicación web.
+\item \textbf{Visualizador de escritorio} (\texttt{visualize\_tiledb.py}): lee el array sparse y proyecta las celdas húmedas sobre pantalla (máximo 4\,096 px) con cuatro modos de visualización (H, V, Q\_mod, MH) y un panel de cursor en tiempo real, evitando materializar el dominio denso ($\sim$3 GB por variable). Construido con Matplotlib, fue esencial para detectar anomalías geoespaciales en el proceso ETL antes de integrar las consultas en la aplicación web.
 \item \textbf{Utilidades de consola} (\texttt{query\_tiledb.py}, \texttt{query\_max\_depth\_tiledb.py}): estadísticos descriptivos por paso temporal y localización de las N celdas de mayor calado con sus coordenadas UTM, útiles para el \textit{profiling} de casos extremos al calibrar los criterios de peligrosidad.
 \item \textbf{Scripts de \textit{benchmark}} (\texttt{benchmark\_vs\_geotiff.py}, \texttt{benchmark\_queries.py}): reproducen los experimentos del \textit{benchmark} de almacenamiento y de la validación con un único argumento (\texttt{-\/-dataset}).
 \end{itemize}

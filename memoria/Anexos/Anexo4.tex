@@ -39,7 +39,7 @@ El proceso ETL (\textit{geotiff\_to\_tiledb\_sparse.py}) transforma los ficheros
 
 \section{Parámetros de configuración}\label{d.1-parametros-de-configuracion}
 
-Los tres parámetros que controlan el comportamiento del ETL se definen como constantes al inicio del script y se describen en la Tabla~\ref{tab:etl-params}.
+Los tres parámetros que controlan el comportamiento del proceso ETL se definen como constantes al inicio del script y se describen en la Tabla~\ref{tab:etl-params}.
 
 \begin{table}[ht]
 \centering
@@ -58,21 +58,21 @@ tile (espacial) & Tamaño del tile en las dimensiones fila y columna del array T
 
 \section{Esquema del array TileDB}\label{d.2-esquema-del-array}
 
-El script llama a \texttt{create\_sparse\_array()} para crear el array con la siguiente configuración:
+El programa llama a \texttt{create\_sparse\_array()} para crear el array con la siguiente configuración:
 
 \begin{itemize}
 \item \textbf{Modo:} disperso (\texttt{sparse=True}), sin duplicados (\texttt{allows\_duplicates=False}).
 \item \textbf{Orden de celdas y tiles:} \texttt{row-major} en ambos casos.
 \item \textbf{Dimensiones:} \texttt{time} (int32, rango 0--19, tile=16), \texttt{row} (int32, rango 0--34\,199, tile=256), \texttt{col} (int32, rango 0--23\,039, tile=256).
 \item \textbf{Atributos:} H, QX, QY, MH (todos float32), con el filtro ByteShuffle + ZSTD-9 aplicado individualmente a cada atributo.
-\item \textbf{Filtro de compresión:} \texttt{tiledb.ByteShuffleFilter()} seguido de \texttt{tiledb.ZstdFilter(level=9)}, elegidos tras el benchmark del \hyperref[anexo-b.-tablas-de-resultados-completas]{Anexo~B} (reducción adicional del 8,9\,\% frente a ZSTD-1 sin penalización en lectura).
+\item \textbf{Filtro de compresión:} \texttt{tiledb.ByteShuffleFilter()} seguido de \texttt{tiledb.ZstdFilter(level=9)}, elegidos tras el \textit{benchmark} del \hyperref[anexo-b.-tablas-de-resultados-completas]{Anexo~B} (reducción adicional del 8,9\,\% frente a ZSTD-1 sin penalización en lectura).
 \end{itemize}
 
-Si el array ya existe en disco, el script lo elimina antes de recrearlo para evitar la acumulación de fragmentos de ejecuciones anteriores.
+Si el array ya existe en disco, el programa lo elimina antes de recrearlo para evitar la acumulación de fragmentos de ejecuciones anteriores.
 
 \section{Bucle de procesamiento por paso temporal}\label{d.3-bucle-por-paso}
 
-El cuerpo principal del ETL itera sobre los 20 pasos temporales en orden cronológico. Para cada paso \texttt{t}:
+El cuerpo principal del proceso ETL itera sobre los 20 pasos temporales en orden cronológico. Para cada paso \texttt{t}:
 
 \begin{enumerate}
 \item \textbf{Apertura de GeoTIFFs.} Se abren simultáneamente los cuatro ficheros correspondientes al paso (\texttt{H\_<step>.tif}, \texttt{QX\_<step>.tif}, \texttt{QY\_<step>.tif}, \texttt{MH\_<step>.tif}) con la biblioteca rasterio.
@@ -83,7 +83,7 @@ El cuerpo principal del ETL itera sobre los 20 pasos temporales en orden cronol�
 
 \item \textbf{Escritura en TileDB.} Una vez procesadas todas las franjas del paso temporal, se realiza \textbf{una única escritura} con el total de celdas húmedas del paso. Esto crea exactamente un fragmento en el array TileDB, lo que preserva la separación temporal que hace eficiente el filtrado por tiempo (véase la sección~\ref{fragmentos-y-consolidacion}).
 
-\item \textbf{Progreso.} El script imprime por pantalla el número de celdas húmedas almacenadas y el tiempo empleado en cada paso.
+\item \textbf{Progreso.} El programa imprime por pantalla el número de celdas húmedas almacenadas y el tiempo empleado en cada paso.
 \end{enumerate}
 
 Este bucle se repite para los 20 pasos temporales del escenario; al completarlo, el array contiene exactamente un fragmento por paso y está listo para la fase de verificación.
@@ -101,7 +101,7 @@ El consumo pico total se sitúa alrededor de los 3--4 GB de RAM, lo que hace rec
 
 \section{Metadatos almacenados}\label{d.5-metadatos}
 
-Tras completar la escritura de los 20 fragmentos, el script almacena en el propio array TileDB los metadatos geoespaciales necesarios para interpretar los datos y para la interoperabilidad con herramientas SIG, recogidos en la Tabla~\ref{tab:etl-metadata}.
+Tras completar la escritura de los 20 fragmentos, el módulo de ingesta almacena en el propio array TileDB los metadatos geoespaciales necesarios para interpretar los datos y para la interoperabilidad con herramientas SIG, recogidos en la Tabla~\ref{tab:etl-metadata}.
 
 \begin{table}[ht]
 \centering
@@ -138,7 +138,7 @@ El proceso de ingesta se compone de tres fases: verificación de requisitos, eje
 \item El entorno Python debe incluir las dependencias: \texttt{tiledb>=0.30}, \texttt{rasterio>=1.3}, \texttt{numpy>=1.24}.
 \end{itemize}
 
-Una vez verificados estos tres requisitos, el script puede ejecutarse con el siguiente comando.
+Una vez verificados estos tres requisitos, el programa puede ejecutarse con el siguiente comando.
 
 \subsection{Comando de ejecución}\label{d.6.2-comando}
 
@@ -157,7 +157,7 @@ TRITON_GTIFF_DIR=/ruta/datos \
 
 \subsection{Salida esperada}\label{d.6.3-salida}
 
-Al finalizar la ingesta el script imprime un resumen similar al siguiente (valores reales de datos1):
+Al finalizar la ingesta el programa imprime un resumen similar al siguiente (valores reales de datos1):
 
 \begin{verbatim}
 Dataset: datos1
