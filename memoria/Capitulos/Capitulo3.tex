@@ -1,24 +1,24 @@
 \chapter{Herramientas desarrolladas}\label{herramientas-desarrolladas}
 
-Este capítulo describe las herramientas que, junto con el módulo de ingesta, constituyen el producto final del trabajo: la exportación e interoperabilidad con sistemas GIS (sección~\ref{exportacion-a-geotiff}), el motor de consultas analíticas (sección~\ref{motor-de-consultas-analiticas}), la comparativa frente a GeoTIFF (sección~\ref{benchmark-vs-geotiff}) y la aplicación web (sección~\ref{aplicacion-web-interactiva}). Las herramientas auxiliares de exploración y diagnóstico desarrolladas como apoyo (visualizador de escritorio y utilidades de consola) se describen en el \hyperref[anexo-e.-guia-de-despliegue]{Anexo~E}.
+Este capítulo describe las herramientas que, junto con el módulo de ingesta, constituyen el producto final del trabajo: la exportación e interoperabilidad con SIG (sección~\ref{exportacion-a-geotiff}), el motor de consultas analíticas (sección~\ref{motor-de-consultas-analiticas}), la comparativa frente a GeoTIFF (sección~\ref{benchmark-vs-geotiff}) y la aplicación web (sección~\ref{aplicacion-web-interactiva}). Las herramientas auxiliares de exploración y diagnóstico desarrolladas como apoyo (visualizador de escritorio y utilidades de consola) se describen en el \hyperref[anexo-e.-guia-de-despliegue]{Anexo~E}.
 
-\section{Exportación e interoperabilidad con sistemas GIS}\label{exportacion-a-geotiff}
+\section{Exportación e interoperabilidad con SIG}\label{exportacion-a-geotiff}
 
 El sistema incluye exportación a GeoTIFF para interoperabilidad con herramientas SIG como QGIS, que no leen el formato TileDB: reconstruye el ráster denso a partir del array sparse (las celdas secas reciben \textit{nodata}), conservando EPSG:32614 y la resolución de 10 m, con posibilidad de restringirse a una subregión. Los metadatos geoespaciales se almacenan en el propio array durante la ingesta, por lo que no es necesario conservar los GeoTIFF originales en el servidor. Está disponible desde la aplicación web (botón de descarga por consulta) y de forma autónoma, concebida como herramienta puntual: exportar el escenario completo produciría $\sim$20 GB, anulando la ventaja de compresión.
 
-Para una integración más directa, el exportador genera además \textit{Cloud-Optimized GeoTIFF} (COG), una variante con \textit{tiles} internos y vistas reducidas que permite la lectura parcial eficiente, junto con un estilo de calado y un proyecto de QGIS listos para abrir. Así, el resultado se visualiza en QGIS con la misma codificación de peligrosidad que la aplicación web y sin configuración manual. El formato, el estilo y el flujo de trabajo completo se detallan en el \hyperref[anexo-g.-interoperabilidad-gis]{Anexo~G}.
+Para una integración más directa, el exportador genera además \textit{Cloud-Optimized GeoTIFF} (COG), una variante con tiles internos y vistas reducidas que permite la lectura parcial eficiente, junto con un estilo de calado y un proyecto de QGIS listos para abrir. Así, el resultado se visualiza en QGIS con la misma codificación de peligrosidad que la aplicación web y sin configuración manual. El formato, el estilo y el flujo de trabajo completo se detallan en el \hyperref[anexo-g.-interoperabilidad-gis]{Anexo~G}.
 
 \section{Motor de consultas analíticas}\label{motor-de-consultas-analiticas}
 
 El motor de consultas analíticas es el núcleo del sistema. Proporciona 24 consultas, implementadas en Python, que operan directamente sobre el array TileDB sparse sin exportación previa ni carga completa en memoria. Cada consulta acepta opcionalmente un parámetro bbox (ventana espacial en EPSG:32614) para restringir el análisis a una subregión.
 
-Las consultas acumuladas por píxel (bloques C y G) emplean un \textit{grid} de tamaño fijo $n_r \times n_c$ que se actualiza paso a paso con \texttt{np.minimum.at}, \texttt{np.maximum.at} o \texttt{np.add.at}, según la consulta. Este enfoque mantiene el consumo de memoria constante ($\sim$750 MB sobre el dominio completo) independientemente del volumen de celdas húmedas procesado, frente a los más de 14 GB que requeriría acumular listas y concatenarlas al final. Las 24 funciones se organizan en ocho bloques (Tabla~\ref{tab:bloques-queries}); el catálogo completo con firma y parámetros se recoge en el \hyperref[anexo-a.-catalogo-completo-de-consultas-analiticas]{Anexo~A}.
+Las consultas acumuladas por píxel (bloques C y G) emplean un \textit{grid} de tamaño fijo $n_r \times n_c$ que se actualiza paso a paso con \texttt{np.minimum.at}, \texttt{np.maximum.at} o \texttt{np.add.at}, según la consulta. Este enfoque mantiene el consumo de memoria constante ($\sim$750 MB sobre el dominio completo) independientemente del volumen de celdas húmedas procesado, frente a los más de 14 GB que requeriría acumular listas y concatenarlas al final. Las 24 consultas se organizan en ocho bloques (Tabla~\ref{tab:bloques-queries}); el catálogo completo con firma y parámetros se recoge en el \hyperref[anexo-a.-catalogo-completo-de-consultas-analiticas]{Anexo~A}.
 
 
 \begin{center}
 \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3.2cm}>{\raggedright\arraybackslash}p{4.5cm}L}
 \toprule
-\textbf{Bloque} & \textbf{Funciones} & \textbf{Descripción} \\
+\textbf{Bloque} & \textbf{Consultas} & \textbf{Descripción} \\
 \midrule
 A. Puntuales & Q1, Q2, Q3 & Calado en punto, serie temporal y velocidad en zona \\
 B. Umbrales & Q4/Q6, Q5 & Mapa de zonas inundadas con umbral predeterminado (Q4) o libre (Q6, variante parametrizada de Q4); evolución temporal de la extensión (Q5) \\
@@ -30,7 +30,7 @@ G. Evacuación & Q16 & Ventana temporal disponible para evacuación por píxel; 
 H. Daños normativos & Q18 & Zona de graves daños según el Real Decreto 9/2008 (Reglamento del Dominio Público Hidráulico): celda afectada si cumple al menos una de $H > 1$ m, $V > 1$ m/s ó $H{\cdot}V > 0{,}5$ m$^2$/s \\
 \bottomrule
 \end{tabularx}
-\captionsetup{hypcap=false}\captionof{table}{Organización de las 24 funciones analíticas por bloque.}
+\captionsetup{hypcap=false}\captionof{table}{Organización de las 24 consultas analíticas por bloque.}
 \label{tab:bloques-queries}
 \end{center}
 

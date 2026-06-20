@@ -33,7 +33,7 @@ El proceso ETL (\textit{geotiff\_to\_tiledb\_sparse.py}) transforma los ficheros
     \draw[arrow] (more) -- node[right, font=\scriptsize] {no} (verify);
     \draw[arrow] (verify) -- (end);
 \end{tikzpicture}
-\caption{Diagrama de flujo del proceso ETL. Por cada escenario se iteran los 20 pasos temporales: se leen los cuatro ficheros GeoTIFF, se filtra por H $\geq$ 0,01 m y se escriben sólo las celdas húmedas en el array TileDB sparse con compresión ByteShuffle+ZSTD-9. Al finalizar se verifica la integridad mediante muestreo aleatorio.}
+\caption{Diagrama de flujo del proceso ETL. Por cada escenario se iteran los 20 pasos temporales: se leen los cuatro ficheros GeoTIFF, se filtra por H $\geq$ 0,01 m y se escriben solo las celdas húmedas en el array TileDB sparse con compresión ByteShuffle+ZSTD-9. Al finalizar se verifica la integridad mediante muestreo aleatorio.}
 \label{fig:etl-flow}
 \end{figure}
 
@@ -111,7 +111,7 @@ Tras completar la escritura de los 20 fragmentos, el módulo de ingesta almacena
 \midrule
 \texttt{crs}        & Sistema de referencia de coordenadas (EPSG:32614, UTM zona 14N) \\
 \texttt{transform}  & Transformación afín GeoTIFF (6 coeficientes) en JSON \\
-\texttt{bounds}     & Extensión espacial en coordenadas del CRS (JSON) \\
+\texttt{bounds}     & Extensión espacial en el sistema de referencia de coordenadas (CRS), en JSON \\
 \texttt{width} / \texttt{height} & Dimensiones del ráster original \\
 \texttt{time\_steps} & Lista de identificadores de paso temporal en JSON \\
 \texttt{source\_dataset} & Alias del \textit{dataset} (p.~ej.\ \texttt{datos1}) \\

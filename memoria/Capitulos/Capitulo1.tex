@@ -194,7 +194,7 @@ La característica de TileDB más relevante para este proyecto es que soporta do
 \item \textbf{Sparse:} Almacena únicamente las celdas no nulas junto con sus coordenadas. Eficiente cuando el dominio es mayoritariamente vacío.
 \end{itemize}
 
-En este proyecto se utiliza el modo disperso porque solo el $\sim$8,3 \% del dominio tiene agua. Almacenar el $\sim$92 \% restante (terreno seco) sería un desperdicio de espacio y tiempo de lectura. La Figura~\ref{fig:dense-vs-sparse} ilustra la diferencia entre ambos modos sobre un dominio de ejemplo de 6$\times$5 celdas: el modo denso almacena las 30 celdas, incluidas las secas con valor cero, mientras que el disperso guarda únicamente las celdas húmedas junto con sus coordenadas (8 de 30 en el ejemplo). En el dominio real, esta diferencia es la que reduce los 235 GB de GeoTIFF a 17,5 GB en TileDB sparse.
+En este proyecto se utiliza el modo disperso porque solo el $\sim$8,3 \% del dominio tiene agua. Almacenar el $\sim$92 \% restante (terreno seco) sería un desperdicio de espacio y tiempo de lectura. La Figura~\ref{fig:dense-vs-sparse} ilustra la diferencia entre ambos modos sobre un dominio de ejemplo de 6$\times$5 celdas: el modo denso almacena las 30 celdas, incluidas las secas con valor cero, mientras que el disperso guarda únicamente las celdas húmedas junto con sus coordenadas (8 de 30 en el ejemplo). En el dominio real, esta diferencia es la que reduce los 235 GB de GeoTIFF a 17,2 GB en TileDB sparse.
 
 \begin{figure}[ht]
 \centering

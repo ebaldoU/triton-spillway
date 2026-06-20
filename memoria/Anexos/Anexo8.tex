@@ -4,7 +4,7 @@ Este anexo amplía el marco tecnológico presentado en el capítulo~\ref{analisi
 
 \section{Modelo de datos: arrays densos y dispersos}\label{h-modelo}
 
-TileDB organiza los datos como \textit{arrays} multidimensionales. Un array se define por dos elementos: las \textbf{dimensiones}, que forman el sistema de coordenadas por el que se indexa (en este trabajo, tiempo, fila y columna), y los \textbf{atributos}, que son los valores almacenados en cada celda (las variables hidráulicas H, QX, QY y MH). La diferencia con una imagen ráster convencional es que las dimensiones no son solo ejes de una matriz: son un índice por el que se puede consultar de forma eficiente.
+TileDB organiza los datos como arrays multidimensionales. Un array se define por dos elementos: las \textbf{dimensiones}, que forman el sistema de coordenadas por el que se indexa (en este trabajo, tiempo, fila y columna), y los \textbf{atributos}, que son los valores almacenados en cada celda (las variables hidráulicas H, QX, QY y MH). La diferencia con una imagen ráster convencional es que las dimensiones no son solo ejes de una matriz: son un índice por el que se puede consultar de forma eficiente.
 
 Un array puede ser \textbf{denso} (se almacenan todas las celdas, haya o no dato) o \textbf{disperso} (\textit{sparse}, solo se almacenan las celdas con dato, guardando explícitamente sus coordenadas). La elección es la decisión central de este trabajo: en una inundación, en cada instante solo alrededor del 8\,\% del dominio está mojado, de modo que un array disperso almacena únicamente esas celdas y evita el coste de las celdas secas, mientras que uno denso las guardaría todas.
 
@@ -28,27 +28,59 @@ Para localizar los tiles relevantes sin recorrer todo el array, TileDB ordena la
 
 \begin{figure}[ht]
 \centering
-\begin{tikzpicture}[font=\small\sffamily, x=0.6cm, y=0.6cm]
-  % Fondo de celdas secas
-  \fill[gray!8] (0,0) rectangle (12,9);
-  % Tiles intersecados por la ventana (resaltados)
+\begin{tikzpicture}[font=\small\sffamily, x=0.8cm, y=0.8cm]
+  % --- Dominio: fondo seco ---
+  \fill[gray!7] (0,0) rectangle (12,9);
+
+  % --- Tiles que interseca la ventana (se leen enteros) ---
   \foreach \tx/\ty in {6/3, 9/3, 6/6, 9/6} {
-    \fill[orange!18] (\tx,\ty) rectangle (\tx+3,\ty+3);
+    \fill[orange!25] (\tx,\ty) rectangle ++(3,3);
   }
-  % Celdas humedas dispersas
-  \foreach \x/\y in {0/1,1/2,2/1,1/7,2/6,3/7,4/5,7/4,8/5,9/4,10/7,9/1,5/2,6/3,8/1,10/2,0/5,7/7,11/5} {
-    \fill[blue!55] (\x,\y) rectangle (\x+1,\y+1);
+
+  % --- Celdas humedas que NO se leen (su tile no toca la ventana) ---
+  \foreach \x/\y in {0/1,1/2,2/1,0/5,1/4,3/3,4/5,1/7,2/6,3/8,4/8,0/8,5/1,5/6,7/1,9/0,10/2,11/1,6/1,8/0} {
+    \fill[blue!22] (\x,\y) rectangle ++(1,1);
   }
-  % Rejilla de tiles
-  \foreach \i in {0,3,...,12} { \draw[gray!55, thick] (\i,0)--(\i,9); }
-  \foreach \j in {0,3,...,9} { \draw[gray!55, thick] (0,\j)--(12,\j); }
-  % Ventana de consulta
+
+  % --- Celdas humedas que SI se leen (dentro de los tiles naranjas) ---
+  \foreach \x/\y in {7/4,8/5,6/3,10/4,9/5,7/7,8/6,10/8,11/6,9/7,6/5,11/4} {
+    \fill[blue!72] (\x,\y) rectangle ++(1,1);
+  }
+
+  % --- Rejilla fina de celdas ---
+  \draw[gray!18, very thin] (0,0) grid (12,9);
+
+  % --- Rejilla gruesa de tiles (3x3 celdas) ---
+  \foreach \i in {0,3,...,12} { \draw[gray!60, thick] (\i,0)--(\i,9); }
+  \foreach \j in {0,3,...,9}  { \draw[gray!60, thick] (0,\j)--(12,\j); }
+
+  % --- Ventana de consulta (no alineada con los tiles, a proposito) ---
   \draw[red!75!black, very thick, dashed] (6.4,3.4) rectangle (11.4,8.4);
-  \node[red!75!black, font=\scriptsize\bfseries, anchor=south east] at (11.4,8.5) {ventana de consulta};
-  % Anotacion tiles leidos
-  \node[orange!55!black, font=\scriptsize, anchor=north] at (9,2.8) {tiles leídos};
+  \node[red!75!black, font=\scriptsize\bfseries, anchor=south west]
+        at (6.45,8.55) {ventana de consulta};
+
+  % --- Etiqueta: un tile ---
+  \draw[gray!75, -{Latex[length=1.6mm]}] (1.5,-0.55) -- (2.4,1.4);
+  \node[gray!55!black, font=\scriptsize, anchor=north] at (1.5,-0.55)
+        {1 tile = 256$\times$256 celdas};
+
+  % ===================== LEYENDA =====================
+  \begin{scope}[shift={(0,-2.2)}]
+    % columna 1
+    \fill[gray!7]    (0,-0.0) rectangle ++(0.7,0.7); \draw[gray!60] (0,-0.0) rectangle ++(0.7,0.7);
+    \node[anchor=west, font=\scriptsize] at (0.85,0.35) {dominio seco (no se lee)};
+    \fill[orange!25] (0,-1.0) rectangle ++(0.7,0.7); \draw[gray!60] (0,-1.0) rectangle ++(0.7,0.7);
+    \node[anchor=west, font=\scriptsize] at (0.85,-0.65) {tile leído y descomprimido};
+    \draw[red!75!black, very thick, dashed] (0,-2.0) rectangle ++(0.7,0.7);
+    \node[anchor=west, font=\scriptsize] at (0.85,-1.65) {ventana de consulta};
+    % columna 2
+    \fill[blue!72] (6.6,-0.0) rectangle ++(0.7,0.7); \draw[gray!50] (6.6,-0.0) rectangle ++(0.7,0.7);
+    \node[anchor=west, font=\scriptsize] at (7.45,0.35) {celda húmeda leída};
+    \fill[blue!22] (6.6,-1.0) rectangle ++(0.7,0.7); \draw[gray!50] (6.6,-1.0) rectangle ++(0.7,0.7);
+    \node[anchor=west, font=\scriptsize] at (7.45,-0.65) {celda húmeda no leída};
+  \end{scope}
 \end{tikzpicture}
-\caption{Lectura por ventana sobre un array disperso. El índice localiza los tiles que intersecan la región consultada (en naranja) y TileDB descomprime únicamente esos tiles, en lugar de recorrer todo el dominio; las celdas húmedas (en azul) situadas fuera de la ventana no se leen.}
+\caption{Lectura por ventana (\textit{windowed read}) sobre un array disperso. Ante una consulta acotada a una región (recuadro rojo discontinuo), el índice de TileDB identifica los \textbf{tiles} que la intersecan (en naranja) y descomprime únicamente esos, en lugar de recorrer todo el dominio. Solo se leen las celdas húmedas contenidas en esos tiles (azul intenso); el resto de celdas húmedas (azul claro) y la inmensa mayoría de celdas secas permanecen en disco sin descomprimirse. La ventana no coincide con los límites de los tiles a propósito: como el tile es la unidad mínima de lectura, basta con que la ventana toque parte de un tile para leerlo entero.}
 \label{fig:windowed-read}
 \end{figure}
 

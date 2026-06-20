@@ -248,10 +248,10 @@ C6. Exportar ventana    & \textbf{0,380}  & 0,799          & \textbf{2,1}$\times
 \label{tab:bench-datos2}
 \end{center}
 
+\clearpage
 La Tabla~\ref{tab:comparativa-datos1-datos2} contrasta los factores de aceleración obtenidos en ambos \textit{datasets}: el patrón de victorias es idéntico en los seis casos, lo que confirma que las ventajas de TileDB son inherentes al modelo sparse y no específicas de un conjunto de datos concreto.
 
-\begin{table}[ht]
-\centering
+\begin{center}
 \begin{tabularx}{\textwidth}{p{5cm}XXX}
 \toprule
 \textbf{Caso} & \textbf{Factor datos1} & \textbf{Factor datos2} & \textbf{Consistencia} \\
@@ -264,17 +264,15 @@ C5. Estadísticos & 2,4$\times$ TDB & 3,7$\times$ TDB & $\checkmark$ TDB gana \\
 C6. Exportar GeoTIFF & 2,4$\times$ TDB & 2,1$\times$ TDB & $\checkmark$ TDB gana \\
 \bottomrule
 \end{tabularx}
-\caption{Comparativa del factor de aceleración TileDB vs GeoTIFF entre los \textit{datasets} datos1 y datos2.}
+\captionsetup{hypcap=false}\captionof{table}{Comparativa del factor de aceleración TileDB vs GeoTIFF entre los \textit{datasets} datos1 y datos2.}
 \label{tab:comparativa-datos1-datos2}
-\end{table}
+\end{center}
 
-\clearpage
 \section{Comparativa multi-escenario}\label{comparativa-multiescenario}
 
 La Tabla~\ref{tab:metricas-datasets} recoge las métricas principales de los cuatro \textit{datasets} de referencia. datos1, datos2 y datos4 representan escenarios de inundación de magnitud similar (extensión máxima 7\,433--7\,718 km\textsuperscript{2}, $\sim$1\,300 M celdas húmedas), mientras que datos3 corresponde a un escenario significativamente más seco (extensión máxima 2\,838 km\textsuperscript{2}, 498 M celdas), con el pico de inundación en la hora 6 frente a las horas 90--96 del resto.
 
-\begin{table}[ht]
-\centering
+\begin{center}
 \begin{tabularx}{\textwidth}{p{6cm}XXXX}
 \toprule
 \textbf{Métrica} & \textbf{datos1} & \textbf{datos2} & \textbf{datos3} & \textbf{datos4} \\
@@ -288,9 +286,9 @@ Peligrosidad adultos (Russo) h60 (km\textsuperscript{2}) & 2\,311 & 2\,294 & 717
 Volumen máximo (Mm\textsuperscript{3}) & 4\,462,8 & 4\,325,3 & 1\,327,9 & 4\,462,8 \\
 \bottomrule
 \end{tabularx}
-\caption{Métricas globales por \textit{dataset} (datos1--datos4).}
+\captionsetup{hypcap=false}\captionof{table}{Métricas globales por \textit{dataset} (datos1--datos4).}
 \label{tab:metricas-datasets}
-\end{table}
+\end{center}
 
 \clearpage
 \section{Rendimiento en distintas máquinas}\label{anexo:rendimiento-extra}
@@ -331,6 +329,8 @@ Ventana 5\,000$\times$5\,000, paso único    & 0{,}12 & 0{,}20 \\
 \caption{Tiempo de las consultas del \textit{benchmark} de patrones de acceso en las dos máquinas (escenario \texttt{datos1}).}
 \label{tab:multimaquina}
 \end{table}
+
+Un último experimento caracteriza la sensibilidad del sistema a la memoria disponible, un aspecto crítico para el despliegue en servidores modestos. Para ello se repitió el \textit{benchmark} de consultas multi-paso sobre el dominio completo (escenario \texttt{datos1}) limitando progresivamente la memoria del proceso, desde 12 hasta 2~GB. La Figura~\ref{fig:curva-ram} muestra el tiempo total obtenido en cada nivel: entre 12 y 4~GB el rendimiento apenas varía (menos de un 9~\%), lo que confirma que el \textit{grid} acumulador de tamaño fijo mantiene el consumo de memoria acotado con independencia del número de celdas recorridas. Por debajo de ese umbral el comportamiento cambia de forma abrupta: con solo 2~GB el proceso agota la memoria y se aborta (OOM) antes de terminar la consulta, lo que sitúa en torno a 4~GB el mínimo de memoria para ejecutar las consultas multi-paso.
 
 \begin{figure}[ht]
 \centering

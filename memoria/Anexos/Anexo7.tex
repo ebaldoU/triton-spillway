@@ -1,14 +1,14 @@
-\chapter{Interoperabilidad con sistemas GIS}\label{anexo-g.-interoperabilidad-gis}
+\chapter{Interoperabilidad con SIG}\label{anexo-g.-interoperabilidad-gis}
 
 Este anexo detalla la interoperabilidad con herramientas SIG resumida en la sección~\ref{exportacion-a-geotiff}: el formato de exportación, el estilo de calado y el flujo de trabajo para abrir los resultados en QGIS.
 
 \section{Cloud-Optimized GeoTIFF}\label{g-cog}
 
-El formato de intercambio es el \textit{Cloud-Optimized GeoTIFF} (COG), un GeoTIFF que organiza la imagen en \textit{tiles} internos y añade vistas reducidas (\textit{overviews}) precalculadas. Esta organización permite leer solo la región y el nivel de detalle necesarios en lugar del fichero entero, la misma filosofía de lectura parcial que motiva el uso de TileDB (sección~\ref{rendimiento-consultas}). Al ser un GeoTIFF corriente, cualquier herramienta que lea GeoTIFF lo abre. El exportador lo genera con la opción \texttt{-{}-cog}, marcando el fichero como \textit{tiled} con bloques de 512$\times$512 píxeles, construyendo \textit{overviews} en los factores 2, 4, 8 y 16 por submuestreo promediado y manteniendo la compresión DEFLATE sin pérdida.
+El formato de intercambio es el \textit{Cloud-Optimized GeoTIFF} (COG), un GeoTIFF que organiza la imagen en tiles internos y añade vistas reducidas (\textit{overviews}) precalculadas. Esta organización permite leer solo la región y el nivel de detalle necesarios en lugar del fichero entero, la misma filosofía de lectura parcial que motiva el uso de TileDB (sección~\ref{rendimiento-consultas}). Al ser un GeoTIFF corriente, cualquier herramienta que lea GeoTIFF lo abre. El exportador lo genera con la opción \texttt{-{}-cog}, marcando el fichero como \textit{tiled} con bloques de 512$\times$512 píxeles, construyendo \textit{overviews} en los factores 2, 4, 8 y 16 por submuestreo promediado y manteniendo la compresión DEFLATE sin pérdida.
 
 \section{Estilo de calado}\label{g-qml}
 
-Junto al COG se genera un fichero de estilo QML que QGIS aplica automáticamente al cargar la capa. Usa una rampa de color por umbrales de calado coherente con la aplicación web, con las fronteras derivadas de Russo et al.\ \cite{russo2013} recogidas en la Tabla~\ref{tab:qml-stops}. De este modo, un mapa abierto en QGIS y otro generado por la aplicación se interpretan con el mismo criterio cromático.
+Junto al COG se genera un fichero de estilo QML (el formato de estilos de QGIS) que QGIS aplica automáticamente al cargar la capa. Usa una rampa de color por umbrales de calado coherente con la aplicación web, con las fronteras derivadas de Russo et al.\ \cite{russo2013} recogidas en la Tabla~\ref{tab:qml-stops}. De este modo, un mapa abierto en QGIS y otro generado por la aplicación se interpretan con el mismo criterio cromático.
 
 \begin{table}[ht]
 \centering

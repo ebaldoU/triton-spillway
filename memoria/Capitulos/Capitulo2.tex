@@ -9,7 +9,7 @@ El sistema está compuesto por cuatro capas articuladas en torno al array TileDB
 \begin{enumerate}
 \item \textbf{Ingesta (ETL):} El módulo de ingesta lee los ficheros GeoTIFF generados por Triton, aplica el filtro de celdas húmedas (H $\geq$ 0,01 m) y escribe los datos en TileDB con filtro ByteShuffle+ZSTD-9. La lectura se realiza por franjas de 5\,000 filas para limitar el uso de memoria.
 \item \textbf{Almacenamiento:} Array TileDB sparse con dimensiones (time, row, col) y atributos (H, QX, QY, MH). Un fragmento por paso temporal facilita el filtrado temporal eficiente.
-\item \textbf{Análisis:} El motor de consultas proporciona 24 funciones que operan directamente sobre el array TileDB sin exportación previa.
+\item \textbf{Análisis:} El motor de consultas proporciona 24 consultas que operan directamente sobre el array TileDB sin exportación previa.
 \item \textbf{Visualización y exportación:} Un visualizador interactivo, un exportador a GeoTIFF para interoperabilidad SIG y la aplicación web Streamlit con mapas interactivos, comparativa multi-escenario y panel de ayuda.
 \end{enumerate}
 
@@ -29,7 +29,7 @@ El sistema está compuesto por cuatro capas articuladas en torno al array TileDB
     \node[process, right=14mm of geo] (etl) {ETL\\\scriptsize filtrado y compresión};
     \node[storage, right=14mm of etl] (tdb) {TileDB sparse\\\scriptsize solo celdas húmedas};
 
-    \node[consumer, below=14mm of tdb, xshift=-32mm] (queries) {Motor de consultas\\\scriptsize 24 funciones analíticas};
+    \node[consumer, below=14mm of tdb, xshift=-32mm] (queries) {Motor de consultas\\\scriptsize 24 consultas analíticas};
     \node[consumer, below=14mm of tdb, xshift=4mm] (viz) {Visualizador};
     \node[consumer, below=14mm of tdb, xshift=40mm] (exp) {Exportador GeoTIFF};
 
@@ -70,7 +70,7 @@ Atributo MH & float32 & Profundidad máxima histórica \\
 \label{tab:array-schema}
 \end{table}
 
-La Figura~\ref{fig:tiledb-estructura} ilustra cómo TileDB organiza físicamente estos datos \cite{tiledb_indexing, tiledb_datalayout}: 20 fragmentos independientes (uno por paso temporal) almacenan únicamente las coordenadas y valores de las celdas húmedas, con los cuatro atributos codificados juntos mediante ByteShuffle+ZSTD-9. Cada celda húmeda guarda sus tres coordenadas enteras y los cuatro valores float32; las celdas secas ($\sim$92 \% del dominio) no se almacenan, y esta combinación es la que reduce los $\sim$235 GB originales a $\sim$17,5 GB.
+La Figura~\ref{fig:tiledb-estructura} ilustra cómo TileDB organiza físicamente estos datos \cite{tiledb_indexing, tiledb_datalayout}: 20 fragmentos independientes (uno por paso temporal) almacenan únicamente las coordenadas y valores de las celdas húmedas, con los cuatro atributos codificados juntos mediante ByteShuffle+ZSTD-9. Cada celda húmeda guarda sus tres coordenadas enteras y los cuatro valores float32; las celdas secas ($\sim$92 \% del dominio) no se almacenan, y esta combinación es la que reduce los $\sim$235 GB originales a $\sim$17,2 GB.
 
 \begin{figure}[ht]
 \centering
@@ -213,7 +213,7 @@ La Figura~\ref{fig:tiledb-estructura} ilustra cómo TileDB organiza físicamente
   \node[orange!55!black, font=\tiny, align=center]
     at (\BX+\BW/2,\BY+0.43) {ByteShuffle + ZSTD-9};
   \node[gray!55, font=\tiny, align=center]
-    at (\BX+\BW/2,\BY+0.18) {$\sim$17,5 GB por escenario};
+    at (\BX+\BW/2,\BY+0.18) {$\sim$17,2 GB por escenario};
 
   %% ── Flecha array → cuadro ────────────────────────────────────────
   \draw[-{latex}, blue!35!black, thick, dashed]
@@ -238,7 +238,7 @@ La aplicación web descubre automáticamente los \textit{datasets} disponibles i
 
 \section{Elección de la configuración de almacenamiento}\label{benchmark-de-almacenamiento}
 
-La última decisión de diseño es la configuración de almacenamiento del array, determinada mediante un \textit{benchmark} sistemático ejecutado sobre los datos reales del dominio de simulación. Se evaluaron cinco grupos de parámetros de forma independiente (G1--G5: filtros de compresión, tamaño de \textit{tile}, tipo de dato, organización temporal y estructura de atributos) y se adoptó la configuración definitiva que se aplica a los 56 conjuntos de datos procesados.
+La última decisión de diseño es la configuración de almacenamiento del array, determinada mediante un \textit{benchmark} sistemático ejecutado sobre los datos reales del dominio de simulación. Se evaluaron cinco grupos de parámetros de forma independiente (G1--G5: filtros de compresión, tamaño de tile, tipo de dato, organización temporal y estructura de atributos) y se adoptó la configuración definitiva que se aplica a los 56 conjuntos de datos procesados.
 
 El ahorro de espacio proviene principalmente del almacenamiento disperso (solo el $\sim$8,3 \% del dominio está inundado), no de la compresión en sí; las métricas del array con la configuración inicial (ZSTD-1) se recogen en la Tabla~\ref{tab:metricas-tdb} del \hyperref[anexo-b.-tablas-de-resultados-completas]{Anexo~B}. Para cuantificar el impacto de la compresión se diseñó un \textit{benchmark} con cinco dimensiones de experimento, ejecutado sobre los datos reales del paso temporal 16\_00 (64,3 millones de celdas húmedas, en torno al $\sim$8,3 \% de los 787 millones del paso).
 
