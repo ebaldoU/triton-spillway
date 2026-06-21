@@ -1,0 +1,19 @@
+\begin{center}
+{\Large \bfseries Optimization of storage for flood simulation data using sparse structures}
+
+\vspace{1cm}
+{\Large \bfseries ABSTRACT}
+
+\vspace{1.5cm}
+\end{center}
+
+
+River floods are among the most costly natural disasters, and their study increasingly relies on high-resolution hydraulic simulations that predict how water spreads across the terrain. These simulations generate such large volumes of data that their subsequent analysis becomes a problem in itself: answering questions such as when water reaches a given area or which streets become dangerous for people requires scanning hundreds of gigabytes of raster files, with waits of minutes or hours. However, at any instant of a flood the vast majority of the territory remains dry, and storing all those empty cells is a waste that this work turns into an opportunity.
+
+With this motivation, this work designs and implements an efficient storage and analysis system for high-resolution hydraulic simulations. Simulations from the Triton simulator generate up to 235 GB of GeoTIFF data per scenario; the developed ETL pipeline transforms them into a TileDB sparse array with a ByteShuffle+ZSTD-9 filter, reducing them to 17.2 GB (a 92.7\,\% reduction, 13.7$\times$ ratio) by storing only the wet cells, which account for just $\sim$8.3\,\% of the domain.
+
+The system includes an engine of 24 analytical queries organized in eight blocks, ranging from basic water-depth and velocity queries to indicators of hydrodynamic instability, the severe-damage zone (Spanish Royal Decree 9/2008) and the available evacuation time. A benchmark against GeoTIFF shows advantages of up to 12.4$\times$ in five of six access patterns, consistent across four datasets and two different machines. Functional validation confirms the accuracy of the queries against the original data.
+
+The system has been applied to 56 simulations over a basin of $\sim$78,000 km$^2$ in the United States, and is generalizable to any equivalent 2D hydraulic simulator. The interface is a Streamlit web application with interactive maps, multi-scenario comparison and export to standard GIS formats (GeoTIFF and QGIS), deployed in production.
+
+
