@@ -36,7 +36,7 @@ Delta + ZSTD & --- & --- & \multicolumn{1}{l}{ERROR (no acepta float32)} & --- \
 \end{table}
 
 
-El hallazgo más relevante es que ZSTD solo reduce el tamaño apenas un 8 \% respecto a sin compresión (de 1\,029 MB a 943 MB), porque los valores float32 de la simulación no presentan redundancia de bytes suficiente. Al anteponer ByteShuffle o BitShuffle, que reordenan los bytes de cada float para agrupar exponentes y mantisas similares, ZSTD alcanza un 16 \% de reducción adicional ($\sim$860--872 MB). ByteShuffle + ZSTD-1 es la excepción: con nivel 1 ZSTD no explota el reordenamiento y el \textit{overhead} de descompresión supera el ahorro de I/O, resultando en lecturas lentas e inestables (mediana 0,195 s, $\sigma$ = 0,084 s).
+El hallazgo más relevante es que ZSTD solo reduce el tamaño apenas un 8\,\% respecto a sin compresión (de 1\,029 MB a 943 MB), porque los valores float32 de la simulación no presentan redundancia de bytes suficiente. Al anteponer ByteShuffle o BitShuffle, que reordenan los bytes de cada float para agrupar exponentes y mantisas similares, ZSTD alcanza un 16\,\% de reducción adicional ($\sim$860--872 MB). ByteShuffle + ZSTD-1 es la excepción: con nivel 1 ZSTD no explota el reordenamiento y el \textit{overhead} de descompresión supera el ahorro de I/O, resultando en lecturas lentas e inestables (mediana 0,195 s, $\sigma$ = 0,084 s).
 
 Un dato llamativo es que ZSTD-1 (configuración inicial) resulta más lento en lectura que sin compresión (0,158 s frente a 0,161 s), ya que no comprime lo suficiente para reducir el I/O pero sí introduce \textit{overhead} de CPU. ZSTD-5 en adelante recupera ese tiempo gracias a la mayor compresión.
 
@@ -86,7 +86,7 @@ float16 & 2 & \multicolumn{2}{l}{No soportado por TileDB} \\
 \end{table}
 
 
-float16 no está soportado por la versión de TileDB utilizada. float64 ocupa solo un 9,4 \% más que float32 gracias a la compresión, pero es un 29 \% más lento en lectura. float32 ofrece precisión más que suficiente para los valores de H, QX, QY y MH en simulación hidráulica (error de cuantización $<0{,}001$ m).
+float16 no está soportado por la versión de TileDB utilizada. float64 ocupa solo un 9,4\,\% más que float32 gracias a la compresión, pero es un 29\,\% más lento en lectura. float32 ofrece precisión más que suficiente para los valores de H, QX, QY y MH en simulación hidráulica (error de cuantización $<0{,}001$ m).
 
 \section{Estructura temporal (G4)}\label{g4.-estructura-temporal}
 
@@ -109,7 +109,7 @@ Se compararon tres organizaciones para almacenar múltiples pasos temporales, us
 \end{table}
 
 
-El array 3D con tile\_t=1 ocupa un 19 \% menos que con tile\_t=4 (4\,109 MB frente a 5\,054 MB). La razón es que con tile\_t=1 cada tile solo contiene celdas de un paso temporal, cuyos valores hidráulicos presentan alta correlación espacial; ZSTD los comprime eficazmente. Con tile\_t=4 se mezclan valores de cuatro pasos con distribuciones distintas, reduciendo la compresibilidad.
+El array 3D con tile\_t=1 ocupa un 19\,\% menos que con tile\_t=4 (4\,109 MB frente a 5\,054 MB). La razón es que con tile\_t=1 cada tile solo contiene celdas de un paso temporal, cuyos valores hidráulicos presentan alta correlación espacial; ZSTD los comprime eficazmente. Con tile\_t=4 se mezclan valores de cuatro pasos con distribuciones distintas, reduciendo la compresibilidad.
 
 La decisión fue adoptar el array 3D con 1 fragmento por paso temporal. El código de producción define el tile de la dimensión temporal como \texttt{min(n\_times, 16) = 16}; sin embargo, al escribirse un fragmento independiente por cada paso (con un único paso por fragmento), las celdas de distintos pasos no comparten tiles en el mismo fragmento, obteniendo el mismo comportamiento práctico que con tile\_t=1.
 
@@ -133,11 +133,11 @@ Arrays independientes: un array por variable & 1\,086 & 0,312 \\
 \end{table}
 
 
-Los arrays independientes ocupan un 14,9 \% más porque almacenan las coordenadas (time, row, col) cuatro veces. En lectura son 2,2$\times$ más lentos al requerir cuatro consultas separadas. La organización multi-atributo es superior en todos los criterios.
+Los arrays independientes ocupan un 14,9\,\% más porque almacenan las coordenadas (time, row, col) cuatro veces. En lectura son 2,2$\times$ más lentos al requerir cuatro consultas separadas. La organización multi-atributo es superior en todos los criterios.
 
 \section{Evolución horaria por dataset}\label{evolucion-horaria-por-dataset}
 
-La Tabla~\ref{tab:evolucion-horaria} recoge la evolución horaria de la extensión inundada (km\textsuperscript{2}) y el área de peligro para adultos según los criterios de Russo et al. \cite{russo2013} para los cuatro \textit{datasets} de referencia.
+La Tabla~\ref{tab:evolucion-horaria} recoge la evolución horaria de la extensión inundada (km\textsuperscript{2}) y el área de peligro para adultos según los criterios de Russo et al.\ \cite{russo2013} para los cuatro \textit{datasets} de referencia.
 
 \begin{table}[ht]
 \centering
@@ -195,11 +195,11 @@ Resolución ráster & 34\,200 $\times$ 23\,040 px \\
 Variables & H, QX, QY, MH \\
 Celdas totales del dominio & 15\,759\,360\,000 \\
 Celdas almacenadas en TileDB & 1\,311\,695\,098 \\
-\% del dominio con agua & 8,3 \% \\
+\% del dominio con agua & 8,3\,\% \\
 \addlinespace[6pt]
 Ficheros GeoTIFF originales & 235 GB \\
 TileDB sparse (ZSTD-1) & 19 GB \\
-Espacio ahorrado & 216 GB (91,9 \%) \\
+Espacio ahorrado & 216 GB (91,9\,\%) \\
 Ratio de compresión & 12,4$\times$ \\
 \addlinespace[6pt]
 Bytes/celda sin comprimir (4 vars $\times$ float32) & 16 B \\

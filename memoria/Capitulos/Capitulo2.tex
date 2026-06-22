@@ -70,7 +70,7 @@ Atributo MH & float32 & Profundidad máxima histórica \\
 \label{tab:array-schema}
 \end{table}
 
-La Figura~\ref{fig:tiledb-estructura} ilustra cómo TileDB organiza físicamente estos datos \cite{tiledb_indexing, tiledb_datalayout}: 20 fragmentos independientes (uno por paso temporal) almacenan únicamente las coordenadas y valores de las celdas húmedas, con los cuatro atributos codificados juntos mediante ByteShuffle+ZSTD-9. Cada celda húmeda guarda sus tres coordenadas enteras y los cuatro valores float32; las celdas secas ($\sim$92 \% del dominio) no se almacenan, y esta combinación es la que reduce los $\sim$235 GB originales a $\sim$17,2 GB.
+La Figura~\ref{fig:tiledb-estructura} ilustra cómo TileDB organiza físicamente estos datos \cite{tiledb_indexing, tiledb_datalayout}: 20 fragmentos independientes (uno por paso temporal) almacenan únicamente las coordenadas y valores de las celdas húmedas, con los cuatro atributos codificados juntos mediante ByteShuffle+ZSTD-9. Cada celda húmeda guarda sus tres coordenadas enteras y los cuatro valores float32; las celdas secas ($\sim$92\,\% del dominio) no se almacenan, y esta combinación es la que reduce los $\sim$235 GB originales a $\sim$17,2 GB.
 
 \begin{figure}[ht]
 \centering
@@ -240,7 +240,7 @@ La aplicación web descubre automáticamente los \textit{datasets} disponibles i
 
 La última decisión de diseño es la configuración de almacenamiento del array, determinada mediante un \textit{benchmark} sistemático ejecutado sobre los datos reales del dominio de simulación. Se evaluaron cinco grupos de parámetros de forma independiente (G1--G5: filtros de compresión, tamaño de tile, tipo de dato, organización temporal y estructura de atributos) y se adoptó la configuración definitiva que se aplica a los 56 conjuntos de datos procesados.
 
-El ahorro de espacio proviene principalmente del almacenamiento disperso (solo el $\sim$8,3 \% del dominio está inundado), no de la compresión en sí; las métricas del array con la configuración inicial (ZSTD-1) se recogen en la Tabla~\ref{tab:metricas-tdb} del \hyperref[anexo-b.-tablas-de-resultados-completas]{Anexo~B}. Para cuantificar el impacto de la compresión se diseñó un \textit{benchmark} con cinco dimensiones de experimento, ejecutado sobre los datos reales del paso temporal 16\_00 (64,3 millones de celdas húmedas, en torno al $\sim$8,3 \% de los 787 millones del paso).
+El ahorro de espacio proviene principalmente del almacenamiento disperso (solo el $\sim$8,3\,\% del dominio está inundado), no de la compresión en sí; las métricas del array con la configuración inicial (ZSTD-1) se recogen en la Tabla~\ref{tab:metricas-tdb} del \hyperref[anexo-b.-tablas-de-resultados-completas]{Anexo~B}. Para cuantificar el impacto de la compresión se diseñó un \textit{benchmark} con cinco dimensiones de experimento, ejecutado sobre los datos reales del paso temporal 16\_00 (64,3 millones de celdas húmedas, en torno al $\sim$8,3\,\% de los 787 millones del paso).
 
 \subsection{Entorno y metodología experimental}\label{entorno-y-metodologia-experimental}\label{hardware-y-software}
 
@@ -259,15 +259,15 @@ A partir de los resultados del \textit{benchmark} se generaron los 56 arrays def
 \toprule
 \textbf{Grupo (alternativas comparadas)} & \textbf{Elegida} & \textbf{Motivo principal} \\
 \midrule
-G1. Filtros (ZSTD 1/3/5/9, ByteShuffle+ZSTD, BitShuffle+ZSTD) & ByteShuffle+ ZSTD-9 & ByteShuffle reordena los bytes de los float32 antes de comprimir: $-$16 \% frente a sin compresión; velocidad de lectura equivalente entre variantes \\
+G1. Filtros (ZSTD 1/3/5/9, ByteShuffle+ZSTD, BitShuffle+ZSTD) & ByteShuffle+ ZSTD-9 & ByteShuffle reordena los bytes de los float32 antes de comprimir: $-$16\,\% frente a sin compresión; velocidad de lectura equivalente entre variantes \\
 \addlinespace[3pt]
 G2. Tile espacial (256, 512, 1\,024) & 256$\times$256 & Diferencias despreciables con datos dispersos \\
 \addlinespace[3pt]
-G3. Tipo de dato (float64, float32, float16) & float32 & float64 ocupa +9,4 \%; float16 no soportado \\
+G3. Tipo de dato (float64, float32, float16) & float32 & float64 ocupa +9,4\,\%; float16 no soportado \\
 \addlinespace[3pt]
-G4. Estructura temporal (tile\_t=1 vs 4; 2D vs 3D) & Array 3D, 1 frag./paso & Confinar cada tile a un paso comprime $-$19 \% y permite filtrado temporal sin consolidación \\
+G4. Estructura temporal (tile\_t=1 vs 4; 2D vs 3D) & Array 3D, 1 frag./paso & Confinar cada tile a un paso comprime $-$19\,\% y permite filtrado temporal sin consolidación \\
 \addlinespace[3pt]
-G5. Atributos (1 array multi-atributo vs 4 arrays) & 1 array, 4 atributos & Arrays separados: +14,9 \% en disco y 2,2$\times$ más lentos en lectura conjunta \\
+G5. Atributos (1 array multi-atributo vs 4 arrays) & 1 array, 4 atributos & Arrays separados: +14,9\,\% en disco y 2,2$\times$ más lentos en lectura conjunta \\
 \bottomrule
 \end{tabularx}
 \caption{Resumen del \textit{benchmark} de almacenamiento por grupos de parámetros.}

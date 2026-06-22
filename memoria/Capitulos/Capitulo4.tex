@@ -119,7 +119,7 @@ Se midió un representante de cada categoría y nivel de complejidad: Q1 (instan
 \label{fig:patrones-acceso}
 \end{figure}
 
-El rendimiento del motor de consultas se midió sobre \texttt{datos29}, el \textit{dataset} más voluminoso disponible (21 GB, 1\,500 M celdas húmedas), en condiciones de caché fría sobre la máquina descrita en la sección~\ref{hardware-y-software}. Los tiempos se miden extremo a extremo: desde la llamada a la función hasta la obtención del resultado en Python, incluyendo lectura de TileDB, filtrado y cálculo. En la Tabla~\ref{tab:rendimiento-consultas}, la columna de subdominio corresponde al cuadrante central del dominio (50 \% en cada eje, 25 \% del área) y la RAM pico se midió con \texttt{tracemalloc}.
+El rendimiento del motor de consultas se midió sobre \texttt{datos29}, el \textit{dataset} más voluminoso disponible (21 GB, 1\,500 M celdas húmedas), en condiciones de caché fría sobre la máquina descrita en la sección~\ref{hardware-y-software}. Los tiempos se miden extremo a extremo: desde la llamada a la función hasta la obtención del resultado en Python, incluyendo lectura de TileDB, filtrado y cálculo. En la Tabla~\ref{tab:rendimiento-consultas}, la columna de subdominio corresponde al cuadrante central del dominio (50\,\% en cada eje, 25\,\% del área) y la RAM pico se midió con \texttt{tracemalloc}.
 
 \begin{table}[htbp]
 \centering
