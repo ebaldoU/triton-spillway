@@ -7,8 +7,6 @@ import zipfile
 from pathlib import Path
 from xml.sax.saxutils import escape, quoteattr
 
-from gis_style import depth_qml  # noqa: F401  (estilo coherente, reutilizado)
-
 # El COG debe ser un nombre de fichero simple (sin separadores ni ..),
 # para que el datasource relativo no pueda apuntar fuera del paquete.
 _COG_NAME_RE = re.compile(r"^[A-Za-z0-9._-]+\.tif$")

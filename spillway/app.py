@@ -33,7 +33,6 @@ if os.path.exists(_env_file):
 import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
-import streamlit.components.v1 as _stc
 import tiledb
 import folium
 from streamlit_folium import st_folium

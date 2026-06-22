@@ -22,7 +22,6 @@ import gc
 import json
 import time
 
-import numpy as np
 import tiledb
 from config import BASE_URI, resolve_dataset
 

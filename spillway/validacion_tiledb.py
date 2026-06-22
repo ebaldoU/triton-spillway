@@ -3,7 +3,7 @@ Validación funcional de consultas mediante comparación interna:
 resultado del motor analítico vs recálculo independiente sobre los
 mismos datos TileDB con NumPy puro (sin pasar por las funciones del motor).
 """
-import sys, os, json, random
+import sys, json, random
 sys.path.insert(0, "/home/ebald/spillway")
 
 import numpy as np
