@@ -3,7 +3,7 @@
 Sistema de almacenamiento y análisis eficiente para resultados de simulaciones hidráulicas de alta resolución. Convierte los GeoTIFF generados por el simulador Triton (~235 GB por escenario) a arrays TileDB sparse (~17,5 GB, reducción del 92,7 %) y expone 24 consultas analíticas a través de una aplicación web interactiva.
 
 > Trabajo Fin de Grado — EINA, Universidad de Zaragoza, 2026  
-> Autor: Enrique Baldovín Cotela  
+> Autor: Enrique Baldovin Cotela  
 > Directores: Mario Morales Hernández · Sergio Ilarri Artigas
 
 ---
