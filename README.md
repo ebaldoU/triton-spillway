@@ -1,6 +1,6 @@
 # Spillway — Análisis de Simulaciones Hidráulicas con TileDB
 
-Sistema de almacenamiento y análisis eficiente para resultados de simulaciones hidráulicas de alta resolución. Convierte los GeoTIFF generados por el simulador Triton (~235 GB por escenario) a arrays TileDB sparse (~17,5 GB, reducción del 92,7 %) y expone 24 consultas analíticas a través de una aplicación web interactiva.
+Sistema de almacenamiento y análisis eficiente para resultados de simulaciones hidráulicas de alta resolución. Convierte los GeoTIFF generados por el simulador Triton (~235 GB por escenario) a arrays TileDB sparse (~17,2 GB, reducción del 92,7 %) y expone 24 consultas analíticas a través de una aplicación web interactiva.
 
 > Trabajo Fin de Grado — EINA, Universidad de Zaragoza, 2026  
 > Autor: Enrique Baldovin Cotela  
@@ -33,7 +33,7 @@ memoria/
   main.tex                     # Memoria TFG en LaTeX (compilar con pdflatex)
 ```
 
-> Los datos (arrays TileDB y GeoTIFF fuente) **no están incluidos** en el repositorio por su tamaño. Ver sección [Datos](#datos).
+> Los datos (arrays TileDB y GeoTIFF fuente) **no están incluidos** en el repositorio por su tamaño. Ver sección [Datos](#datos-y-reproducibilidad).
 
 ---
 
@@ -155,7 +155,7 @@ Los ficheros se guardan en `TRITON_OUTPUT_DIR` (~257 MB por variable y paso).
 Todo el código fuente está disponible en este repositorio bajo licencia académica:
 
 - Pipeline ETL, motor de consultas y aplicación web (`spillway/`)
-- Scripts de validación y benchmark (`spillway/validacion_tiledb.py`, `spillway/benchmark_validacion.py`)
+- Scripts de validación y benchmark (`spillway/validacion_tiledb.py`, `spillway/benchmark_vs_geotiff.py`)
 - Código fuente de la memoria en LaTeX (`memoria/`)
 - Versiones exactas de dependencias (`requirements.txt`)
 
