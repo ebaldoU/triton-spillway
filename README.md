@@ -8,6 +8,30 @@ Sistema de almacenamiento y análisis eficiente para resultados de simulaciones 
 
 ---
 
+## 🚀 Inicio rápido
+
+Desde una máquina limpia (Linux o WSL), con los datos de demostración incluidos:
+
+```bash
+# 1. Prerrequisitos del sistema
+sudo apt update && sudo apt install -y git python3-venv python3-pip curl
+
+# 2. Clonar e instalar (entorno + dependencias + datos de demostración)
+git clone https://github.com/ebaldoU/triton-spillway.git
+cd triton-spillway
+./setup.sh
+
+# 3. Arrancar
+source venv/bin/activate
+streamlit run spillway/app.py
+```
+
+Abre `http://localhost:8501` e inicia sesión con **`triton`** / **`demo`**.
+
+Probado de cero en un WSL recién instalado: el script deja la aplicación lista con los escenarios datos1 y datos2, y funcionan las 24 consultas incluido el modo comparativo. Para más detalle (instalación manual, despliegue, datos completos) sigue leyendo.
+
+---
+
 ## Descripción
 
 El simulador Triton produce 80 ficheros GeoTIFF por escenario (4 variables × 20 pasos temporales). Este proyecto:
@@ -52,6 +76,9 @@ memoria/
 El script `setup.sh` crea el entorno virtual, instala las dependencias y descarga los datos de demostración en `triton_results/`. Al terminar, la aplicación arranca sin configurar nada:
 
 ```bash
+# Prerrequisitos del sistema (en un WSL/Linux recién instalado)
+sudo apt update && sudo apt install -y git python3-venv python3-pip curl
+
 git clone https://github.com/ebaldoU/triton-spillway.git
 cd triton-spillway
 ./setup.sh                  # añade --no-data para omitir los datos de demostración
