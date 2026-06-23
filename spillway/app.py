@@ -568,11 +568,11 @@ _LOGO_URI = _logo_uri()
 
 
 # ── Login ────────────────────────────────────────────────────────────────────
+# Credenciales por defecto (triton / demo) para que el repositorio funcione sin
+# configuración. En producción se sobrescriben con las variables de entorno.
+_DEFAULT_PASS_HASH = "2a97516c354b68848cdbd8f54a226a0a55b21ed138e207ad6c5cbb9c00aa5aea"  # sha256("demo")
 _APP_USER      = os.environ.get("SPILLWAY_USER", "triton")
-_APP_PASS_HASH = os.environ.get("SPILLWAY_PASS_HASH", "")
-if not _APP_PASS_HASH:
-    st.error("⚠️ SPILLWAY_PASS_HASH not configured. Set the environment variable.")
-    st.stop()
+_APP_PASS_HASH = os.environ.get("SPILLWAY_PASS_HASH", _DEFAULT_PASS_HASH)
 
 def _login_screen() -> bool:
     if st.session_state.get("authenticated"):

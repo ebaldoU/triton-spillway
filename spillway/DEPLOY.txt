@@ -75,12 +75,23 @@ Contenido del archivo:
   User=<usuario>
   WorkingDirectory=/home/<usuario>/spillway
   Environment="TRITON_BASE_URI=<ruta-datos>/triton_results"
+  Environment="SPILLWAY_USER=triton"
+  Environment="SPILLWAY_PASS_HASH=<hash-sha256-de-la-contrasena>"
   ExecStart=/home/<usuario>/venv_triton/bin/streamlit run app.py --server.port 8501 --server.headless true --server.address 127.0.0.1
   Restart=on-failure
   RestartSec=5
 
   [Install]
   WantedBy=multi-user.target
+
+NOTA: la app trae credenciales por defecto triton / demo. Las dos variables
+Environment de arriba son opcionales y solo sirven para usar credenciales
+propias en produccion (tienen prioridad sobre los valores por defecto).
+Generar el hash de una contrasena propia con:
+
+  python -c "import hashlib; print(hashlib.sha256('MI_CONTRASENA'.encode()).hexdigest())"
+
+y pegar el resultado en la linea Environment de SPILLWAY_PASS_HASH.
 
 Activar el servicio (solo la primera vez):
 

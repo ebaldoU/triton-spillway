@@ -134,7 +134,35 @@ python geotiff_to_tiledb_sparse.py --dataset datos1
 
 El proceso tarda aproximadamente 10 minutos por \textit{dataset} con un pico de RAM de $\sim$4 GB. Al finalizar, verifica automáticamente la integridad del array creado. Si el array ya existe, lo elimina y lo recrea desde cero.
 
+\section{Credenciales de acceso}\label{e.55-credenciales}
+
+La aplicación web pide iniciar sesión con usuario y contraseña, de modo que en el despliegue remoto los datos no quedan expuestos públicamente. Por defecto trae las credenciales \texttt{triton} / \texttt{demo}, suficientes para probar el sistema con los datos de demostración sin configurar nada. Para un despliegue propio se pueden cambiar mediante las dos variables de entorno descritas en la Tabla~\ref{tab:env-auth}, que tienen prioridad sobre los valores por defecto. La contraseña nunca se guarda en claro: solo se almacena su hash SHA-256, y la comprobación en el inicio de sesión se realiza con \texttt{hmac.compare\_digest} para evitar ataques por tiempo de respuesta.
+
+\begin{table}[ht]
+\centering
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{4.5cm}>{\raggedright\arraybackslash}p{3.5cm}L}
+\toprule
+\textbf{Variable} & \textbf{Default} & \textbf{Contenido} \\
+\midrule
+\texttt{SPILLWAY\_USER} & \texttt{triton} & Nombre de usuario para el inicio de sesión. \\
+\texttt{SPILLWAY\_PASS\_HASH} & hash de \texttt{demo} & Hash SHA-256 en hexadecimal de la contraseña. \\
+\bottomrule
+\end{tabularx}
+\caption{Variables de entorno de autenticación de la aplicación web.}
+\label{tab:env-auth}
+\end{table}
+
+Para usar una contraseña propia, su hash se genera con una sola orden y el resultado se exporta antes de arrancar la aplicación:
+
+\begin{verbatim}
+export SPILLWAY_USER=triton
+export SPILLWAY_PASS_HASH=$(python -c "import hashlib; \
+  print(hashlib.sha256('MI_CONTRASEÑA'.encode()).hexdigest())")
+\end{verbatim}
+
 \section{Arranque de la aplicación en local}\label{e.6-app-local}
+
+Tras definir las rutas (sección~\ref{e.4-configuracion}) y las credenciales (sección~\ref{e.55-credenciales}):
 
 \begin{verbatim}
 cd spillway/
@@ -152,7 +180,9 @@ mkdir -p /ruta/triton_results
 tar -xzf demo_datos1_bbox50km.tar.gz -C /ruta/triton_results/
 tar -xzf demo_datos2_bbox50km.tar.gz -C /ruta/triton_results/
 export TRITON_BASE_URI=/ruta/triton_results
-streamlit run app.py
+export SPILLWAY_PASS_HASH=$(python -c "import hashlib; \
+  print(hashlib.sha256('demo'.encode()).hexdigest())")
+streamlit run app.py   # usuario: triton  contrasena: demo
 \end{verbatim}
 
 La aplicación detecta ambos subconjuntos automáticamente y las 24 consultas, incluido el modo comparativo entre escenarios, funcionan sin ninguna modificación.
@@ -166,7 +196,7 @@ La aplicación puede desplegarse como servicio \texttt{systemd} para que arranqu
 
 \item Transferir el código Python (\texttt{spillway/*.py}).
 
-\item Crear un fichero de unidad \texttt{systemd} que defina la variable \texttt{TRITON\_BASE\_URI} y ejecute \texttt{streamlit run app.py} en modo \textit{headless}.
+\item Crear un fichero de unidad \texttt{systemd} que defina las variables \texttt{TRITON\_BASE\_URI}, \texttt{SPILLWAY\_USER} y \texttt{SPILLWAY\_PASS\_HASH} (sección~\ref{e.55-credenciales}) y ejecute \texttt{streamlit run app.py} en modo \textit{headless}.
 
 \item Habilitar e iniciar el servicio con \texttt{systemctl enable} y \texttt{systemctl start}.
 \end{enumerate}

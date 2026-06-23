@@ -94,6 +94,38 @@ Estructura de directorios esperada:
 
 ---
 
+## Credenciales de acceso
+
+La aplicación web pide iniciar sesión con usuario y contraseña. **Por defecto funciona sin configurar nada:**
+
+| Usuario | Contraseña |
+|---|---|
+| `triton` | `demo` |
+
+Esto basta para probar el sistema con los datos de demostración. Para un despliegue propio, las credenciales se pueden cambiar mediante dos variables de entorno, que tienen prioridad sobre los valores por defecto:
+
+| Variable | Significado | Defecto |
+|---|---|---|
+| `SPILLWAY_USER` | Nombre de usuario | `triton` |
+| `SPILLWAY_PASS_HASH` | Hash SHA-256 (hexadecimal) de la contraseña | hash de `demo` |
+
+La contraseña nunca se almacena en claro: solo su hash. Para generar el hash de una contraseña propia:
+
+```bash
+python -c "import hashlib; print(hashlib.sha256('MI_CONTRASEÑA'.encode()).hexdigest())"
+```
+
+Después se exporta el resultado antes de arrancar la aplicación:
+
+```bash
+export SPILLWAY_USER=triton
+export SPILLWAY_PASS_HASH=<hash-generado-arriba>
+```
+
+En despliegue como servicio `systemd`, ambas variables se definen en el fichero de unidad (sección [Despliegue en servidor](#despliegue-en-servidor-producción)).
+
+---
+
 ## Uso
 
 ### 1. Configurar rutas
@@ -124,6 +156,8 @@ Lee los GeoTIFF de `TRITON_GTIFF_DIR/datos1/` y crea el array TileDB en `TRITON_
 ```bash
 python -m streamlit run app.py
 ```
+
+Inicia sesión con `triton` / `demo` (o las credenciales propias definidas por variables de entorno).
 
 Abre `http://localhost:8501` en el navegador. La aplicación detecta automáticamente todos los datasets disponibles en `TRITON_BASE_URI`.
 
@@ -169,6 +203,7 @@ tar -xzf demo_datos1_bbox50km.tar.gz -C /ruta/triton_results/
 tar -xzf demo_datos2_bbox50km.tar.gz -C /ruta/triton_results/
 export TRITON_BASE_URI=/ruta/triton_results
 streamlit run app.py
+# Inicia sesión con usuario "triton" y contraseña "demo"
 ```
 
 ### Datos de simulación completos
@@ -189,7 +224,7 @@ El pipeline ETL, el esquema del array TileDB y las funciones analíticas **no as
 
 ## Despliegue en servidor (producción)
 
-La aplicación puede desplegarse como servicio `systemd` en cualquier servidor Linux. El fichero de unidad debe definir `TRITON_BASE_URI` y ejecutar `streamlit run app.py` en modo headless. Una vez el servicio está activo, se accede mediante un túnel SSH:
+La aplicación puede desplegarse como servicio `systemd` en cualquier servidor Linux. El fichero de unidad debe definir `TRITON_BASE_URI` y las credenciales (`SPILLWAY_USER`, `SPILLWAY_PASS_HASH`), y ejecutar `streamlit run app.py` en modo headless. Una vez el servicio está activo, se accede mediante un túnel SSH:
 
 ```bash
 ssh -L 8501:localhost:8501 usuario@servidor
