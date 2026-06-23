@@ -42,6 +42,26 @@ Los requisitos que se indican a continuación se han determinado a partir de las
 
 Con una máquina que cumpla estos requisitos mínimos es posible tanto procesar nuevos escenarios como servir la aplicación web con tiempos de respuesta interactivos para las consultas instantáneas y multi-paso (véase la Tabla~\ref{tab:rendimiento-consultas} para los tiempos medidos en producción).
 
+\section{Instalación rápida}\label{e.25-instalacion-rapida}
+
+Para probar el sistema con el mínimo esfuerzo, el repositorio incluye el \textit{script} \texttt{setup.sh}, que automatiza toda la puesta en marcha: crea el entorno virtual, instala las dependencias y descarga los datos de demostración. Partiendo de una máquina limpia (Linux o WSL):
+
+\begin{verbatim}
+# Prerrequisitos del sistema
+sudo apt update && sudo apt install -y git python3-venv python3-pip curl
+
+# Clonar e instalar
+git clone https://github.com/ebaldoU/triton-spillway.git
+cd triton-spillway
+./setup.sh
+
+# Arrancar
+source venv/bin/activate
+streamlit run spillway/app.py
+\end{verbatim}
+
+Al terminar, la aplicación se sirve en \texttt{http://localhost:8501} y se accede con las credenciales por defecto \texttt{triton} / \texttt{demo}, ya con los escenarios de demostración cargados. Este procedimiento se ha verificado de cero en un sistema recién instalado. Las secciones siguientes describen cada paso por separado para escenarios que requieran instalación o configuración manual.
+
 \section{Instalación del entorno Python}\label{e.3-instalacion}
 
 Se recomienda usar un entorno virtual para aislar las dependencias:
