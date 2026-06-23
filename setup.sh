@@ -87,7 +87,20 @@ else
   say "Datos de demostración omitidos (--no-data)"
 fi
 
-# ── 5. Resumen ───────────────────────────────────────────────────────────────
+# ── 5. Configuración de Streamlit ────────────────────────────────────────────
+# Evita el aviso interactivo de telemetría ("Welcome to Streamlit!") la primera
+# vez, para que la aplicación arranque sin pedir nada por consola.
+say "Configurando Streamlit"
+ST_CFG="$HOME/.streamlit"
+mkdir -p "$ST_CFG"
+if [ ! -f "$ST_CFG/credentials.toml" ]; then
+  printf '[general]\nemail = ""\n' > "$ST_CFG/credentials.toml"
+  ok "aviso de telemetría desactivado"
+else
+  ok "configuración de Streamlit ya existente, se respeta"
+fi
+
+# ── 6. Resumen ───────────────────────────────────────────────────────────────
 say "Listo"
 cat <<EOF
 
