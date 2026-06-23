@@ -47,6 +47,21 @@ memoria/
 
 ## Instalación
 
+### Opción A — Instalación automática (recomendada)
+
+El script `setup.sh` crea el entorno virtual, instala las dependencias y descarga los datos de demostración en `triton_results/`. Al terminar, la aplicación arranca sin configurar nada:
+
+```bash
+git clone https://github.com/ebaldoU/triton-spillway.git
+cd triton-spillway
+./setup.sh                  # añade --no-data para omitir los datos de demostración
+
+source venv/bin/activate
+streamlit run spillway/app.py   # entrar con triton / demo
+```
+
+### Opción B — Instalación manual
+
 ```bash
 # 1. Clonar el repositorio
 git clone https://github.com/ebaldoU/triton-spillway.git
